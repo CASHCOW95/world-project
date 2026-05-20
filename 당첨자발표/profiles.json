@@ -1,0 +1,62 @@
+import os
+from openpyxl import load_workbook
+from openpyxl.styles import PatternFill
+
+def check_and_highlight(excel_file_path):
+    # --- [여기에 네 실제 정보를 넣으면 돼! 로컬에서만 수정해] ---
+    my_profiles = [
+        {
+            "nickname": "임광훈",
+            "tele": "nodingu19",
+            "email": "nodingu19@gmail.com",
+            "phone": "64631970", # 뒷 8자리만 있어도 충분
+            "evm": "0xc27b399f35ffb11d222dc790c442198983db6d63",
+            "sol": "HYREvQnrvSovycPN99D9MqroYyXc3KS8W87MVtfY115L"
+        }
+    ]
+    # -------------------------------------------------------
+
+    if not os.path.exists(excel_file_path):
+        print(f"파일을 찾을 수 없습니다: {excel_file_path}")
+        return
+
+    wb = load_workbook(excel_file_path)
+    yellow_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+    
+    found_any = False
+
+    for sheet in wb.worksheets:
+        for row in sheet.iter_rows():
+            for cell in row:
+                if cell.value is None: continue
+                
+                content = str(cell.value).lower().strip() # 소문자로 변환해 비교
+                
+                for p in my_profiles:
+                    # 마스킹 대응 검색 조건들
+                    search_targets = [
+                        p['tele'][:4],              # 텔레 앞 4글자 (nodi...)
+                        p['email'].split('@')[0],   # 이메일 ID 부분
+                        p['phone'][-4:],            # 전화번호 맨 뒷 4자리 (1970)
+                        p['evm'][:6],               # EVM 앞 6자리 (0xc27b)
+                        p['evm'][-4:],              # EVM 뒤 4자리 (6d63)
+                        p['sol'][:6],               # SOL 앞 6자리 (HYREvQ)
+                        p['sol'][-4:]               # SOL 뒤 4자리 (115L)
+                    ]
+
+                    # 검색 타겟 중 하나라도 셀 내용에 포함되어 있다면 노란색!
+                    if any(target.lower() in content for target in search_targets if len(target) > 2):
+                        cell.fill = yellow_fill
+                        found_any = True
+                        print(f"✅ 매칭 발견! [{p['nickname']}] -> 셀 내용: {cell.value}")
+
+    if found_any:
+        output_name = f"RESULT_{excel_file_path}"
+        wb.save(output_name)
+        print(f"\n✨ 작업 완료! 노란색으로 표시된 파일을 저장했습니다: {output_name}")
+    else:
+        print("\n아쉽게도 당첨 내역이 없네. 😥")
+
+if __name__ == "__main__":
+    # 다운로드 받은 엑셀 파일명을 여기에 적어줘
+    check_and_highlight("winners.xlsx")

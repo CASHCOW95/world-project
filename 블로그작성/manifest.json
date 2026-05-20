@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "네이버 블로그 HTML 변환기 (무제한)",
+  "version": "1.1.0",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "permissions": ["identity", "clipboardWrite"],
+  "oauth2": {
+    "client_id": "발급받은_클라이언트_ID_여기에_입력",
+    "scopes": ["https://www.googleapis.com/auth/userinfo.email"]
+  }
+}
