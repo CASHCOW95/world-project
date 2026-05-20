@@ -113,31 +113,133 @@
                 <!-- Features Grid -->
                 <section id="features" class="max-w-5xl mx-auto px-6 py-12 w-full scroll-reveal">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div class="p-8 rounded-2xl glass-card card-glow-cyan flex flex-col items-center text-center">
-                            <div class="w-12 h-12 rounded-xl bg-cyan-100 dark:bg-cyan-950/50 border border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400 mb-4 text-xl">🤖</div>
-                            <h3 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">Customized AI Assistant</h3>
-                            <p class="text-slate-600 dark:text-gray-400 text-xs mt-2 leading-relaxed">개별 비즈니스에 최적화된 맞춤형 AI 비서를 즉시 구축하세요.</p>
+                        <!-- 1. Online Meetup -->
+                        <div class="p-8 rounded-2xl glass-card card-glow-cyan flex flex-col items-center text-center cursor-pointer hover:scale-105 transition-transform" onclick="openFeatureModal('calendar-modal')">
+                            <div class="w-12 h-12 rounded-xl bg-cyan-100 dark:bg-cyan-950/50 border border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400 mb-4 text-xl">📅</div>
+                            <h3 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">온라인 밋업일정</h3>
+                            <p class="text-slate-600 dark:text-gray-400 text-xs mt-2 leading-relaxed">구글 캘린더 연동 타임라인 확인</p>
                         </div>
 
-                        <div class="p-8 rounded-2xl glass-card card-glow-magenta flex flex-col items-center text-center">
-                            <div class="w-12 h-12 rounded-xl bg-pink-100 dark:bg-pink-950/50 border border-pink-500/30 flex items-center justify-center text-pink-600 dark:text-pink-400 mb-4 text-xl">⚃</div>
-                            <h3 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">Intuitive Dashboard</h3>
-                            <p class="text-slate-600 dark:text-gray-400 text-xs mt-2 leading-relaxed">복잡한 도구들을 한눈에 제어하는 강력한 인터페이스.</p>
+                        <!-- 2. Profile Management -->
+                        <div class="p-8 rounded-2xl glass-card card-glow-magenta flex flex-col items-center text-center cursor-pointer hover:scale-105 transition-transform" onclick="openFeatureModal('profile-modal')">
+                            <div class="w-12 h-12 rounded-xl bg-pink-100 dark:bg-pink-950/50 border border-pink-500/30 flex items-center justify-center text-pink-600 dark:text-pink-400 mb-4 text-xl">📊</div>
+                            <h3 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">밋업프로필 관리</h3>
+                            <p class="text-slate-600 dark:text-gray-400 text-xs mt-2 leading-relaxed">엑셀 업로드 및 즉시 수정</p>
                         </div>
 
-                        <div class="p-8 rounded-2xl glass-card card-glow-emerald flex flex-col items-center text-center">
-                            <div class="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-950/50 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-4 text-xl">📈</div>
-                            <h3 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">압도적 생산성</h3>
-                            <p class="text-slate-600 dark:text-gray-400 text-xs mt-2 leading-relaxed">작업 시간을 300% 이상 단축시키는 초자동화 프로세스.</p>
+                        <!-- 3. Offline Meetup -->
+                        <div class="p-8 rounded-2xl glass-card card-glow-emerald flex flex-col items-center text-center cursor-pointer hover:scale-105 transition-transform" onclick="openFeatureModal('location-modal')">
+                            <div class="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-950/50 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-4 text-xl">📍</div>
+                            <h3 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">오프라인 밋업</h3>
+                            <p class="text-slate-600 dark:text-gray-400 text-xs mt-2 leading-relaxed">장소 업로드 및 관리</p>
                         </div>
 
-                        <div class="p-8 rounded-2xl glass-card card-glow-gold flex flex-col items-center text-center">
-                            <div class="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-950/50 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-4 text-xl">⚡</div>
-                            <h3 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">수익 직결 자동화</h3>
-                            <p class="text-slate-600 dark:text-gray-400 text-xs mt-2 leading-relaxed">클릭 한 번으로 아이디어를 수익성 높은 결과물로 전환.</p>
+                        <!-- 4. Gifticon Management -->
+                        <div class="p-8 rounded-2xl glass-card card-glow-gold flex flex-col items-center text-center cursor-pointer hover:scale-105 transition-transform" onclick="openFeatureModal('gifticon-modal')">
+                            <div class="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-950/50 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-4 text-xl">🎁</div>
+                            <h3 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">기프티콘 관리</h3>
+                            <p class="text-slate-600 dark:text-gray-400 text-xs mt-2 leading-relaxed">이미지 업로드 및 목록 관리</p>
                         </div>
                     </div>
                 </section>
+
+                <!-- Feature Modals -->
+                <!-- 1. Calendar Modal -->
+                <div id="calendar-modal" class="modal feature-modal" role="dialog">
+                    <div class="modal-content max-w-4xl bg-white dark:bg-bg-dark border border-black/10 dark:border-white/10">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-black text-slate-900 dark:text-white">온라인 밋업일정</h2>
+                            <button class="close-feature text-slate-400 hover:text-slate-900 dark:hover:text-white text-2xl">&times;</button>
+                        </div>
+                        <div class="aspect-video w-full rounded-xl overflow-hidden bg-slate-100 dark:bg-white/5 border border-black/5 dark:border-white/5">
+                            <!-- Placeholder for Google Calendar Embed -->
+                            <div class="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                                <p class="mb-4">Google Calendar 연동 영역</p>
+                                <iframe src="https://calendar.google.com/calendar/embed?src=ko.south_korea%23holiday%40group.v.calendar.google.com&ctz=Asia%2FSeoul" style="border: 0" width="100%" height="100%" frameborder="0" scrolling="no"></iframe>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Profile Modal -->
+                <div id="profile-modal" class="modal feature-modal" role="dialog">
+                    <div class="modal-content max-w-4xl bg-white dark:bg-bg-dark border border-black/10 dark:border-white/10">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-black text-slate-900 dark:text-white">밋업프로필 관리</h2>
+                            <button class="close-feature text-slate-400 hover:text-slate-900 dark:hover:text-white text-2xl">&times;</button>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="border-2 border-dashed border-slate-200 dark:border-white/10 rounded-2xl p-12 text-center hover:border-indigo-500 transition-colors cursor-pointer" onclick="document.getElementById('excel-upload').click()">
+                                <input type="file" id="excel-upload" class="hidden" accept=".xlsx, .xls">
+                                <div class="text-4xl mb-4">📂</div>
+                                <p class="text-slate-600 dark:text-gray-400 font-medium">엑셀 파일을 드래그하거나 클릭하여 업로드하세요</p>
+                                <p class="text-[10px] text-slate-400 mt-2">지원 형식: .xlsx, .xls (최대 10MB)</p>
+                            </div>
+                            <div id="excel-preview" class="hidden overflow-x-auto rounded-xl border border-black/5 dark:border-white/5">
+                                <table class="w-full text-left text-xs">
+                                    <thead class="bg-slate-50 dark:bg-white/5 text-slate-500 uppercase font-bold">
+                                        <tr>
+                                            <th class="px-4 py-3">이름</th>
+                                            <th class="px-4 py-3">역할</th>
+                                            <th class="px-4 py-3">상태</th>
+                                            <th class="px-4 py-3">관리</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-black/5 dark:divide-white/5">
+                                        <!-- Dynamic Data -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Location Modal -->
+                <div id="location-modal" class="modal feature-modal" role="dialog">
+                    <div class="modal-content max-w-4xl bg-white dark:bg-bg-dark border border-black/10 dark:border-white/10">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-black text-slate-900 dark:text-white">오프라인 밋업 장소</h2>
+                            <button class="close-feature text-slate-400 hover:text-slate-900 dark:hover:text-white text-2xl">&times;</button>
+                        </div>
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div class="space-y-4">
+                                <div class="p-4 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5">
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">장소명</label>
+                                    <input type="text" class="w-full bg-transparent border-none focus:ring-0 text-sm text-slate-900 dark:text-white" placeholder="예: 강남역 인근 스터디룸">
+                                </div>
+                                <div class="p-4 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5">
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">주소</label>
+                                    <input type="text" class="w-full bg-transparent border-none focus:ring-0 text-sm text-slate-900 dark:text-white" placeholder="주소를 입력하세요">
+                                </div>
+                                <button class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition shadow-lg">장소 추가하기</button>
+                            </div>
+                            <div class="rounded-xl bg-slate-100 dark:bg-white/5 overflow-hidden flex items-center justify-center text-slate-400">
+                                <p>지도/장소 목록 미리보기</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Gifticon Modal -->
+                <div id="gifticon-modal" class="modal feature-modal" role="dialog">
+                    <div class="modal-content max-w-4xl bg-white dark:bg-bg-dark border border-black/10 dark:border-white/10">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-black text-slate-900 dark:text-white">기프티콘 관리</h2>
+                            <button class="close-feature text-slate-400 hover:text-slate-900 dark:hover:text-white text-2xl">&times;</button>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="flex items-center gap-4">
+                                <button class="px-6 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-sm transition shadow-md" onclick="document.getElementById('gifticon-upload').click()">이미지 업로드</button>
+                                <input type="file" id="gifticon-upload" class="hidden" accept="image/*" multiple>
+                                <p class="text-xs text-slate-500">여러 장의 이미지를 동시에 관리할 수 있습니다.</p>
+                            </div>
+                            <div id="gifticon-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <!-- Placeholder for uploaded images -->
+                                <div class="aspect-square rounded-xl border border-dashed border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 text-3xl">🖼️</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Detailed Info Section -->
                 <section id="details" class="max-w-4xl mx-auto px-6 py-20 w-full scroll-reveal">
