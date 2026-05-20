@@ -1,13 +1,34 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Authentication Check
     const protectedPages = ['online-meetup.html', 'profile-mgmt.html', 'offline-meetup.html', 'gifticon-mgmt.html'];
-    const currentPage = window.location.pathname.split('/').pop();
+    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
     const isLoggedIn = sessionStorage.getItem('isAdminLoggedIn') === 'true';
     const adminNickname = sessionStorage.getItem('adminNickname');
 
     if (protectedPages.includes(currentPage) && !isLoggedIn) {
-        window.location.href = `login.html?redirect=${currentPage}`;
+        document.body.classList.add('auth-locked');
+        const lockUI = document.createElement('div');
+        lockUI.id = 'access-denied-message';
+        lockUI.className = 'glass-card p-10 rounded-[2.5rem] border border-white/10 shadow-2xl animate-in';
+        lockUI.innerHTML = `
+            <div class="text-6xl mb-6">🔒</div>
+            <h2 class="text-2xl font-black mb-4 text-white">접근 권한이 없습니다</h2>
+            <p class="text-slate-400 text-sm mb-8 leading-relaxed">해당 서비스는 관리자 로그인이 필요합니다.<br>관리자 계정으로 로그인 후 다시 시도해주세요.</p>
+            <div class="flex gap-3 justify-center">
+                <a href="index.html" class="px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold transition text-sm">홈으로</a>
+                <a href="login.html?redirect=${currentPage}" class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition text-sm shadow-lg shadow-indigo-500/20">관리자 로그인</a>
+            </div>
+        `;
+        document.body.appendChild(lockUI);
+        // Ensure header is still visible if needed, but usually we want full lock
         return;
+    }
+
+    // Ensure content is visible
+    document.body.classList.remove('page-loading');
+    const mainContent = document.querySelector('main');
+    if (mainContent) {
+        mainContent.style.opacity = '1';
     }
 
     // Update Header UI for Auth

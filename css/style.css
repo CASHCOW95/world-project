@@ -131,3 +131,48 @@ body {
 .modal.active .modal-content {
     transform: scale(1);
 }
+
+/* Animation utilities */
+.scroll-reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.animate-in {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+}
+
+/* Feature Page Visibility */
+.page-loading main {
+    opacity: 0;
+}
+
+main {
+    transition: opacity 0.8s ease-out;
+}
+
+/* Auth Lock UI */
+.auth-locked {
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-locked::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(3, 5, 9, 0.8);
+    backdrop-filter: blur(20px);
+    z-index: 90;
+}
+
+#access-denied-message {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100;
+    text-align: center;
+    width: 100%;
+    max-width: 400px;
+}
