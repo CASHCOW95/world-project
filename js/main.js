@@ -2,45 +2,58 @@ document.addEventListener('DOMContentLoaded', () => {
     // Theme Logic
     const themeToggle = document.getElementById('theme-toggle');
     const themeIcon = document.getElementById('theme-icon');
-    const body = document.body;
+    const html = document.documentElement;
 
-    const currentTheme = localStorage.getItem('theme') || 'dark';
-    if (currentTheme === 'light') {
-        body.classList.add('light-mode');
+    // Load saved theme or default to dark
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    if (savedTheme === 'light') {
+        html.classList.remove('dark');
         themeIcon.textContent = '☀️';
+    } else {
+        html.classList.add('dark');
+        themeIcon.textContent = '🌙';
     }
 
     themeToggle.addEventListener('click', () => {
-        body.classList.toggle('light-mode');
-        const isLight = body.classList.contains('light-mode');
-        themeIcon.textContent = isLight ? '☀️' : '🌙';
-        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        const isDark = html.classList.toggle('dark');
+        themeIcon.textContent = isDark ? '🌙' : '☀️';
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
     });
 
     // Modal Logic
     const authModal = document.getElementById('auth-modal');
     const openAuthBtns = document.querySelectorAll('.open-auth');
-    const closeModal = document.querySelector('.close-modal');
+    const closeModalBtn = document.querySelector('.close-modal');
 
-    openAuthBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            authModal.classList.add('active');
-        });
-    });
+    const openModal = () => {
+        authModal.classList.add('active');
+        document.body.style.overflow = 'hidden'; // Prevent scrolling
+    };
 
-    closeModal.addEventListener('click', () => {
+    const closeModal = () => {
         authModal.classList.remove('active');
+        document.body.style.overflow = ''; // Restore scrolling
+    };
+
+    openAuthBtns.forEach(btn => btn.addEventListener('click', openModal));
+    closeModalBtn.addEventListener('click', closeModal);
+
+    // Close on outside click
+    window.addEventListener('click', (e) => {
+        if (e.target === authModal) closeModal();
     });
 
-    window.addEventListener('click', (e) => {
-        if (e.target === authModal) {
-            authModal.classList.remove('active');
+    // Close on Escape key
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && authModal.classList.contains('active')) {
+            closeModal();
         }
     });
 
-    // Scroll Animations (AOS replacement simple logic)
+    // Scroll Animations (Intersection Observer)
     const observerOptions = {
-        threshold: 0.1
+        threshold: 0.15,
+        rootMargin: '0px 0px -50px 0px'
     };
 
     const observer = new IntersectionObserver((entries) => {
@@ -55,4 +68,17 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.scroll-reveal').forEach(el => {
         observer.observe(el);
     });
+
+    // Header scroll effect
+    const header = document.querySelector('header');
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 50) {
+            header.classList.add('py-2', 'bg-white/80', 'dark:bg-[#030509]/60');
+            header.classList.remove('py-3.5', 'bg-white/60', 'dark:bg-[#030509]/30');
+        } else {
+            header.classList.remove('py-2', 'bg-white/80', 'dark:bg-[#030509]/60');
+            header.classList.add('py-3.5', 'bg-white/60', 'dark:bg-[#030509]/30');
+        }
+    });
 });
+
