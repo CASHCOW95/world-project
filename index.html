@@ -7,11 +7,37 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-color: #030509;
+            --text-color: #f3f4f6;
+            --card-bg: rgba(9, 14, 26, 0.75);
+            --header-bg: rgba(3, 5, 9, 0.3);
+            --footer-bg: rgba(3, 5, 9, 0.95);
+            --border-color: rgba(255, 255, 255, 0.05);
+            --bg-filter-1: linear-gradient(135deg, rgba(3, 5, 12, 0.15) 0%, rgba(3, 5, 10, 0.2) 100%);
+            --bg-filter-2: linear-gradient(to bottom, transparent 60%, rgba(3, 5, 9, 0.4) 100%);
+            --accent-indigo: #4f46e5;
+        }
+
+        .light-mode {
+            --bg-color: #f8fafc;
+            --text-color: #1e293b;
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --header-bg: rgba(255, 255, 255, 0.6);
+            --footer-bg: rgba(248, 250, 252, 0.95);
+            --border-color: rgba(0, 0, 0, 0.05);
+            --bg-filter-1: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.4) 100%);
+            --bg-filter-2: linear-gradient(to bottom, transparent 60%, rgba(255, 255, 255, 0.5) 100%);
+            --accent-indigo: #6366f1;
+        }
+
         body {
             font-family: 'Noto Sans KR', sans-serif;
-            background-color: #030509;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             margin: 0;
             padding: 0;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         /* [핵심 1] 화면 크기, 비율에 상관없이 원본 배경을 100% 꽉 채우는 절대 레이아웃 */
@@ -30,17 +56,17 @@
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            /* 원본의 파랑, 주황, 보라가 선명하게 비치도록 투명도를 최소화(0.15~0.2)하고 소프트하게 가라앉힘 */
-            background: linear-gradient(135deg, rgba(3, 5, 12, 0.15) 0%, rgba(3, 5, 10, 0.2) 100%);
+            background: var(--bg-filter-1);
             z-index: 1;
+            transition: background 0.3s ease;
         }
         .full-bg::after {
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            /* 하단만 아주 미세하게 자연스러운 블랙으로 마감 */
-            background: linear-gradient(to bottom, transparent 60%, rgba(3, 5, 9, 0.4) 100%);
+            background: var(--bg-filter-2);
             z-index: 2;
+            transition: background 0.3s ease;
         }
 
         /* 콘텐츠 레이어 고정 */
@@ -49,35 +75,69 @@
             z-index: 10;
         }
 
-        /* 1번 사진의 영롱한 네온 테두리 컬러 및 네온 발광(Glow) 싱크로율 100% 세팅 */
-        .card-glow-cyan {
-            box-shadow: 0 0 20px rgba(34, 211, 238, 0.35), inset 0 1px 1px rgba(255,255,255,0.1);
-            border: 1.5px solid rgba(34, 211, 238, 0.6);
-        }
-        .card-glow-magenta {
-            box-shadow: 0 0 20px rgba(236, 72, 153, 0.35), inset 0 1px 1px rgba(255,255,255,0.1);
-            border: 1.5px solid rgba(236, 72, 153, 0.6);
-        }
-        .card-glow-emerald {
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.35), inset 0 1px 1px rgba(255,255,255,0.1);
-            border: 1.5px solid rgba(16, 185, 129, 0.6);
-        }
-        .card-glow-gold {
-            box-shadow: 0 0 20px rgba(245, 158, 11, 0.35), inset 0 1px 1px rgba(255,255,255,0.1);
-            border: 1.5px solid rgba(245, 158, 11, 0.6);
+        /* 카드 스타일 공통 */
+        .glass-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            backdrop-blur: 12px;
+            transition: all 0.3s ease;
         }
 
+        /* 네온 발광(Glow) 세팅 */
+        .card-glow-cyan {
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.2), inset 0 1px 1px rgba(255,255,255,0.05);
+            border: 1.5px solid rgba(34, 211, 238, 0.5);
+        }
+        .card-glow-magenta {
+            box-shadow: 0 0 20px rgba(236, 72, 153, 0.2), inset 0 1px 1px rgba(255,255,255,0.05);
+            border: 1.5px solid rgba(236, 72, 153, 0.5);
+        }
+        .card-glow-emerald {
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.2), inset 0 1px 1px rgba(255,255,255,0.05);
+            border: 1.5px solid rgba(16, 185, 129, 0.5);
+        }
+        .card-glow-gold {
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.2), inset 0 1px 1px rgba(255,255,255,0.05);
+            border: 1.5px solid rgba(245, 158, 11, 0.5);
+        }
+
+        .light-mode .text-white { color: #1e293b !important; }
+        .light-mode .text-gray-100 { color: #1e293b !important; }
+        .light-mode .text-gray-200 { color: #334155 !important; }
+        .light-mode .text-gray-300 { color: #475569 !important; }
+        .light-mode .text-gray-400 { color: #64748b !important; }
+        .light-mode .text-gray-500 { color: #94a3b8 !important; }
+        
+        .light-mode .bg-\[\#030509\]\/30 { background-color: var(--header-bg) !important; }
+        .light-mode .bg-\[\#030509\]\/95 { background-color: var(--footer-bg) !important; }
+
         .text-shadow-strong {
-            text-shadow: 0 4px 16px rgba(0, 0, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.9);
+            text-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        .light-mode .text-shadow-strong {
+            text-shadow: 0 2px 8px rgba(255, 255, 255, 0.8);
+        }
+
+        #theme-toggle {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+        #theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .light-mode #theme-toggle:hover {
+            background: rgba(0, 0, 0, 0.05);
         }
     </style>
 </head>
-<body class="text-gray-100 antialiased overflow-x-hidden">
+<body class="antialiased overflow-x-hidden">
 
     <div class="full-bg">
         <div class="content-container min-h-screen flex flex-col justify-between">
 
-            <header class="w-full bg-[#030509]/30 backdrop-blur-md border-b border-white/5 px-8 py-3.5 flex justify-between items-center">
+            <header class="w-full bg-[#030509]/30 backdrop-blur-md border-b border-white/5 px-8 py-3.5 flex justify-between items-center transition-colors duration-300">
                 <div class="flex items-center space-x-3">
                     <div class="text-xl font-black tracking-tighter text-white flex items-center gap-2">
                         <div class="w-5 h-5 rounded-full bg-gradient-to-tr from-cyan-400 via-indigo-500 to-purple-500 relative flex items-center justify-center shadow-inner">
@@ -93,6 +153,9 @@
                     </nav>
                 </div>
                 <div class="flex items-center space-x-3 text-[11px] font-medium">
+                    <button id="theme-toggle" class="text-lg" aria-label="Toggle Theme">
+                        <span id="theme-icon">🌙</span>
+                    </button>
                     <button class="px-4 py-1.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-gray-200 transition">Login / Join</button>
                     <button class="px-4 py-1.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white transition shadow-md">Patch Notes</button>
                 </div>
@@ -114,25 +177,25 @@
             <section class="max-w-4xl mx-auto px-6 py-2 w-full">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     
-                    <div class="p-6 rounded-xl bg-[#090e1a]/75 backdrop-blur-md transition duration-300 card-glow-cyan flex flex-col items-center text-center">
+                    <div class="p-6 rounded-xl glass-card card-glow-cyan flex flex-col items-center text-center">
                         <div class="w-8 h-8 rounded-lg bg-cyan-950/50 border border-cyan-500/30 flex items-center justify-center text-cyan-400 mb-3 text-sm">🤖</div>
                         <h3 class="text-sm font-bold text-white tracking-tight">Customized AI Assistant</h3>
                         <p class="text-gray-400 text-[11px] mt-1.5 leading-relaxed">AI helper using World AI prompt templates.</p>
                     </div>
 
-                    <div class="p-6 rounded-xl bg-[#090e1a]/75 backdrop-blur-md transition duration-300 card-glow-magenta flex flex-col items-center text-center">
+                    <div class="p-6 rounded-xl glass-card card-glow-magenta flex flex-col items-center text-center">
                         <div class="w-8 h-8 rounded-lg bg-pink-950/50 border border-pink-500/30 flex items-center justify-center text-pink-400 mb-3 text-sm">⚃</div>
                         <h3 class="text-sm font-bold text-white tracking-tight">Intuitive Dashboard</h3>
                         <p class="text-gray-400 text-[11px] mt-1.5 leading-relaxed">World AI의 모든 도구를 한눈에 다룰 수 있는 아름답고 강력한 인터페이스.</p>
                     </div>
 
-                    <div class="p-6 rounded-xl bg-[#090e1a]/75 backdrop-blur-md transition duration-300 card-glow-emerald flex flex-col items-center text-center">
+                    <div class="p-6 rounded-xl glass-card card-glow-emerald flex flex-col items-center text-center">
                         <div class="w-8 h-8 rounded-lg bg-emerald-950/50 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-3 text-sm">📈</div>
                         <h3 class="text-sm font-bold text-white tracking-tight">압도적 생산성</h3>
                         <p class="text-gray-400 text-[11px] mt-1.5 leading-relaxed">평균 300% 이상의 작업 시간을 단축시키고 결과물의 퀄리티를 대폭 향상시킵니다.</p>
                     </div>
 
-                    <div class="p-6 rounded-xl bg-[#090e1a]/75 backdrop-blur-md transition duration-300 card-glow-gold flex flex-col items-center text-center">
+                    <div class="p-6 rounded-xl glass-card card-glow-gold flex flex-col items-center text-center">
                         <div class="w-8 h-8 rounded-lg bg-amber-950/50 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-3 text-sm">⚡</div>
                         <h3 class="text-sm font-bold text-white tracking-tight">수익 직결 초자동화</h3>
                         <p class="text-gray-400 text-[11px] mt-1.5 leading-relaxed">막연했던 아이디어를 클릭 한 번으로 수익을 창출하는 결과물로 완성시킵니다.</p>
@@ -142,7 +205,7 @@
             </section>
 
             <section class="max-w-4xl mx-auto px-6 py-4 w-full">
-                <div class="p-8 rounded-xl bg-[#060b16]/85 border border-white/5 backdrop-blur-md text-center relative overflow-hidden shadow-2xl">
+                <div class="p-8 rounded-xl glass-card border border-white/5 text-center relative overflow-hidden shadow-2xl">
                     <div class="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto mb-3 text-sm">✨</div>
                     <h2 class="text-xl font-black text-white tracking-tight leading-tight">
                         오직 나만을 위한 프리미엄 AI 툴킷
@@ -156,7 +219,7 @@
                 </div>
             </section>
 
-            <footer class="w-full border-t border-white/5 bg-[#030509]/95 backdrop-blur-sm px-8 py-4 text-[10px] text-gray-500 flex flex-col md:flex-row justify-between items-center gap-2">
+            <footer class="w-full border-t border-white/5 bg-[#030509]/95 backdrop-blur-sm px-8 py-4 text-[10px] text-gray-500 flex flex-col md:flex-row justify-between items-center gap-2 transition-colors duration-300">
                 <div class="flex items-center space-x-2 font-bold text-gray-400">
                     <span class="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-cyan-400 to-indigo-500 inline-block"></span>
                     <span>World AI</span>
@@ -171,5 +234,29 @@
         </div>
     </div>
 
+    <script>
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const body = document.body;
+
+        // Load saved theme
+        const currentTheme = localStorage.getItem('theme');
+        if (currentTheme === 'light') {
+            body.classList.add('light-mode');
+            themeIcon.textContent = '☀️';
+        }
+
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('light-mode');
+            
+            if (body.classList.contains('light-mode')) {
+                themeIcon.textContent = '☀️';
+                localStorage.setItem('theme', 'light');
+            } else {
+                themeIcon.textContent = '🌙';
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+    </script>
 </body>
 </html>
