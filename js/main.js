@@ -1,4 +1,38 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Authentication Check
+    const protectedPages = ['online-meetup.html', 'profile-mgmt.html', 'offline-meetup.html', 'gifticon-mgmt.html'];
+    const currentPage = window.location.pathname.split('/').pop();
+    const isLoggedIn = sessionStorage.getItem('isAdminLoggedIn') === 'true';
+    const adminNickname = sessionStorage.getItem('adminNickname');
+
+    if (protectedPages.includes(currentPage) && !isLoggedIn) {
+        window.location.href = `login.html?redirect=${currentPage}`;
+        return;
+    }
+
+    // Update Header UI for Auth
+    const authBtn = document.querySelector('.open-auth');
+    if (authBtn) {
+        if (isLoggedIn) {
+            authBtn.innerHTML = `<span class="text-indigo-500 font-black mr-2">●</span> ${adminNickname} 관리자`;
+            authBtn.classList.replace('open-auth', 'admin-profile');
+            
+            // Add Logout Button
+            const logoutBtn = document.createElement('button');
+            logoutBtn.className = 'px-4 py-1.5 rounded-full border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition text-[11px] font-bold';
+            logoutBtn.innerText = 'LOGOUT';
+            logoutBtn.onclick = () => {
+                sessionStorage.clear();
+                window.location.href = 'index.html';
+            };
+            authBtn.parentNode.appendChild(logoutBtn);
+        } else {
+            authBtn.addEventListener('click', () => {
+                window.location.href = 'login.html';
+            });
+        }
+    }
+
     // Theme Logic
     const themeToggle = document.getElementById('theme-toggle');
     const themeIcon = document.getElementById('theme-icon');
