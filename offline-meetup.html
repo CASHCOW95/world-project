@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오프라인 밋업 - WORLD AI</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="antialiased bg-bg-light dark:bg-bg-dark text-slate-900 dark:text-slate-100 transition-colors duration-300">
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="w-full bg-white/60 dark:bg-[#030509]/30 backdrop-blur-md border-b border-black/5 dark:border-white/5 px-8 py-3.5 flex justify-between items-center sticky top-0 z-50">
+            <a href="index.html" class="flex items-center space-x-3">
+                <div class="text-xl font-black tracking-tighter flex items-center gap-2">
+                    <div class="w-5 h-5 rounded-full bg-gradient-to-tr from-cyan-400 via-indigo-500 to-purple-500 relative flex items-center justify-center shadow-inner">
+                        <div class="absolute w-6.5 h-2.5 border border-white/50 rounded-full rotate-[-30deg]"></div>
+                    </div>
+                    <span class="text-slate-900 dark:text-white font-extrabold text-lg tracking-wide">WORLD AI</span>
+                </div>
+            </a>
+            <div class="flex items-center space-x-3">
+                <button id="theme-toggle" class="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+                    <span id="theme-icon">🌙</span>
+                </button>
+                <a href="index.html" class="px-4 py-1.5 rounded-full border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-slate-700 dark:text-gray-200 text-xs transition">홈으로 돌아가기</a>
+            </div>
+        </header>
+
+        <main class="flex-grow p-8 max-w-6xl mx-auto w-full">
+            <div class="mb-8">
+                <h1 class="text-4xl font-black text-slate-900 dark:text-white mb-2">📍 오프라인 밋업</h1>
+                <p class="text-slate-600 dark:text-gray-400">오프라인 모임 장소를 등록하고 지도로 위치를 확인하세요.</p>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-1 space-y-6">
+                    <div class="glass-card p-6 rounded-3xl border border-black/5 dark:border-white/10 shadow-xl">
+                        <h3 class="text-lg font-bold mb-4">새 장소 등록</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1">장소 이름</label>
+                                <input type="text" class="w-full px-4 py-2.5 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 focus:border-indigo-500 focus:outline-none text-sm transition" placeholder="예: 강남 코워킹 스페이스">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1">주소</label>
+                                <input type="text" class="w-full px-4 py-2.5 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 focus:border-indigo-500 focus:outline-none text-sm transition" placeholder="전체 주소 입력">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1">설명</label>
+                                <textarea class="w-full px-4 py-2.5 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 focus:border-indigo-500 focus:outline-none text-sm transition h-24" placeholder="장소에 대한 추가 정보"></textarea>
+                            </div>
+                            <button class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition shadow-lg">장소 저장하기</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="glass-card rounded-3xl overflow-hidden border border-black/5 dark:border-white/10 shadow-2xl h-[500px] flex items-center justify-center bg-slate-100 dark:bg-white/5 text-slate-400">
+                        <div class="text-center">
+                            <div class="text-5xl mb-4">🗺️</div>
+                            <p>지도가 연동되는 영역입니다.</p>
+                            <p class="text-xs mt-2">(Kakao Map / Google Map API 연동 가능)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="p-8 border-t border-black/5 dark:border-white/5 text-center text-xs text-slate-500">
+            © 2026 World AI. All rights reserved.
+        </footer>
+    </div>
+    <script src="js/main.js"></script>
+</body>
+</html>
