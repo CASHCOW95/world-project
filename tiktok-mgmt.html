@@ -8,15 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <style>
-        .calendar-day {
-            aspect-ratio: 1 / 1;
-            transition: all 0.3s;
-        }
-        .calendar-day.checked {
-            background: #6366f1;
-            color: white;
-            box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
-        }
+        .calendar-day { aspect-ratio: 1 / 1; transition: all 0.3s; }
+        .calendar-day.checked { background: #6366f1; color: white; box-shadow: 0 0 15px rgba(99, 102, 241, 0.5); border-color: #818cf8; }
     </style>
 </head>
 <body class="antialiased bg-bg-light dark:bg-bg-dark text-slate-900 dark:text-slate-100 transition-colors duration-300">
@@ -32,7 +25,7 @@
                 </div>
             </a>
             <div class="flex items-center space-x-4">
-                <button onclick="saveAll()" class="px-6 py-2 rounded-full bg-indigo-600 text-white font-black text-[11px] shadow-lg active:scale-95 transition-all">💾 출석 저장</button>
+                <button onclick="saveAll()" class="px-6 py-2 rounded-full bg-indigo-600 text-white font-black text-[11px] shadow-lg active:scale-95 transition-all">💾 데이터 저장</button>
                 <button id="theme-toggle" class="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
                     <span id="theme-icon">🌙</span>
                 </button>
@@ -40,94 +33,115 @@
             </div>
         </header>
 
-        <main class="flex-grow p-8 max-w-4xl mx-auto w-full">
+        <main class="flex-grow p-8 max-w-5xl mx-auto w-full">
             <div class="mb-12 text-center">
-                <h1 class="text-5xl font-black mb-3 tracking-tighter">📱 틱톡 관리</h1>
-                <p class="text-slate-500 font-medium">매일매일 빠짐없이! 출석률을 체크하며 틱톡 활동을 관리하세요.</p>
+                <h1 class="text-5xl font-black mb-3 tracking-tighter uppercase">📱 틱톡 관리</h1>
+                <p class="text-slate-500 font-medium italic">매일 원터치 출석과 메모를 통해 성실함을 기록하세요.</p>
             </div>
 
-            <div class="glass-card p-10 rounded-[3rem] border border-black/5 dark:border-white/10 shadow-2xl">
-                <div class="flex justify-between items-center mb-10">
-                    <h3 id="current-month" class="text-3xl font-black">2026년 05월</h3>
-                    <div class="flex items-center gap-6">
+            <div class="grid lg:grid-cols-3 gap-8">
+                <!-- Calendar (One-touch Attendance) -->
+                <div class="lg:col-span-2 glass-card p-10 rounded-[3rem] border border-black/5 dark:border-white/10 shadow-2xl">
+                    <div class="flex justify-between items-center mb-8">
+                        <h3 class="text-2xl font-black">2026년 05월</h3>
                         <div class="text-right">
-                            <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">출석률</p>
+                            <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">출석률</p>
                             <p id="attendance-rate" class="text-2xl font-black text-indigo-500">0%</p>
                         </div>
-                        <div class="flex gap-2">
-                            <button class="p-2 rounded-xl bg-white/5 border border-white/10 text-xl">←</button>
-                            <button class="p-2 rounded-xl bg-white/5 border border-white/10 text-xl">→</button>
-                        </div>
+                    </div>
+                    <div class="grid grid-cols-7 gap-4 mb-4 text-center text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">
+                        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                    </div>
+                    <div id="calendar-grid" class="grid grid-cols-7 gap-4">
+                        <!-- Days -->
                     </div>
                 </div>
 
-                <div class="grid grid-cols-7 gap-4 mb-4 text-center text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">
-                    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                <!-- Memo Section -->
+                <div class="lg:col-span-1 glass-card p-8 rounded-[2.5rem] border border-black/5 dark:border-white/10 shadow-2xl flex flex-col">
+                    <h3 class="text-lg font-black mb-6 flex items-center gap-2">
+                        <span class="w-2 h-5 bg-indigo-500 rounded-full"></span>
+                        일일 작업 메모
+                    </h3>
+                    <div id="memo-container" class="flex-grow space-y-4 overflow-auto max-h-[500px] pr-2">
+                        <!-- Memo inputs populated by JS -->
+                    </div>
                 </div>
-
-                <div id="calendar-grid" class="grid grid-cols-7 gap-4">
-                    <!-- Days -->
-                </div>
-            </div>
-
-            <div class="mt-12 p-8 rounded-[2.5rem] bg-indigo-600/10 border border-indigo-500/20">
-                <h4 class="text-sm font-black mb-4 flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-indigo-500 animate-ping"></span>
-                    오늘의 미션
-                </h4>
-                <p class="text-xs text-slate-400 leading-relaxed">틱톡 업로드 완료 후 위 달력에서 오늘 날짜를 클릭하여 체크하세요. 꾸준한 활동이 수익의 지름길입니다!</p>
             </div>
         </main>
 
         <footer class="p-12 text-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
-            © 2026 World AI. Consistency is Key.
+            © 2026 World AI. TikTok Excellence.
         </footer>
     </div>
 
     <script src="js/main.js"></script>
     <script>
         const monthYear = '2026-05';
-        let attendance = AppStorage.load(`tiktok_${monthYear}`) || [];
+        let tiktokData = AppStorage.load(`tiktok_v2_${monthYear}`) || {
+            attendance: [],
+            memos: {}
+        };
+
+        function renderAll() {
+            renderCalendar();
+            renderMemos();
+            updateRate();
+        }
 
         function renderCalendar() {
             const grid = document.getElementById('calendar-grid');
             grid.innerHTML = '';
-            
-            // Empty slots for May 2026 starts on Friday (5)
-            for(let i=0; i<5; i++) {
-                grid.innerHTML += `<div class="calendar-day"></div>`;
-            }
+            // Empty slots for May 2026
+            for(let i=0; i<5; i++) grid.innerHTML += `<div class="calendar-day"></div>`;
 
             for(let d=1; d<=31; d++) {
-                const isChecked = attendance.includes(d);
+                const isChecked = tiktokData.attendance.includes(d);
                 const dayEl = document.createElement('div');
                 dayEl.className = `calendar-day flex items-center justify-center rounded-2xl border border-white/5 bg-white/5 cursor-pointer font-black text-lg ${isChecked ? 'checked' : 'hover:bg-white/10'}`;
                 dayEl.innerText = d;
-                dayEl.onclick = () => toggleDay(d);
+                dayEl.onclick = () => {
+                    if(tiktokData.attendance.includes(d)) tiktokData.attendance = tiktokData.attendance.filter(a => a !== d);
+                    else tiktokData.attendance.push(d);
+                    renderAll();
+                };
                 grid.appendChild(dayEl);
             }
-            updateRate();
         }
 
-        function toggleDay(day) {
-            if(attendance.includes(day)) {
-                attendance = attendance.filter(a => a !== day);
-            } else {
-                attendance.push(day);
+        function renderMemos() {
+            const container = document.getElementById('memo-container');
+            container.innerHTML = '';
+            // Only show memos for checked days to keep it clean, or all days? 
+            // Let's show memos for all 31 days but sorted
+            for(let d=1; d<=31; d++) {
+                const memoDiv = document.createElement('div');
+                memoDiv.className = 'space-y-1.5';
+                memoDiv.innerHTML = `
+                    <div class="flex justify-between items-center px-1">
+                        <span class="text-[10px] font-black text-slate-500">${d}일</span>
+                        ${tiktokData.attendance.includes(d) ? '<span class="text-[8px] font-black text-indigo-400">CHECKED</span>' : ''}
+                    </div>
+                    <textarea onchange="updateMemo(${d}, this.value)" class="w-full bg-black/5 dark:bg-white/5 border border-white/5 rounded-xl p-3 text-xs focus:outline-none focus:border-indigo-500/50 transition h-16 leading-tight">${tiktokData.memos[d] || ''}</textarea>
+                `;
+                container.appendChild(memoDiv);
             }
-            renderCalendar();
+        }
+
+        function updateMemo(day, val) {
+            tiktokData.memos[day] = val;
         }
 
         function updateRate() {
-            const rate = ((attendance.length / 31) * 100).toFixed(1);
+            const rate = ((tiktokData.attendance.length / 31) * 100).toFixed(1);
             document.getElementById('attendance-rate').innerText = `${rate}%`;
         }
 
         function saveAll() {
-            AppStorage.save(`tiktok_${monthYear}`, attendance);
+            AppStorage.save(`tiktok_v2_${monthYear}`, tiktokData);
         }
 
-        document.addEventListener('DOMContentLoaded', renderCalendar);
+        document.addEventListener('DOMContentLoaded', renderAll);
     </script>
 </body>
 </html>

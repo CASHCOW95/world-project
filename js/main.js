@@ -1,143 +1,115 @@
+// Global Persistence Layer (Must load first)
+window.AppStorage = {
+    save: (key, data) => {
+        localStorage.setItem(`world_ai_${key}`, JSON.stringify(data));
+        showToast('💾 데이터가 안전하게 저장되었습니다.');
+    },
+    load: (key) => {
+        const data = localStorage.getItem(`world_ai_${key}`);
+        return data ? JSON.parse(data) : null;
+    }
+};
+
+function showToast(msg) {
+    const toast = document.createElement('div');
+    toast.className = 'fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full bg-indigo-600 text-white font-black text-xs shadow-2xl z-[1000] animate-in';
+    toast.innerText = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 500);
+    }, 2000);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const isLoggedIn = sessionStorage.getItem('isAdminLoggedIn') === 'true';
     const adminNickname = sessionStorage.getItem('adminNickname');
     const pathParts = window.location.pathname.split('/');
     const currentPage = pathParts[pathParts.length - 1] || 'index.html';
 
-    // 1. Initial Visibility Fix
+    // 1. Initial Visibility
+    document.body.style.opacity = '1';
     const mainContent = document.querySelector('main');
-    if (mainContent) {
-        mainContent.style.opacity = '1';
-    }
+    if (mainContent) mainContent.style.opacity = '1';
 
-    // 2. Service Locking System (on index.html)
+    // 2. Service Locking (index.html)
     if (currentPage === 'index.html' || currentPage === '') {
-        const featureCards = document.querySelectorAll('.feature-card');
-        featureCards.forEach(card => {
+        document.querySelectorAll('.feature-card').forEach(card => {
             const lockOverlay = card.querySelector('.lock-overlay');
             const icon = card.querySelector('.feature-icon');
-
             if (!isLoggedIn) {
                 if(lockOverlay) lockOverlay.style.opacity = '1';
                 if(lockOverlay) lockOverlay.style.pointerEvents = 'auto';
                 if(icon) icon.style.filter = 'grayscale(1) blur(4px)';
-                card.style.cursor = 'not-allowed';
-                
                 card.onclick = (e) => {
                     e.preventDefault();
-                    if(confirm('이 서비스는 관리자 전용입니다. 로그인 페이지로 이동하시겠습니까?')) {
-                        window.location.href = 'login.html';
-                    }
+                    if(confirm('관리자 전용 서비스입니다. 로그인하시겠습니까?')) window.location.href = 'login.html';
                     return false;
                 };
-            } else {
-                if(lockOverlay) lockOverlay.style.opacity = '0';
-                if(lockOverlay) lockOverlay.style.pointerEvents = 'none';
-                if(icon) icon.style.filter = 'none';
-                card.style.cursor = 'pointer';
             }
         });
+        updateDashboardSummary();
     }
 
-    // 3. Protected Page Guard
-    const protectedPages = [
-        'meetup-calendar.html', 
-        'asset-mgmt.html', 
-        'profit-mgmt.html', 
-        'diary.html', 
-        'tiktok-mgmt.html',
-        'online-meetup.html', // Legacy compatibility
-        'profile-mgmt.html', 
-        'offline-meetup.html', 
-        'gifticon-mgmt.html'
-    ];
-
+    // 3. Auth Guard
+    const protectedPages = ['meetup-calendar.html', 'asset-mgmt.html', 'profit-mgmt.html', 'diary.html', 'tiktok-mgmt.html', 'timer.html'];
     if (protectedPages.includes(currentPage) && !isLoggedIn) {
-        document.body.classList.add('auth-locked');
-        const lockUI = document.createElement('div');
-        lockUI.id = 'access-denied-message';
-        lockUI.className = 'glass-card p-10 rounded-[2.5rem] border border-white/10 shadow-2xl animate-in';
-        lockUI.innerHTML = `
-            <div class="text-6xl mb-6 text-center">🔒</div>
-            <h2 class="text-2xl font-black mb-4 text-white text-center">접근 권한이 없습니다</h2>
-            <p class="text-slate-400 text-sm mb-8 leading-relaxed text-center">해당 서비스는 관리자 로그인이 필요합니다.<br>관리자 계정으로 로그인 후 다시 시도해주세요.</p>
-            <div class="flex gap-3 justify-center">
-                <a href="index.html" class="px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold transition text-sm">홈으로</a>
-                <a href="login.html?redirect=${currentPage}" class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition text-sm shadow-lg shadow-indigo-500/20">관리자 로그인</a>
-            </div>
-        `;
-        document.body.appendChild(lockUI);
-        if(mainContent) mainContent.style.display = 'none';
+        window.location.href = `login.html?redirect=${currentPage}`;
         return;
     }
 
-    // 4. Update Header UI for Auth
+    // 4. Header UI
     const authBtn = document.querySelector('.open-auth');
-    if (authBtn) {
-        if (isLoggedIn) {
-            authBtn.innerHTML = `<span class="text-indigo-500 font-black mr-2">●</span> ${adminNickname} 관리자`;
-            authBtn.classList.replace('open-auth', 'admin-profile');
-            
-            const logoutBtn = document.createElement('button');
-            logoutBtn.className = 'px-4 py-1.5 rounded-full border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition text-[11px] font-bold ml-2';
-            logoutBtn.innerText = 'LOGOUT';
-            logoutBtn.onclick = () => {
-                sessionStorage.clear();
-                window.location.href = 'index.html';
-            };
-            authBtn.parentNode.appendChild(logoutBtn);
-        } else {
-            authBtn.onclick = () => { window.location.href = 'login.html'; };
-        }
+    if (authBtn && isLoggedIn) {
+        authBtn.innerHTML = `<span class="text-indigo-500 font-black mr-2">●</span> ${adminNickname} 관리자`;
+        const logoutBtn = document.createElement('button');
+        logoutBtn.className = 'px-4 py-1.5 rounded-full border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition text-[11px] font-bold ml-2';
+        logoutBtn.innerText = 'LOGOUT';
+        logoutBtn.onclick = () => { sessionStorage.clear(); window.location.href = 'index.html'; };
+        authBtn.parentNode.appendChild(logoutBtn);
     }
 
-    // 5. Data Persistence Helpers
-    window.AppStorage = {
-        save: (key, data) => {
-            localStorage.setItem(`world_ai_${key}`, JSON.stringify(data));
-            console.log(`Saved ${key} to storage.`);
-            // Visual feedback
-            const toast = document.createElement('div');
-            toast.className = 'fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full bg-indigo-600 text-white font-bold text-xs shadow-2xl z-[100] animate-in';
-            toast.innerText = '💾 데이터가 안전하게 저장되었습니다.';
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 2000);
-        },
-        load: (key) => {
-            const data = localStorage.getItem(`world_ai_${key}`);
-            return data ? JSON.parse(data) : null;
-        }
-    };
-
-    // 6. Theme Logic
+    // 5. Theme Toggle
     const themeToggle = document.getElementById('theme-toggle');
-    const themeIcon = document.getElementById('theme-icon');
     const html = document.documentElement;
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    if (savedTheme === 'light') {
-        html.classList.remove('dark');
-        if(themeIcon) themeIcon.textContent = '☀️';
-    } else {
-        html.classList.add('dark');
-        if(themeIcon) themeIcon.textContent = '🌙';
-    }
     if (themeToggle) {
         themeToggle.addEventListener('click', () => {
             const isDark = html.classList.toggle('dark');
-            if(themeIcon) themeIcon.textContent = isDark ? '🌙' : '☀️';
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
         });
     }
 
-    // 7. Scroll Animations
-    const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('animate-in');
-                observer.unobserve(entry.target);
-            }
-        });
-    }, observerOptions);
-    document.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
+    // 6. Dashboard Summary (Logic for index.html footer)
+    function updateDashboardSummary() {
+        const profitData = AppStorage.load('profit_data') || [];
+        const summaryEl = document.getElementById('dashboard-summary-content');
+        if (!summaryEl) return;
+
+        if (profitData.length === 0) {
+            summaryEl.innerHTML = '<p class="text-slate-500">데이터가 없습니다.</p>';
+            return;
+        }
+
+        const totalProfit = profitData.reduce((acc, d) => acc + (Number(d.amount) || 0), 0);
+        const totalEntry = profitData.reduce((acc, d) => acc + (Number(d.entry) || 0), 0);
+        const totalWinners = profitData.reduce((acc, d) => acc + (Number(d.winners) || 0), 0);
+        const rate = totalEntry > 0 ? ((totalWinners / totalEntry) * 100).toFixed(1) : 0;
+
+        summaryEl.innerHTML = `
+            <div class="grid grid-cols-3 gap-8">
+                <div class="text-left">
+                    <p class="text-[10px] font-black text-slate-500 uppercase mb-1">총 누적 수익</p>
+                    <p class="text-2xl font-black text-indigo-500">₩${totalProfit.toLocaleString()}</p>
+                </div>
+                <div class="text-left">
+                    <p class="text-[10px] font-black text-slate-500 uppercase mb-1">평균 당첨률</p>
+                    <p class="text-2xl font-black text-emerald-500">${rate}%</p>
+                </div>
+                <div class="text-left">
+                    <p class="text-[10px] font-black text-slate-500 uppercase mb-1">최근 활동</p>
+                    <p class="text-sm font-bold text-white truncate">${profitData[0].item}</p>
+                </div>
+            </div>
+        `;
+    }
 });

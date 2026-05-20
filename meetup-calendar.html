@@ -20,32 +20,43 @@
                     <span class="text-slate-900 dark:text-white font-extrabold text-lg tracking-wide uppercase">WORLD AI</span>
                 </div>
             </a>
-            <div class="flex items-center space-x-3">
+            <div class="flex items-center space-x-4">
+                <button onclick="saveAll()" class="px-6 py-2 rounded-full bg-indigo-600 text-white font-black text-[11px] shadow-lg active:scale-95 transition-all">💾 전체 일정 저장</button>
                 <button id="theme-toggle" class="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
                     <span id="theme-icon">🌙</span>
                 </button>
-                <a href="index.html" class="px-4 py-1.5 rounded-full border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-slate-700 dark:text-gray-200 text-xs transition font-bold">HOME</a>
+                <a href="index.html" class="px-4 py-1.5 rounded-full border border-black/10 dark:border-white/10 text-slate-700 dark:text-gray-200 text-xs font-bold">HOME</a>
             </div>
         </header>
 
         <main class="flex-grow p-8 max-w-6xl mx-auto w-full">
-            <div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
-                <div>
-                    <h1 class="text-5xl font-black text-slate-900 dark:text-white mb-3 tracking-tighter">🗓️ 온/오프라인 밋업</h1>
-                    <p class="text-slate-500 dark:text-gray-400 font-medium italic">모든 일정을 하나의 통합 캘린더에서 완벽하게 관리하세요.</p>
-                </div>
-                <div class="flex gap-4">
-                    <button onclick="saveAll()" class="px-8 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm transition shadow-[0_0_20px_rgba(79,70,229,0.3)] active:scale-95">💾 변경사항 저장</button>
-                    <button onclick="toggleAddForm()" class="px-8 py-3.5 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black text-sm transition active:scale-95">+ 일정 추가</button>
-                </div>
+            <div class="mb-12">
+                <h1 class="text-5xl font-black mb-3 tracking-tighter">🗓️ 온/오프라인 밋업</h1>
+                <p class="text-slate-500 font-medium italic">구글 캘린더와 통합된 완벽한 일정 관리 솔루션입니다.</p>
+            </div>
+
+            <!-- Google Calendar Section -->
+            <div class="glass-card rounded-[3rem] overflow-hidden border border-black/5 dark:border-white/10 shadow-2xl mb-12 h-[500px]">
+                <iframe src="https://calendar.google.com/calendar/embed?src=ko.south_korea%23holiday%40group.v.calendar.google.com&ctz=Asia%2FSeoul" style="border: 0" width="100%" height="100%" frameborder="0" scrolling="no"></iframe>
             </div>
 
             <div class="grid lg:grid-cols-4 gap-8">
-                <!-- Sidebar Form -->
-                <div id="add-form" class="lg:col-span-1 hidden animate-in">
+                <!-- Sidebar Form (Simplified & Enhanced) -->
+                <div class="lg:col-span-1">
                     <div class="glass-card p-8 rounded-[2.5rem] border border-black/5 dark:border-white/10 shadow-2xl sticky top-24">
-                        <h3 class="text-xl font-black mb-6">신규 일정</h3>
+                        <h3 class="text-xl font-black mb-6 flex items-center gap-2">
+                            <span class="w-2 h-6 bg-indigo-500 rounded-full"></span>
+                            빠른 일정 추가
+                        </h3>
                         <div class="space-y-4">
+                            <div>
+                                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">제목</label>
+                                <input type="text" id="ev-title" class="w-full px-4 py-3 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-sm focus:border-indigo-500 focus:outline-none" placeholder="밋업 제목">
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="date" id="ev-date" class="w-full px-3 py-3 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-xs focus:border-indigo-500 focus:outline-none">
+                                <input type="time" id="ev-time" class="w-full px-3 py-3 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-xs focus:border-indigo-500 focus:outline-none">
+                            </div>
                             <div>
                                 <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">유형</label>
                                 <select id="ev-type" class="w-full px-4 py-3 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-sm focus:border-indigo-500 focus:outline-none">
@@ -53,34 +64,19 @@
                                     <option value="offline">📍 오프라인</option>
                                 </select>
                             </div>
-                            <div>
-                                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">제목</label>
-                                <input type="text" id="ev-title" class="w-full px-4 py-3 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-sm focus:border-indigo-500 focus:outline-none" placeholder="밋업 제목">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">날짜 / 시간</label>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <input type="date" id="ev-date" class="w-full px-3 py-3 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-xs focus:border-indigo-500 focus:outline-none">
-                                    <input type="time" id="ev-time" class="w-full px-3 py-3 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-xs focus:border-indigo-500 focus:outline-none">
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">장소/링크</label>
-                                <input type="text" id="ev-loc" class="w-full px-4 py-3 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-sm focus:border-indigo-500 focus:outline-none" placeholder="주소 또는 URL">
-                            </div>
                             <button onclick="addEvent()" class="w-full py-4 mt-2 rounded-2xl bg-indigo-600 text-white font-black text-sm transition hover:opacity-90 active:scale-95 shadow-xl">등록하기</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Main Content (Timeline/List) -->
-                <div id="event-list" class="lg:col-span-4 space-y-6">
-                    <!-- Events will be rendered here -->
+                <!-- Timeline List (Improved readability) -->
+                <div id="event-list" class="lg:col-span-3 space-y-4">
+                    <!-- Events -->
                 </div>
             </div>
         </main>
 
-        <footer class="p-12 border-t border-black/5 dark:border-white/5 text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">
+        <footer class="p-12 text-center text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">
             © 2026 World AI. Unified Management.
         </footer>
     </div>
@@ -94,85 +90,51 @@
             container.innerHTML = '';
 
             if (events.length === 0) {
-                container.innerHTML = `
-                    <div class="py-32 text-center glass-card rounded-[3rem] border border-black/5 dark:border-white/10">
-                        <div class="text-6xl mb-6 opacity-20">🗓️</div>
-                        <h3 class="text-2xl font-black text-slate-400">등록된 일정이 없습니다</h3>
-                        <p class="text-slate-500 text-sm mt-2">상단의 '+ 일정 추가' 버튼을 눌러 첫 일정을 등록하세요.</p>
-                    </div>
-                `;
+                container.innerHTML = `<div class="py-20 text-center text-slate-500">등록된 상세 일정이 없습니다.</div>`;
                 return;
             }
 
-            // Sort by date
             const sorted = [...events].sort((a, b) => new Date(a.date) - new Date(b.date));
 
             sorted.forEach((ev, idx) => {
-                const dateObj = new Date(ev.date);
-                const month = dateObj.toLocaleString('en-US', { month: 'short' }).toUpperCase();
-                const day = dateObj.getDate();
                 const isOnline = ev.type === 'online';
-
-                const card = document.createElement('div');
-                card.className = 'group flex items-center justify-between p-8 rounded-[2.5rem] glass-card border border-black/5 dark:border-white/10 shadow-xl hover:shadow-2xl transition-all hover:scale-[1.01]';
-                card.innerHTML = `
-                    <div class="flex items-center gap-8">
-                        <div class="flex flex-col items-center justify-center w-24 h-24 rounded-3xl ${isOnline ? 'bg-cyan-50 dark:bg-cyan-950/20 border-cyan-100 dark:border-cyan-500/20' : 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-500/20'} border">
-                            <span class="text-[11px] font-black ${isOnline ? 'text-cyan-500' : 'text-emerald-500'} uppercase mb-1">${month}</span>
-                            <span class="text-4xl font-black text-slate-900 dark:text-white">${day}</span>
+                const div = document.createElement('div');
+                div.className = 'group flex items-center justify-between p-6 rounded-3xl glass-card border border-white/5 hover:bg-white/5 transition-all';
+                div.innerHTML = `
+                    <div class="flex items-center gap-6">
+                        <div class="text-center w-16">
+                            <p class="text-[10px] font-black text-slate-500 uppercase">${new Date(ev.date).toLocaleString('en-US', {month:'short'})}</p>
+                            <p class="text-2xl font-black">${new Date(ev.date).getDate()}</p>
                         </div>
+                        <div class="h-10 w-[1px] bg-white/10"></div>
                         <div>
-                            <div class="flex items-center gap-3 mb-2">
-                                <span class="px-3 py-1 rounded-full text-[10px] font-black ${isOnline ? 'bg-cyan-100 dark:bg-cyan-900/40 text-cyan-600 dark:text-cyan-400' : 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400'} uppercase tracking-widest">${ev.type}</span>
-                                <span class="text-sm font-bold text-slate-400">⏰ ${ev.time || '시간 미정'}</span>
-                            </div>
-                            <h3 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">${ev.title}</h3>
-                            <p class="text-sm text-slate-500 dark:text-gray-400 mt-2 flex items-center gap-2">
-                                📍 ${ev.loc || (isOnline ? '온라인 미팅' : '장소 미등록')}
-                            </p>
+                            <p class="text-[10px] font-black ${isOnline ? 'text-cyan-400' : 'text-emerald-400'} uppercase mb-1">${ev.type}</p>
+                            <h4 class="text-lg font-bold">${ev.title}</h4>
+                            <p class="text-xs text-slate-500">⏰ ${ev.time || '시간 미정'}</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onclick="editEvent(${ev.id})" class="p-4 rounded-2xl bg-black/5 dark:bg-white/5 text-slate-400 hover:text-indigo-500 transition-colors">✏️</button>
-                        <button onclick="deleteEvent(${ev.id})" class="p-4 rounded-2xl bg-black/5 dark:bg-white/5 text-slate-400 hover:text-red-500 transition-colors">🗑️</button>
+                    <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onclick="deleteEvent(${ev.id})" class="p-2 rounded-lg bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition">🗑️</button>
                     </div>
                 `;
-                container.appendChild(card);
+                container.appendChild(div);
             });
-        }
-
-        function toggleAddForm() {
-            const form = document.getElementById('add-form');
-            const list = document.getElementById('event-list');
-            const isHidden = form.classList.contains('hidden');
-            if (isHidden) {
-                form.classList.remove('hidden');
-                list.classList.replace('lg:col-span-4', 'lg:col-span-3');
-            } else {
-                form.classList.add('hidden');
-                list.classList.replace('lg:col-span-3', 'lg:col-span-4');
-            }
         }
 
         function addEvent() {
             const title = document.getElementById('ev-title').value;
             const date = document.getElementById('ev-date').value;
             const time = document.getElementById('ev-time').value;
-            const loc = document.getElementById('ev-loc').value;
             const type = document.getElementById('ev-type').value;
 
-            if(!title || !date) return alert('제목과 날짜는 필수입니다.');
+            if(!title || !date) return alert('제목과 날짜를 입력하세요.');
 
-            const newEv = { id: Date.now(), title, date, time, loc, type };
-            events.push(newEv);
+            events.push({ id: Date.now(), title, date, time, type });
             renderEvents();
-            // Clear inputs
             document.getElementById('ev-title').value = '';
-            toggleAddForm();
         }
 
         function deleteEvent(id) {
-            if(!confirm('정말 삭제하시겠습니까?')) return;
             events = events.filter(e => e.id !== id);
             renderEvents();
         }
