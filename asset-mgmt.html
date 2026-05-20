@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>기프티콘 및 프로필 관리 - WORLD AI</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .tab-btn.active {
+            background: #6366f1;
+            color: white;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+        }
+        .editable-cell:focus {
+            background: rgba(99, 102, 241, 0.1);
+            outline: none;
+            box-shadow: inset 0 0 0 2px #6366f1;
+        }
+    </style>
+</head>
+<body class="antialiased bg-bg-light dark:bg-bg-dark text-slate-900 dark:text-slate-100 transition-colors duration-300">
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="w-full bg-white/60 dark:bg-[#030509]/30 backdrop-blur-md border-b border-black/5 dark:border-white/5 px-8 py-3.5 flex justify-between items-center sticky top-0 z-50">
+            <a href="index.html" class="flex items-center space-x-3">
+                <div class="text-xl font-black tracking-tighter flex items-center gap-2">
+                    <div class="w-5 h-5 rounded-full bg-gradient-to-tr from-cyan-400 via-indigo-500 to-purple-500 relative flex items-center justify-center shadow-inner">
+                        <div class="absolute w-6.5 h-2.5 border border-white/50 rounded-full rotate-[-30deg]"></div>
+                    </div>
+                    <span class="text-slate-900 dark:text-white font-extrabold text-lg tracking-wide uppercase">WORLD AI</span>
+                </div>
+            </a>
+            <div class="flex items-center space-x-4">
+                <button onclick="saveAll()" class="px-6 py-2 rounded-full bg-indigo-600 text-white font-black text-[11px] shadow-lg active:scale-95 transition-all">💾 전체 저장</button>
+                <button id="theme-toggle" class="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+                    <span id="theme-icon">🌙</span>
+                </button>
+                <a href="index.html" class="px-4 py-1.5 rounded-full border border-black/10 dark:border-white/10 text-slate-700 dark:text-gray-200 text-xs font-bold">HOME</a>
+            </div>
+        </header>
+
+        <main class="flex-grow p-8 max-w-7xl mx-auto w-full">
+            <div class="mb-10 text-center">
+                <h1 class="text-4xl font-black mb-2 tracking-tighter">🎁 기프티콘 및 프로필 관리</h1>
+                <p class="text-slate-500 text-sm">자산과 멤버 정보를 한 곳에서 효율적으로 관리하세요.</p>
+            </div>
+
+            <!-- Tab Switcher -->
+            <div class="flex justify-center mb-10">
+                <div class="flex p-1.5 bg-black/5 dark:bg-white/5 rounded-2xl border border-black/5 dark:border-white/10">
+                    <button onclick="switchTab('profile')" id="tab-profile" class="tab-btn active px-8 py-2.5 rounded-xl text-xs font-black transition-all">📊 밋업 프로필</button>
+                    <button onclick="switchTab('gifticon')" id="tab-gifticon" class="tab-btn px-8 py-2.5 rounded-xl text-xs font-black transition-all">🖼️ 기프티콘</button>
+                </div>
+            </div>
+
+            <!-- Profile Section -->
+            <div id="section-profile" class="tab-content space-y-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-black">프로필 데이터 (Excel)</h2>
+                    <div class="flex gap-2">
+                        <button onclick="document.getElementById('excel-upload').click()" class="px-4 py-2 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-xs font-bold hover:bg-white/10 transition">📂 파일 불러오기</button>
+                        <button onclick="exportExcel()" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 transition">💾 엑셀 저장</button>
+                        <input type="file" id="excel-upload" class="hidden" accept=".xlsx, .xls">
+                    </div>
+                </div>
+                <div class="glass-card rounded-3xl border border-black/5 dark:border-white/10 overflow-hidden min-h-[400px]">
+                    <div id="excel-placeholder" class="py-20 text-center">
+                        <p class="text-slate-500">파일을 업로드하여 데이터를 확인하세요.</p>
+                    </div>
+                    <div id="excel-table-container" class="hidden overflow-auto max-h-[60vh]">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead id="profile-thead" class="sticky top-0 bg-slate-900/90 backdrop-blur-md z-10"></thead>
+                            <tbody id="profile-tbody" class="divide-y divide-white/5"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gifticon Section -->
+            <div id="section-gifticon" class="tab-content hidden space-y-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-black">기프티콘 갤러리</h2>
+                    <button onclick="document.getElementById('gift-upload').click()" class="px-6 py-2.5 rounded-xl bg-amber-600 text-white text-xs font-bold hover:bg-amber-500 transition shadow-lg">+ 이미지 일괄 업로드</button>
+                    <input type="file" id="gift-upload" class="hidden" accept="image/*" multiple>
+                </div>
+                <div class="glass-card rounded-[2.5rem] border border-black/5 dark:border-white/10 p-8 min-h-[500px]">
+                    <div id="gifticon-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        <!-- Gifticons here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="p-12 text-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
+            © 2026 World AI. Visual & Data Assets.
+        </footer>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        let profileData = AppStorage.load('profile_data') || [];
+        let gifticons = AppStorage.load('gifticons') || [];
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`section-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).classList.add('active');
+        }
+
+        // Profile Logic
+        document.getElementById('excel-upload').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                profileData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
+                renderProfile();
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        function renderProfile() {
+            if(profileData.length === 0) return;
+            document.getElementById('excel-placeholder').classList.add('hidden');
+            document.getElementById('excel-table-container').classList.remove('hidden');
+            
+            const thead = document.getElementById('profile-thead');
+            const tbody = document.getElementById('profile-tbody');
+            
+            thead.innerHTML = `<tr>${profileData[0].map(h => `<th class="px-6 py-4 font-black text-slate-400 uppercase tracking-widest border-b border-white/10">${h || ''}</th>`).join('')}</tr>`;
+            tbody.innerHTML = profileData.slice(1).map((row, ri) => `
+                <tr class="hover:bg-white/5 transition-colors">
+                    ${profileData[0].map((_, ci) => `
+                        <td class="px-6 py-4 border-b border-white/5">
+                            <div class="editable-cell px-2 py-1 rounded" contenteditable="true" onblur="profileData[${ri+1}][${ci}] = this.innerText">${row[ci] || ''}</div>
+                        </td>
+                    `).join('')}
+                </tr>
+            `).join('');
+        }
+
+        // Gifticon Logic
+        document.getElementById('gift-upload').addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    gifticons.push({ id: Date.now() + Math.random(), src: ev.target.result, name: file.name });
+                    renderGifticons();
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+
+        function renderGifticons() {
+            const grid = document.getElementById('gifticon-grid');
+            grid.innerHTML = gifticons.map(g => `
+                <div class="relative group aspect-[3/4] rounded-2xl overflow-hidden border border-white/10 bg-white/5 shadow-md">
+                    <img src="${g.src}" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-4">
+                        <p class="text-[10px] text-white font-bold truncate w-full mb-4 text-center">${g.name}</p>
+                        <button onclick="deleteGift(${g.id})" class="p-2 rounded-lg bg-red-500 text-white text-[10px] font-black uppercase tracking-widest">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function deleteGift(id) {
+            gifticons = gifticons.filter(g => g.id !== id);
+            renderGifticons();
+        }
+
+        function exportExcel() {
+            const ws = XLSX.utils.aoa_to_sheet(profileData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Profiles");
+            XLSX.writeFile(wb, "Meetup_Profiles_Updated.xlsx");
+        }
+
+        function saveAll() {
+            AppStorage.save('profile_data', profileData);
+            AppStorage.save('gifticons', gifticons);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderProfile();
+            renderGifticons();
+        });
+    </script>
+</body>
+</html>

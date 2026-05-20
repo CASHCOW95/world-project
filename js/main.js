@@ -4,7 +4,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const pathParts = window.location.pathname.split('/');
     const currentPage = pathParts[pathParts.length - 1] || 'index.html';
 
-    // 1. Service Locking System (on index.html)
+    // 1. Initial Visibility Fix
+    const mainContent = document.querySelector('main');
+    if (mainContent) {
+        mainContent.style.opacity = '1';
+    }
+
+    // 2. Service Locking System (on index.html)
     if (currentPage === 'index.html' || currentPage === '') {
         const featureCards = document.querySelectorAll('.feature-card');
         featureCards.forEach(card => {
@@ -12,13 +18,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const icon = card.querySelector('.feature-icon');
 
             if (!isLoggedIn) {
-                // LOCK state
-                lockOverlay.style.opacity = '1';
-                lockOverlay.style.pointerEvents = 'auto';
-                if(icon) icon.style.filter = 'grayscale(1) blur(2px)';
+                if(lockOverlay) lockOverlay.style.opacity = '1';
+                if(lockOverlay) lockOverlay.style.pointerEvents = 'auto';
+                if(icon) icon.style.filter = 'grayscale(1) blur(4px)';
                 card.style.cursor = 'not-allowed';
                 
-                // Override click behavior
                 card.onclick = (e) => {
                     e.preventDefault();
                     if(confirm('이 서비스는 관리자 전용입니다. 로그인 페이지로 이동하시겠습니까?')) {
@@ -27,33 +31,36 @@ document.addEventListener('DOMContentLoaded', () => {
                     return false;
                 };
             } else {
-                // UNLOCK state
-                lockOverlay.style.opacity = '0';
-                lockOverlay.style.pointerEvents = 'none';
+                if(lockOverlay) lockOverlay.style.opacity = '0';
+                if(lockOverlay) lockOverlay.style.pointerEvents = 'none';
                 if(icon) icon.style.filter = 'none';
                 card.style.cursor = 'pointer';
-                card.onclick = null; // Restore default link behavior
             }
         });
     }
 
-    // 2. Initial Visibility Fix
-    const mainContent = document.querySelector('main');
-    if (mainContent) {
-        mainContent.style.opacity = '1';
-    }
-
     // 3. Protected Page Guard
-    const protectedPages = ['online-meetup.html', 'profile-mgmt.html', 'offline-meetup.html', 'gifticon-mgmt.html'];
+    const protectedPages = [
+        'meetup-calendar.html', 
+        'asset-mgmt.html', 
+        'profit-mgmt.html', 
+        'diary.html', 
+        'tiktok-mgmt.html',
+        'online-meetup.html', // Legacy compatibility
+        'profile-mgmt.html', 
+        'offline-meetup.html', 
+        'gifticon-mgmt.html'
+    ];
+
     if (protectedPages.includes(currentPage) && !isLoggedIn) {
         document.body.classList.add('auth-locked');
         const lockUI = document.createElement('div');
         lockUI.id = 'access-denied-message';
         lockUI.className = 'glass-card p-10 rounded-[2.5rem] border border-white/10 shadow-2xl animate-in';
         lockUI.innerHTML = `
-            <div class="text-6xl mb-6">🔒</div>
-            <h2 class="text-2xl font-black mb-4 text-white">접근 권한이 없습니다</h2>
-            <p class="text-slate-400 text-sm mb-8 leading-relaxed">해당 서비스는 관리자 로그인이 필요합니다.<br>관리자 계정으로 로그인 후 다시 시도해주세요.</p>
+            <div class="text-6xl mb-6 text-center">🔒</div>
+            <h2 class="text-2xl font-black mb-4 text-white text-center">접근 권한이 없습니다</h2>
+            <p class="text-slate-400 text-sm mb-8 leading-relaxed text-center">해당 서비스는 관리자 로그인이 필요합니다.<br>관리자 계정으로 로그인 후 다시 시도해주세요.</p>
             <div class="flex gap-3 justify-center">
                 <a href="index.html" class="px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold transition text-sm">홈으로</a>
                 <a href="login.html?redirect=${currentPage}" class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition text-sm shadow-lg shadow-indigo-500/20">관리자 로그인</a>
@@ -84,11 +91,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 5. Theme Logic
+    // 5. Data Persistence Helpers
+    window.AppStorage = {
+        save: (key, data) => {
+            localStorage.setItem(`world_ai_${key}`, JSON.stringify(data));
+            console.log(`Saved ${key} to storage.`);
+            // Visual feedback
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full bg-indigo-600 text-white font-bold text-xs shadow-2xl z-[100] animate-in';
+            toast.innerText = '💾 데이터가 안전하게 저장되었습니다.';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        },
+        load: (key) => {
+            const data = localStorage.getItem(`world_ai_${key}`);
+            return data ? JSON.parse(data) : null;
+        }
+    };
+
+    // 6. Theme Logic
     const themeToggle = document.getElementById('theme-toggle');
     const themeIcon = document.getElementById('theme-icon');
     const html = document.documentElement;
-
     const savedTheme = localStorage.getItem('theme') || 'dark';
     if (savedTheme === 'light') {
         html.classList.remove('dark');
@@ -97,7 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
         html.classList.add('dark');
         if(themeIcon) themeIcon.textContent = '🌙';
     }
-
     if (themeToggle) {
         themeToggle.addEventListener('click', () => {
             const isDark = html.classList.toggle('dark');
@@ -106,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 6. Scroll Animations
+    // 7. Scroll Animations
     const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -116,11 +139,5 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }, observerOptions);
-
     document.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
-    setTimeout(() => {
-        document.querySelectorAll('.scroll-reveal').forEach(el => {
-            if (!el.classList.contains('animate-in')) el.classList.add('animate-in');
-        });
-    }, 1000);
 });
