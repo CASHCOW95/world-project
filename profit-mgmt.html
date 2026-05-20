@@ -11,14 +11,13 @@
 </head>
 <body class="antialiased bg-bg-light dark:bg-bg-dark text-slate-900 dark:text-slate-100 transition-colors duration-300">
     <div class="min-h-screen flex flex-col">
-        <!-- Header -->
         <header class="w-full bg-white/60 dark:bg-[#030509]/30 backdrop-blur-md border-b border-black/5 dark:border-white/5 px-8 py-3.5 flex justify-between items-center sticky top-0 z-50">
             <a href="index.html" class="flex items-center space-x-3">
                 <div class="text-xl font-black tracking-tighter flex items-center gap-2">
                     <div class="w-5 h-5 rounded-full bg-gradient-to-tr from-cyan-400 via-indigo-500 to-purple-500 relative flex items-center justify-center shadow-inner">
                         <div class="absolute w-6.5 h-2.5 border border-white/50 rounded-full rotate-[-30deg]"></div>
                     </div>
-                    <span class="text-slate-900 dark:text-white font-extrabold text-lg tracking-wide">WORLD AI</span>
+                    <span class="text-slate-900 dark:text-white font-extrabold text-lg tracking-wide uppercase">WORLD AI</span>
                 </div>
             </a>
             <div class="flex items-center space-x-4">
@@ -26,106 +25,94 @@
                 <button id="theme-toggle" class="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
                     <span id="theme-icon">🌙</span>
                 </button>
-                <a href="index.html" class="px-4 py-1.5 rounded-full border border-black/10 dark:border-white/10 text-slate-700 dark:text-gray-200 text-xs font-bold">HOME</a>
+                <a href="index.html" class="px-4 py-1.5 rounded-full border border-black/10 text-slate-700 dark:text-gray-200 text-xs font-bold transition">HOME</a>
             </div>
         </header>
 
         <main class="flex-grow p-8 max-w-7xl mx-auto w-full">
-            <div class="mb-12">
-                <h1 class="text-5xl font-black mb-3 tracking-tighter">📈 수익정산내역</h1>
-                <p class="text-slate-500 font-medium">수익 도식화 및 밋업 당첨 성공률 분석 데이터입니다.</p>
+            <div class="flex justify-between items-end mb-12">
+                <div>
+                    <h1 class="text-5xl font-black mb-3 tracking-tighter uppercase">📈 수익정산내역</h1>
+                    <p class="text-slate-500 font-medium italic">일정별 수익과 성공률을 상세히 기록하고 분석합니다.</p>
+                </div>
+                <button onclick="addRow()" class="px-6 py-3 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black text-sm transition active:scale-95 shadow-xl">+ 내역 추가</button>
             </div>
 
-            <!-- Visualization Row -->
             <div class="grid lg:grid-cols-3 gap-8 mb-12">
-                <div class="lg:col-span-2 glass-card p-8 rounded-[2.5rem] border border-black/5 dark:border-white/10 shadow-2xl h-[400px]">
-                    <h3 class="text-lg font-black mb-6">주간 수익 흐름</h3>
+                <div class="lg:col-span-2 glass-card p-8 rounded-[3rem] border border-white/5 shadow-2xl h-[400px]">
+                    <h3 class="text-lg font-black mb-6">최근 수익 흐름</h3>
                     <canvas id="profitChart"></canvas>
                 </div>
-                <div class="lg:col-span-1 glass-card p-8 rounded-[2.5rem] border border-black/5 dark:border-white/10 shadow-2xl flex flex-col items-center justify-center text-center">
-                    <h3 class="text-lg font-black mb-2">평균 성공률</h3>
-                    <div class="relative w-48 h-48 flex items-center justify-center mb-4">
+                <div class="lg:col-span-1 glass-card p-8 rounded-[3rem] border border-white/5 shadow-2xl flex flex-col items-center justify-center text-center">
+                    <h3 class="text-lg font-black mb-4">평균 당첨률</h3>
+                    <div class="relative w-48 h-48 flex items-center justify-center">
                         <svg class="w-full h-full transform -rotate-90">
-                            <circle cx="96" cy="96" r="80" stroke="currentColor" stroke-width="12" fill="transparent" class="text-slate-100 dark:text-white/5" />
-                            <circle id="success-circle" cx="96" cy="96" r="80" stroke="#10b981" stroke-width="12" fill="transparent" stroke-dasharray="502.65" stroke-dashoffset="502.65" class="transition-all duration-1000" />
+                            <circle cx="96" cy="96" r="80" stroke="currentColor" stroke-width="12" fill="transparent" class="text-white/5" />
+                            <circle id="success-circle" cx="96" cy="96" r="80" stroke="#6366f1" stroke-width="12" fill="transparent" stroke-dasharray="502.65" stroke-dashoffset="502.65" class="transition-all duration-1000" />
                         </svg>
                         <span id="success-rate-text" class="absolute text-4xl font-black">0%</span>
                     </div>
-                    <p class="text-xs text-slate-500 font-bold uppercase tracking-widest">Entry vs Winners</p>
                 </div>
             </div>
 
-            <!-- Data Entry Table -->
-            <div class="glass-card rounded-[2.5rem] border border-black/5 dark:border-white/10 shadow-2xl overflow-hidden">
-                <div class="p-8 border-b border-white/5 flex justify-between items-center">
-                    <h3 class="text-xl font-black">정산 상세 내역</h3>
-                    <button onclick="addRow()" class="px-5 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-bold hover:bg-white/10 transition">+ 내역 추가</button>
-                </div>
+            <div class="glass-card rounded-[3rem] border border-white/5 shadow-2xl overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm">
-                        <thead class="bg-black/5 dark:bg-white/5 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                        <thead class="bg-white/5 text-[10px] font-black uppercase tracking-widest text-slate-400">
                             <tr>
                                 <th class="px-6 py-5">날짜</th>
-                                <th class="px-6 py-5">수익 항목</th>
+                                <th class="px-6 py-5">항목</th>
                                 <th class="px-6 py-5">금액 (₩)</th>
-                                <th class="px-6 py-5">지원 계정</th>
-                                <th class="px-6 py-5">당첨 계정</th>
+                                <th class="px-6 py-5">지원/당첨</th>
                                 <th class="px-6 py-5">성공률</th>
-                                <th class="px-6 py-5">내 생각/메모</th>
-                                <th class="px-6 py-5">관리</th>
+                                <th class="px-6 py-5">메모/생각</th>
+                                <th class="px-6 py-5"></th>
                             </tr>
                         </thead>
-                        <tbody id="profit-tbody" class="divide-y divide-white/5">
-                            <!-- Rows -->
-                        </tbody>
+                        <tbody id="profit-tbody" class="divide-y divide-white/5 text-xs"></tbody>
                     </table>
                 </div>
             </div>
         </main>
-
-        <footer class="p-12 text-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
-            © 2026 World AI. Profit & Performance Analytics.
-        </footer>
     </div>
 
     <script src="js/main.js"></script>
     <script>
-        let profitData = AppStorage.load('profit_data') || [
-            { id: 1, date: '2026-05-20', item: 'Neura AI 이벤트', amount: 150000, entry: 100, winners: 20, memo: '참여 인원이 많아 당첨 확률이 낮았음.' }
-        ];
-
+        let profitData = AppStorage.load('profit_data') || [];
         let chart = null;
 
         function renderRows() {
             const tbody = document.getElementById('profit-tbody');
             tbody.innerHTML = '';
-            
             profitData.forEach((d, idx) => {
                 const rate = d.entry > 0 ? ((d.winners / d.entry) * 100).toFixed(1) : 0;
-                const row = document.createElement('tr');
-                row.className = 'hover:bg-white/5 transition-colors';
-                row.innerHTML = `
-                    <td class="px-6 py-4"><input type="date" value="${d.date}" onchange="updateVal(${idx}, 'date', this.value)" class="bg-transparent border-none focus:ring-0 text-xs"></td>
-                    <td class="px-6 py-4"><input type="text" value="${d.item}" onchange="updateVal(${idx}, 'item', this.value)" class="bg-transparent border-none focus:ring-0 text-xs w-full"></td>
-                    <td class="px-6 py-4"><input type="number" value="${d.amount}" onchange="updateVal(${idx}, 'amount', this.value)" class="bg-transparent border-none focus:ring-0 text-xs w-24"></td>
-                    <td class="px-6 py-4"><input type="number" value="${d.entry}" onchange="updateVal(${idx}, 'entry', this.value)" class="bg-transparent border-none focus:ring-0 text-xs w-16 text-center"></td>
-                    <td class="px-6 py-4"><input type="number" value="${d.winners}" onchange="updateVal(${idx}, 'winners', this.value)" class="bg-transparent border-none focus:ring-0 text-xs w-16 text-center"></td>
-                    <td class="px-6 py-4"><span class="font-black text-emerald-500">${rate}%</span></td>
-                    <td class="px-6 py-4"><textarea onchange="updateVal(${idx}, 'memo', this.value)" class="bg-transparent border-none focus:ring-0 text-[10px] w-full h-8 leading-tight">${d.memo || ''}</textarea></td>
-                    <td class="px-6 py-4"><button onclick="deleteRow(${idx})" class="text-red-400 hover:text-red-500 font-bold">🗑️</button></td>
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-white/5 transition-colors';
+                tr.innerHTML = `
+                    <td class="px-6 py-4"><input type="date" value="${d.date}" onchange="updateVal(${idx}, 'date', this.value)" class="bg-transparent border-none p-0 focus:ring-0"></td>
+                    <td class="px-6 py-4"><input type="text" value="${d.item}" onchange="updateVal(${idx}, 'item', this.value)" class="bg-transparent border-none p-0 focus:ring-0 font-bold w-full"></td>
+                    <td class="px-6 py-4"><input type="number" value="${d.amount}" onchange="updateVal(${idx}, 'amount', this.value)" class="bg-transparent border-none p-0 focus:ring-0 w-24"></td>
+                    <td class="px-6 py-4 flex items-center gap-2">
+                        <input type="number" value="${d.entry}" onchange="updateVal(${idx}, 'entry', this.value)" class="w-10 bg-transparent border-none p-0 focus:ring-0 text-center">
+                        <span class="opacity-30">/</span>
+                        <input type="number" value="${d.winners}" onchange="updateVal(${idx}, 'winners', this.value)" class="w-10 bg-transparent border-none p-0 focus:ring-0 text-center text-indigo-400 font-bold">
+                    </td>
+                    <td class="px-6 py-4 font-black text-emerald-400">${rate}%</td>
+                    <td class="px-6 py-4"><input type="text" value="${d.memo || ''}" onchange="updateVal(${idx}, 'memo', this.value)" class="bg-transparent border-none p-0 focus:ring-0 w-full opacity-60" placeholder="생각 기록..."></td>
+                    <td class="px-6 py-4"><button onclick="deleteRow(${idx})" class="text-red-500 opacity-0 group-hover:opacity-100 hover:scale-110 transition-all">🗑️</button></td>
                 `;
-                tbody.appendChild(row);
+                tbody.appendChild(tr);
             });
             updateStats();
         }
 
         function updateVal(idx, key, val) {
-            profitData[idx][key] = key === 'amount' || key === 'entry' || key === 'winners' ? Number(val) : val;
+            profitData[idx][key] = (['amount', 'entry', 'winners'].includes(key)) ? Number(val) : val;
             updateStats();
         }
 
         function addRow() {
-            profitData.unshift({ id: Date.now(), date: new Date().toISOString().split('T')[0], item: '신규 항목', amount: 0, entry: 0, winners: 0, memo: '' });
+            profitData.unshift({ id: Date.now(), date: new Date().toISOString().split('T')[0], item: '신규 수익', amount: 0, entry: 0, winners: 0, memo: '' });
             renderRows();
         }
 
@@ -135,60 +122,36 @@
         }
 
         function updateStats() {
-            // Update Gauge
-            const totalEntry = profitData.reduce((acc, d) => acc + d.entry, 0);
-            const totalWinners = profitData.reduce((acc, d) => acc + d.winners, 0);
+            const totalEntry = profitData.reduce((acc, d) => acc + (Number(d.entry)||0), 0);
+            const totalWinners = profitData.reduce((acc, d) => acc + (Number(d.winners)||0), 0);
             const overallRate = totalEntry > 0 ? (totalWinners / totalEntry) * 100 : 0;
-            
             const circle = document.getElementById('success-circle');
-            const offset = 502.65 - (502.65 * overallRate) / 100;
-            circle.style.strokeDashoffset = offset;
-            document.getElementById('success-rate-text').innerText = `${overallRate.toFixed(1)}%`;
-
-            // Update Chart
+            if(circle) circle.style.strokeDashoffset = 502.65 - (502.65 * overallRate) / 100;
+            if(document.getElementById('success-rate-text')) document.getElementById('success-rate-text').innerText = `${overallRate.toFixed(1)}%`;
             updateChart();
         }
 
         function updateChart() {
-            const ctx = document.getElementById('profitChart').getContext('2d');
-            const sortedData = [...profitData].sort((a, b) => new Date(a.date) - new Date(b.date)).slice(-7);
-            
-            const labels = sortedData.map(d => d.date.split('-').slice(1).join('/'));
-            const values = sortedData.map(d => d.amount);
-
-            if (chart) chart.destroy();
+            const ctx = document.getElementById('profitChart');
+            if(!ctx) return;
+            const sorted = [...profitData].sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(-10);
+            if(chart) chart.destroy();
             chart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: labels,
+                    labels: sorted.map(d=>d.date.slice(5)),
                     datasets: [{
-                        label: '수익 흐름',
-                        data: values,
+                        data: sorted.map(d=>d.amount),
                         borderColor: '#6366f1',
                         backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                        borderWidth: 4,
-                        tension: 0.4,
-                        fill: true,
-                        pointRadius: 6,
-                        pointBackgroundColor: '#fff'
+                        fill: true, tension: 0.4, borderWidth: 4, pointRadius: 5
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
-                        x: { grid: { display: false } }
-                    },
-                    plugins: { legend: { display: false } }
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { grid: { display: false } } } }
             });
         }
 
-        function saveAll() {
-            AppStorage.save('profit_data', profitData);
-        }
-
+        function saveAll() { AppStorage.save('profit_data', profitData); }
         document.addEventListener('DOMContentLoaded', renderRows);
     </script>
 </body>
