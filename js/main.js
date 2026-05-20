@@ -1,17 +1,50 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Initial Visibility Fix
+    const isLoggedIn = sessionStorage.getItem('isAdminLoggedIn') === 'true';
+    const adminNickname = sessionStorage.getItem('adminNickname');
+    const pathParts = window.location.pathname.split('/');
+    const currentPage = pathParts[pathParts.length - 1] || 'index.html';
+
+    // 1. Service Locking System (on index.html)
+    if (currentPage === 'index.html' || currentPage === '') {
+        const featureCards = document.querySelectorAll('.feature-card');
+        featureCards.forEach(card => {
+            const lockOverlay = card.querySelector('.lock-overlay');
+            const icon = card.querySelector('.feature-icon');
+
+            if (!isLoggedIn) {
+                // LOCK state
+                lockOverlay.style.opacity = '1';
+                lockOverlay.style.pointerEvents = 'auto';
+                if(icon) icon.style.filter = 'grayscale(1) blur(2px)';
+                card.style.cursor = 'not-allowed';
+                
+                // Override click behavior
+                card.onclick = (e) => {
+                    e.preventDefault();
+                    if(confirm('이 서비스는 관리자 전용입니다. 로그인 페이지로 이동하시겠습니까?')) {
+                        window.location.href = 'login.html';
+                    }
+                    return false;
+                };
+            } else {
+                // UNLOCK state
+                lockOverlay.style.opacity = '0';
+                lockOverlay.style.pointerEvents = 'none';
+                if(icon) icon.style.filter = 'none';
+                card.style.cursor = 'pointer';
+                card.onclick = null; // Restore default link behavior
+            }
+        });
+    }
+
+    // 2. Initial Visibility Fix
     const mainContent = document.querySelector('main');
     if (mainContent) {
         mainContent.style.opacity = '1';
     }
 
-    // 2. Authentication Logic
+    // 3. Protected Page Guard
     const protectedPages = ['online-meetup.html', 'profile-mgmt.html', 'offline-meetup.html', 'gifticon-mgmt.html'];
-    const pathParts = window.location.pathname.split('/');
-    const currentPage = pathParts[pathParts.length - 1] || 'index.html';
-    const isLoggedIn = sessionStorage.getItem('isAdminLoggedIn') === 'true';
-    const adminNickname = sessionStorage.getItem('adminNickname');
-
     if (protectedPages.includes(currentPage) && !isLoggedIn) {
         document.body.classList.add('auth-locked');
         const lockUI = document.createElement('div');
@@ -27,11 +60,11 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
         document.body.appendChild(lockUI);
-        if(mainContent) mainContent.style.display = 'none'; // Completely hide protected content
+        if(mainContent) mainContent.style.display = 'none';
         return;
     }
 
-    // 3. Update Header UI for Auth
+    // 4. Update Header UI for Auth
     const authBtn = document.querySelector('.open-auth');
     if (authBtn) {
         if (isLoggedIn) {
@@ -47,13 +80,11 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             authBtn.parentNode.appendChild(logoutBtn);
         } else {
-            authBtn.addEventListener('click', () => {
-                window.location.href = 'login.html';
-            });
+            authBtn.onclick = () => { window.location.href = 'login.html'; };
         }
     }
 
-    // 4. Theme Logic
+    // 5. Theme Logic
     const themeToggle = document.getElementById('theme-toggle');
     const themeIcon = document.getElementById('theme-icon');
     const html = document.documentElement;
@@ -75,12 +106,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 5. Scroll Animations (Intersection Observer)
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    };
-
+    // 6. Scroll Animations
+    const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -90,31 +117,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }, observerOptions);
 
-    const revealElements = document.querySelectorAll('.scroll-reveal');
-    revealElements.forEach(el => {
-        observer.observe(el);
-    });
-
-    // Fallback: If elements are still not visible after 1s, force them (handles cases where observer might fail)
+    document.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
     setTimeout(() => {
-        revealElements.forEach(el => {
-            if (!el.classList.contains('animate-in')) {
-                el.classList.add('animate-in');
-            }
+        document.querySelectorAll('.scroll-reveal').forEach(el => {
+            if (!el.classList.contains('animate-in')) el.classList.add('animate-in');
         });
     }, 1000);
-
-    // 6. Header scroll effect
-    const header = document.querySelector('header');
-    if (header) {
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 50) {
-                header.classList.add('py-2', 'bg-white/80', 'dark:bg-[#030509]/60');
-                header.classList.remove('py-3.5', 'bg-white/60', 'dark:bg-[#030509]/30');
-            } else {
-                header.classList.remove('py-2', 'bg-white/80', 'dark:bg-[#030509]/60');
-                header.classList.add('py-3.5', 'bg-white/60', 'dark:bg-[#030509]/30');
-            }
-        });
-    }
 });

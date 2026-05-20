@@ -102,31 +102,43 @@
 
                 <!-- Features Grid -->
                 <section id="features" class="max-w-5xl mx-auto px-6 py-12 w-full scroll-reveal">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" id="features-grid">
                         <!-- 1. Online Meetup -->
-                        <a href="online-meetup.html" class="p-8 rounded-2xl glass-card card-glow-cyan flex flex-col items-center text-center cursor-pointer hover:scale-105 transition-transform">
-                            <div class="w-12 h-12 rounded-xl bg-cyan-100 dark:bg-cyan-950/50 border border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400 mb-4 text-xl">📅</div>
+                        <a href="online-meetup.html" class="feature-card p-8 rounded-2xl glass-card card-glow-cyan flex flex-col items-center text-center cursor-pointer hover:scale-105 transition-all duration-500 relative overflow-hidden group" data-feature="online-meetup">
+                            <div class="lock-overlay absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-500 z-20">
+                                <span class="text-4xl">🔒</span>
+                            </div>
+                            <div class="feature-icon w-12 h-12 rounded-xl bg-cyan-100 dark:bg-cyan-950/50 border border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400 mb-4 text-xl transition-all duration-500">📅</div>
                             <h3 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">온라인 밋업일정</h3>
                             <p class="text-slate-600 dark:text-gray-400 text-xs mt-2 leading-relaxed">구글 캘린더 연동 타임라인 확인</p>
                         </a>
 
                         <!-- 2. Profile Management -->
-                        <a href="profile-mgmt.html" class="p-8 rounded-2xl glass-card card-glow-magenta flex flex-col items-center text-center cursor-pointer hover:scale-105 transition-transform">
-                            <div class="w-12 h-12 rounded-xl bg-pink-100 dark:bg-pink-950/50 border border-pink-500/30 flex items-center justify-center text-pink-600 dark:text-pink-400 mb-4 text-xl">📊</div>
+                        <a href="profile-mgmt.html" class="feature-card p-8 rounded-2xl glass-card card-glow-magenta flex flex-col items-center text-center cursor-pointer hover:scale-105 transition-all duration-500 relative overflow-hidden group" data-feature="profile-mgmt">
+                            <div class="lock-overlay absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-500 z-20">
+                                <span class="text-4xl">🔒</span>
+                            </div>
+                            <div class="feature-icon w-12 h-12 rounded-xl bg-pink-100 dark:bg-pink-950/50 border border-pink-500/30 flex items-center justify-center text-pink-600 dark:text-pink-400 mb-4 text-xl transition-all duration-500">📊</div>
                             <h3 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">밋업프로필 관리</h3>
                             <p class="text-slate-600 dark:text-gray-400 text-xs mt-2 leading-relaxed">엑셀 업로드 및 즉시 수정</p>
                         </a>
 
                         <!-- 3. Offline Meetup -->
-                        <a href="offline-meetup.html" class="p-8 rounded-2xl glass-card card-glow-emerald flex flex-col items-center text-center cursor-pointer hover:scale-105 transition-transform">
-                            <div class="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-950/50 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-4 text-xl">📍</div>
+                        <a href="offline-meetup.html" class="feature-card p-8 rounded-2xl glass-card card-glow-emerald flex flex-col items-center text-center cursor-pointer hover:scale-105 transition-all duration-500 relative overflow-hidden group" data-feature="offline-meetup">
+                            <div class="lock-overlay absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-500 z-20">
+                                <span class="text-4xl">🔒</span>
+                            </div>
+                            <div class="feature-icon w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-950/50 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-4 text-xl transition-all duration-500">📍</div>
                             <h3 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">오프라인 밋업</h3>
                             <p class="text-slate-600 dark:text-gray-400 text-xs mt-2 leading-relaxed">장소 업로드 및 관리</p>
                         </a>
 
                         <!-- 4. Gifticon Management -->
-                        <a href="gifticon-mgmt.html" class="p-8 rounded-2xl glass-card card-glow-gold flex flex-col items-center text-center cursor-pointer hover:scale-105 transition-transform">
-                            <div class="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-950/50 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-4 text-xl">🎁</div>
+                        <a href="gifticon-mgmt.html" class="feature-card p-8 rounded-2xl glass-card card-glow-gold flex flex-col items-center text-center cursor-pointer hover:scale-105 transition-all duration-500 relative overflow-hidden group" data-feature="gifticon-mgmt">
+                            <div class="lock-overlay absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-500 z-20">
+                                <span class="text-4xl">🔒</span>
+                            </div>
+                            <div class="feature-icon w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-950/50 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-4 text-xl transition-all duration-500">🎁</div>
                             <h3 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">기프티콘 관리</h3>
                             <p class="text-slate-600 dark:text-gray-400 text-xs mt-2 leading-relaxed">이미지 업로드 및 목록 관리</p>
                         </a>
