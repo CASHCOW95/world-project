@@ -24,54 +24,156 @@
                 <button id="theme-toggle" class="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
                     <span id="theme-icon">🌙</span>
                 </button>
-                <a href="index.html" class="px-4 py-1.5 rounded-full border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-slate-700 dark:text-gray-200 text-xs transition">홈으로 돌아가기</a>
+                <a href="index.html" class="px-4 py-1.5 rounded-full border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-slate-700 dark:text-gray-200 text-xs transition font-bold">HOME</a>
             </div>
         </header>
 
         <main class="flex-grow p-8 max-w-6xl mx-auto w-full">
-            <div class="mb-8">
-                <h1 class="text-4xl font-black text-slate-900 dark:text-white mb-2">📍 오프라인 밋업</h1>
-                <p class="text-slate-600 dark:text-gray-400">오프라인 모임 장소를 등록하고 지도로 위치를 확인하세요.</p>
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
+                <div>
+                    <h1 class="text-5xl font-black text-slate-900 dark:text-white mb-3 tracking-tighter">📍 오프라인 밋업</h1>
+                    <p class="text-slate-500 dark:text-gray-400 font-medium">전국의 밋업 장소와 일정을 체계적으로 관리하세요.</p>
+                </div>
+                <div class="flex gap-4">
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+                        <input type="text" placeholder="장소 검색..." class="pl-10 pr-4 py-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 focus:border-indigo-500 focus:outline-none text-sm w-64 transition">
+                    </div>
+                    <button onclick="toggleVenueForm()" class="px-6 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-sm transition shadow-lg active:scale-95">+ 장소 등록</button>
+                </div>
             </div>
 
-            <div class="grid lg:grid-cols-3 gap-8">
-                <div class="lg:col-span-1 space-y-6">
-                    <div class="glass-card p-6 rounded-3xl border border-black/5 dark:border-white/10 shadow-xl">
-                        <h3 class="text-lg font-bold mb-4">새 장소 등록</h3>
+            <div class="grid lg:grid-cols-4 gap-8">
+                <!-- Registration Form (Side) -->
+                <div id="venue-form-container" class="lg:col-span-1 hidden animate-in">
+                    <div class="glass-card p-6 rounded-[2rem] border border-black/5 dark:border-white/10 shadow-2xl sticky top-24">
+                        <h3 class="text-lg font-black mb-5 flex items-center gap-2">
+                            <span class="w-2 h-5 bg-emerald-500 rounded-full"></span>
+                            신규 장소 등록
+                        </h3>
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-1">장소 이름</label>
-                                <input type="text" class="w-full px-4 py-2.5 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 focus:border-indigo-500 focus:outline-none text-sm transition" placeholder="예: 강남 코워킹 스페이스">
+                                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">장소명</label>
+                                <input type="text" id="v-name" class="w-full px-4 py-2.5 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-sm focus:border-emerald-500 focus:outline-none transition">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-1">주소</label>
-                                <input type="text" class="w-full px-4 py-2.5 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 focus:border-indigo-500 focus:outline-none text-sm transition" placeholder="전체 주소 입력">
+                                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">날짜 및 시간</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input type="date" id="v-date" class="w-full px-3 py-2.5 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-xs focus:border-emerald-500 focus:outline-none transition">
+                                    <input type="time" id="v-time" class="w-full px-3 py-2.5 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-xs focus:border-emerald-500 focus:outline-none transition">
+                                </div>
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-1">설명</label>
-                                <textarea class="w-full px-4 py-2.5 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 focus:border-indigo-500 focus:outline-none text-sm transition h-24" placeholder="장소에 대한 추가 정보"></textarea>
+                                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">위치/주소</label>
+                                <input type="text" id="v-addr" class="w-full px-4 py-2.5 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-sm focus:border-emerald-500 focus:outline-none transition" placeholder="예: 서울 강남구 테헤란로 123">
                             </div>
-                            <button class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition shadow-lg">장소 저장하기</button>
+                            <button onclick="addVenue()" class="w-full py-3.5 mt-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black text-sm transition-all hover:opacity-90 active:scale-95 shadow-xl">등록 완료</button>
                         </div>
                     </div>
                 </div>
 
-                <div class="lg:col-span-2 space-y-6">
-                    <div class="glass-card rounded-3xl overflow-hidden border border-black/5 dark:border-white/10 shadow-2xl h-[500px] flex items-center justify-center bg-slate-100 dark:bg-white/5 text-slate-400">
-                        <div class="text-center">
-                            <div class="text-5xl mb-4">🗺️</div>
-                            <p>지도가 연동되는 영역입니다.</p>
-                            <p class="text-xs mt-2">(Kakao Map / Google Map API 연동 가능)</p>
+                <!-- Venue List (Main) -->
+                <div id="venue-list" class="lg:col-span-4 grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <!-- Venue Card Example -->
+                    <div class="venue-card p-6 rounded-3xl glass-card border border-black/5 dark:border-white/10 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1 group">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-500/20 flex items-center justify-center text-2xl">🏛️</div>
+                            <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button class="p-2 rounded-lg bg-black/5 dark:bg-white/5 text-slate-400 hover:text-emerald-500">✏️</button>
+                                <button class="p-2 rounded-lg bg-black/5 dark:bg-white/5 text-slate-400 hover:text-red-500" onclick="this.closest('.venue-card').remove()">🗑️</button>
+                            </div>
+                        </div>
+                        <h3 class="text-xl font-black text-slate-900 dark:text-white mb-4">강남 테크 허브 4층</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3 text-xs font-bold text-slate-500">
+                                <span class="w-5 text-center">📅</span>
+                                <span>2026년 06월 15일 (월)</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-xs font-bold text-slate-500">
+                                <span class="w-5 text-center">⏰</span>
+                                <span>14:30 ~ 17:00</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-xs font-bold text-slate-500">
+                                <span class="w-5 text-center">📍</span>
+                                <span class="truncate">서울시 강남구 역삼동 824-25</span>
+                            </div>
+                        </div>
+                        <div class="mt-6 pt-6 border-t border-black/5 dark:border-white/5 flex justify-between items-center">
+                            <span class="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Active</span>
+                            <button class="text-[10px] font-black text-slate-400 hover:text-slate-900 dark:hover:text-white transition uppercase tracking-tighter">View on Map &rarr;</button>
                         </div>
                     </div>
+                    
+                    <!-- More cards would go here -->
                 </div>
             </div>
         </main>
 
-        <footer class="p-8 border-t border-black/5 dark:border-white/5 text-center text-xs text-slate-500">
-            © 2026 World AI. All rights reserved.
+        <footer class="p-12 border-t border-black/5 dark:border-white/5 text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">
+            © 2026 World AI. Location Intelligence.
         </footer>
     </div>
+
     <script src="js/main.js"></script>
+    <script>
+        function toggleVenueForm() {
+            const form = document.getElementById('venue-form-container');
+            const list = document.getElementById('venue-list');
+            const isHidden = form.classList.contains('hidden');
+            
+            if (isHidden) {
+                form.classList.remove('hidden');
+                list.classList.replace('lg:col-span-4', 'lg:col-span-3');
+            } else {
+                form.classList.add('hidden');
+                list.classList.replace('lg:col-span-3', 'lg:col-span-4');
+            }
+        }
+
+        function addVenue() {
+            const name = document.getElementById('v-name').value;
+            const date = document.getElementById('v-date').value;
+            const time = document.getElementById('v-time').value;
+            const addr = document.getElementById('v-addr').value;
+
+            if(!name || !date) return alert('필수 정보를 입력해주세요.');
+
+            const card = document.createElement('div');
+            card.className = 'venue-card p-6 rounded-3xl glass-card border border-black/5 dark:border-white/10 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1 group animate-in';
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-500/20 flex items-center justify-center text-2xl">📍</div>
+                    <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button class="p-2 rounded-lg bg-black/5 dark:bg-white/5 text-slate-400 hover:text-emerald-500">✏️</button>
+                        <button class="p-2 rounded-lg bg-black/5 dark:bg-white/5 text-slate-400 hover:text-red-500" onclick="this.closest('.venue-card').remove()">🗑️</button>
+                    </div>
+                </div>
+                <h3 class="text-xl font-black text-slate-900 dark:text-white mb-4">${name}</h3>
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3 text-xs font-bold text-slate-500">
+                        <span class="w-5 text-center">📅</span>
+                        <span>${date}</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs font-bold text-slate-500">
+                        <span class="w-5 text-center">⏰</span>
+                        <span>${time || '시간 미정'}</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs font-bold text-slate-500">
+                        <span class="w-5 text-center">📍</span>
+                        <span class="truncate">${addr || '주소 미등록'}</span>
+                    </div>
+                </div>
+                <div class="mt-6 pt-6 border-t border-black/5 dark:border-white/5 flex justify-between items-center">
+                    <span class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Confirmed</span>
+                    <button class="text-[10px] font-black text-slate-400 hover:text-slate-900 dark:hover:text-white transition uppercase tracking-tighter">View on Map &rarr;</button>
+                </div>
+            `;
+            
+            document.getElementById('venue-list').prepend(card);
+            toggleVenueForm();
+            // Clear inputs
+            document.getElementById('v-name').value = '';
+        }
+    </script>
 </body>
 </html>
