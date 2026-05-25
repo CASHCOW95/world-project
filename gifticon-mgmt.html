@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>기프티콘 관리 - WORLD</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .gifticon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 1.5rem;
+        }
+        @media (max-width: 640px) {
+            .gifticon-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased bg-bg-light dark:bg-bg-dark text-slate-900 dark:text-slate-100 transition-colors duration-300">
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="w-full bg-white/60 dark:bg-[#030509]/30 backdrop-blur-md border-b border-black/5 dark:border-white/5 px-8 py-3.5 flex justify-between items-center sticky top-0 z-50">
+            <a href="index.html" class="flex items-center space-x-3">
+                <div class="text-xl font-black tracking-tighter flex items-center gap-2">
+                    <div class="w-5 h-5 rounded-full bg-gradient-to-tr from-cyan-400 via-indigo-500 to-purple-500 relative flex items-center justify-center shadow-inner">
+                        <div class="absolute w-6.5 h-2.5 border border-white/50 rounded-full rotate-[-30deg]"></div>
+                    </div>
+                    <span class="text-slate-900 dark:text-white font-extrabold text-lg tracking-wide">WORLD</span>
+                </div>
+            </a>
+            <div class="flex items-center space-x-3">
+                <button id="theme-toggle" class="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+                    <span id="theme-icon">🌙</span>
+                </button>
+                <a href="index.html" class="px-4 py-1.5 rounded-full border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-slate-700 dark:text-gray-200 text-xs transition font-bold">HOME</a>
+            </div>
+        </header>
+
+        <main class="flex-grow p-8 max-w-7xl mx-auto w-full">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-8">
+                <div>
+                    <h1 class="text-5xl font-black text-slate-900 dark:text-white mb-3 tracking-tighter">🎁 기프티콘 관리</h1>
+                    <p class="text-slate-500 dark:text-gray-400 font-medium">대량의 기프티콘 이미지를 효율적으로 보관하고 검색하세요.</p>
+                </div>
+                <div class="flex flex-wrap gap-4 items-center">
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+                        <input type="text" id="search-input" placeholder="기프티콘 이름 검색..." class="pl-10 pr-4 py-3.5 rounded-2xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 focus:border-amber-500 focus:outline-none text-sm w-72 transition shadow-sm">
+                    </div>
+                    <button onclick="document.getElementById('gifticon-upload').click()" class="px-8 py-3.5 rounded-2xl bg-amber-600 hover:bg-amber-500 text-white font-black text-sm transition shadow-lg active:scale-95 flex items-center gap-2">
+                        <span>📤</span> 일괄 업로드
+                    </button>
+                    <input type="file" id="gifticon-upload" class="hidden" accept="image/*" multiple>
+                    <button onclick="clearAll()" class="px-5 py-3.5 rounded-2xl border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white font-bold text-xs transition active:scale-95">전체 삭제</button>
+                </div>
+            </div>
+
+            <div class="glass-card rounded-[3rem] border border-black/5 dark:border-white/10 shadow-2xl p-10 min-h-[600px] relative">
+                <!-- Stats Bar -->
+                <div class="flex gap-6 mb-8 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                    <div class="flex items-center gap-2">전체 <span id="total-count" class="text-amber-500">0</span></div>
+                    <div class="flex items-center gap-2 border-l border-black/10 dark:border-white/10 pl-6">오늘 등록 <span class="text-slate-900 dark:text-white">0</span></div>
+                </div>
+
+                <div id="gifticon-grid" class="gifticon-grid">
+                    <!-- Placeholder -->
+                    <div id="upload-placeholder" class="col-span-full py-40 text-center animate-pulse">
+                        <div class="text-8xl mb-6 opacity-20">🖼️</div>
+                        <h3 class="text-2xl font-black mb-2 opacity-40">기프티콘이 없습니다</h3>
+                        <p class="text-slate-500 text-sm opacity-60">수백 개의 이미지도 한 번에 관리할 수 있습니다.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="p-12 border-t border-black/5 dark:border-white/5 text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.5em]">
+            © 2026 World. Visual Asset Manager.
+        </footer>
+    </div>
+
+    <!-- Zoom Modal -->
+    <div id="zoom-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl transition-all cursor-zoom-out" onclick="this.classList.add('hidden')">
+        <img id="zoom-img" src="" class="max-w-full max-h-full rounded-2xl shadow-2xl border border-white/10">
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        const gifticonUpload = document.getElementById('gifticon-upload');
+        const grid = document.getElementById('gifticon-grid');
+        const placeholder = document.getElementById('upload-placeholder');
+        const totalCount = document.getElementById('total-count');
+        const searchInput = document.getElementById('search-input');
+        let items = [];
+
+        gifticonUpload.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            if (files.length > 0) {
+                if(placeholder) placeholder.classList.add('hidden');
+                
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const item = {
+                            id: Date.now() + Math.random(),
+                            name: file.name,
+                            src: event.target.result
+                        };
+                        items.push(item);
+                        renderItems(items);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        });
+
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = items.filter(item => item.name.toLowerCase().includes(query));
+            renderItems(filtered);
+        });
+
+        function renderItems(data) {
+            grid.innerHTML = '';
+            if (data.length === 0 && items.length > 0) {
+                grid.innerHTML = '<div class="col-span-full py-20 text-center font-bold text-slate-500">검색 결과가 없습니다.</div>';
+            } else if (data.length === 0) {
+                grid.appendChild(placeholder);
+                placeholder.classList.remove('hidden');
+            }
+
+            data.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'group relative aspect-[3/4.2] rounded-2xl overflow-hidden border border-black/5 dark:border-white/10 bg-black/5 dark:bg-white/5 shadow-md hover:shadow-2xl transition-all hover:-translate-y-2 hover:scale-[1.02] cursor-pointer';
+                div.innerHTML = `
+                    <img src="${item.src}" class="w-full h-full object-cover" onclick="zoomImage('${item.src}')">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-5">
+                        <p class="text-white text-[11px] font-black truncate mb-3">${item.name}</p>
+                        <div class="flex gap-2">
+                            <button class="flex-grow py-2 rounded-xl bg-white/20 backdrop-blur-md text-white text-[10px] font-black hover:bg-white/30 transition uppercase tracking-widest" onclick="zoomImage('${item.src}')">View</button>
+                            <button class="p-2 rounded-xl bg-red-500/80 text-white hover:bg-red-600 transition" onclick="deleteItem(${item.id})">🗑️</button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(div);
+            });
+            totalCount.innerText = items.length;
+        }
+
+        function deleteItem(id) {
+            items = items.filter(i => i.id !== id);
+            renderItems(items);
+        }
+
+        function clearAll() {
+            if(confirm('정말 모든 기프티콘을 삭제하시겠습니까?')) {
+                items = [];
+                renderItems(items);
+            }
+        }
+
+        function zoomImage(src) {
+            const modal = document.getElementById('zoom-modal');
+            const img = document.getElementById('zoom-img');
+            img.src = src;
+            modal.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

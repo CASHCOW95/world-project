@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스마트 타이머 - WORLD</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .timer-display { font-family: monospace; }
+        .tab-btn.active { background: #6366f1; color: white; box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); }
+    </style>
+</head>
+<body class="antialiased bg-bg-light dark:bg-bg-dark text-slate-900 dark:text-slate-100 transition-colors duration-300">
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="w-full bg-white/60 dark:bg-[#030509]/30 backdrop-blur-md border-b border-black/5 dark:border-white/5 px-8 py-3.5 flex justify-between items-center sticky top-0 z-50">
+            <a href="index.html" class="flex items-center space-x-3">
+                <div class="text-xl font-black tracking-tighter flex items-center gap-2">
+                    <div class="w-5 h-5 rounded-full bg-gradient-to-tr from-cyan-400 via-indigo-500 to-purple-500 relative flex items-center justify-center shadow-inner">
+                        <div class="absolute w-6.5 h-2.5 border border-white/50 rounded-full rotate-[-30deg]"></div>
+                    </div>
+                    <span class="text-slate-900 dark:text-white font-extrabold text-lg tracking-wide uppercase">WORLD</span>
+                </div>
+            </a>
+            <div class="flex items-center space-x-3">
+                <button id="theme-toggle" class="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+                    <span id="theme-icon">🌙</span>
+                </button>
+                <a href="index.html" class="px-4 py-1.5 rounded-full border border-black/10 dark:border-white/10 text-slate-700 dark:text-gray-200 text-xs font-bold transition">HOME</a>
+            </div>
+        </header>
+
+        <main class="flex-grow p-8 max-w-4xl mx-auto w-full">
+            <div class="mb-12 text-center">
+                <h1 class="text-5xl font-black mb-3 tracking-tighter uppercase">⏱️ 스마트 타이머</h1>
+                <p class="text-slate-500 font-medium">밋업 일정을 놓치지 않도록 강력한 알람을 설정하세요.</p>
+            </div>
+
+            <!-- Tab Switcher -->
+            <div class="flex justify-center mb-10">
+                <div class="flex p-1.5 bg-black/5 dark:bg-white/5 rounded-2xl border border-black/5 dark:border-white/10">
+                    <button onclick="switchTab('alarm')" id="tab-alarm" class="tab-btn active px-8 py-2.5 rounded-xl text-xs font-black transition-all">🔔 알람 (지정 시간)</button>
+                    <button onclick="switchTab('countdown')" id="tab-countdown" class="tab-btn px-8 py-2.5 rounded-xl text-xs font-black transition-all">⌛ 카운트다운</button>
+                </div>
+            </div>
+
+            <div class="glass-card p-12 rounded-[3rem] border border-black/5 dark:border-white/10 shadow-2xl text-center relative overflow-hidden">
+                <!-- Alarm Content -->
+                <div id="section-alarm" class="tab-content space-y-8">
+                    <div class="text-[80px] font-black timer-display text-indigo-500" id="current-time">00:00:00</div>
+                    <div class="flex flex-col items-center gap-4">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">알람 시간 설정</label>
+                        <input type="time" id="alarm-time" class="bg-black/5 dark:bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-3xl font-black focus:outline-none focus:border-indigo-500 transition">
+                    </div>
+                    <button id="alarm-toggle" onclick="toggleAlarm()" class="px-12 py-4 rounded-2xl bg-indigo-600 text-white font-black text-sm transition hover:scale-105 active:scale-95 shadow-xl">알람 시작</button>
+                </div>
+
+                <!-- Countdown Content -->
+                <div id="section-countdown" class="tab-content hidden space-y-8">
+                    <div class="text-[80px] font-black timer-display text-emerald-500" id="countdown-display">00:00</div>
+                    <div class="flex justify-center gap-4">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[10px] font-black text-slate-500 uppercase">분</label>
+                            <input type="number" id="cd-min" value="10" min="0" max="59" class="w-20 bg-black/5 dark:bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-2xl font-black text-center focus:outline-none">
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[10px] font-black text-slate-500 uppercase">초</label>
+                            <input type="number" id="cd-sec" value="0" min="0" max="59" class="w-20 bg-black/5 dark:bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-2xl font-black text-center focus:outline-none">
+                        </div>
+                    </div>
+                    <div class="flex justify-center gap-4">
+                        <button id="cd-start" onclick="toggleCountdown()" class="px-10 py-4 rounded-2xl bg-emerald-600 text-white font-black text-sm transition shadow-xl">시작</button>
+                        <button onclick="resetCountdown()" class="px-10 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-black text-sm transition">리셋</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-12 p-8 rounded-[2.5rem] bg-indigo-600/10 border border-indigo-500/20 text-center">
+                <p class="text-xs text-slate-400 leading-relaxed">💡 타이머가 종료되면 강력한 사이렌 소리와 함께 브라우저 알림이 발송됩니다.<br>소리를 들으려면 페이지의 아무 곳이나 한 번 클릭해 주세요.</p>
+            </div>
+        </main>
+
+        <footer class="p-12 text-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
+            © 2026 World. Precision Timing.
+        </footer>
+    </div>
+
+    <!-- Alarm Overlay (Full Screen) -->
+    <div id="alarm-overlay" class="fixed inset-0 z-[2000] hidden bg-indigo-600/90 backdrop-blur-2xl flex flex-col items-center justify-center text-white text-center p-8 animate-pulse">
+        <div class="text-9xl mb-8">🔔</div>
+        <h2 class="text-6xl font-black mb-4 uppercase tracking-tighter">타이머 종료!</h2>
+        <p class="text-2xl mb-12 font-medium">설정하신 시간이 완료되었습니다. 밋업을 확인하세요.</p>
+        <button onclick="stopAlarmSound()" class="px-16 py-6 rounded-full bg-white text-indigo-600 font-black text-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all">알람 끄기</button>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        // 1. Audio and Notification Prep
+        let audioCtx = null;
+        let oscillator = null;
+
+        function playAlarmSound() {
+            if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            oscillator = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            oscillator.connect(gain);
+            gain.connect(audioCtx.destination);
+            oscillator.type = 'square';
+            oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.5);
+            oscillator.loop = true;
+            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            oscillator.start();
+            
+            // Notification
+            if (Notification.permission === "granted") {
+                new Notification("WORLD 타이머 알림", { body: "설정하신 시간이 되었습니다!", icon: "assets/favicon.png" });
+            }
+            
+            document.getElementById('alarm-overlay').classList.remove('hidden');
+            window.focus();
+        }
+
+        function stopAlarmSound() {
+            if(oscillator) {
+                oscillator.stop();
+                oscillator = null;
+            }
+            document.getElementById('alarm-overlay').classList.add('hidden');
+        }
+
+        // 2. Tab Logic
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`section-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).classList.add('active');
+        }
+
+        // 3. Current Time Clock
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('current-time').innerText = now.toTimeString().split(' ')[0];
+            checkAlarm(now);
+        }, 1000);
+
+        // 4. Alarm Logic
+        let alarmTime = null;
+        let isAlarmActive = false;
+
+        function toggleAlarm() {
+            const btn = document.getElementById('alarm-toggle');
+            if(!isAlarmActive) {
+                alarmTime = document.getElementById('alarm-time').value;
+                if(!alarmTime) return alert('알람 시간을 설정해 주세요.');
+                isAlarmActive = true;
+                btn.innerText = '알람 취소';
+                btn.className = btn.className.replace('bg-indigo-600', 'bg-red-500');
+                if (Notification.permission !== "granted") Notification.requestPermission();
+            } else {
+                isAlarmActive = false;
+                alarmTime = null;
+                btn.innerText = '알람 시작';
+                btn.className = btn.className.replace('bg-red-500', 'bg-indigo-600');
+            }
+        }
+
+        function checkAlarm(now) {
+            if(!isAlarmActive || !alarmTime) return;
+            const currentStr = now.toTimeString().slice(0, 5);
+            if(currentStr === alarmTime) {
+                playAlarmSound();
+                toggleAlarm(); // Reset
+            }
+        }
+
+        // 5. Countdown Logic
+        let cdInterval = null;
+        let cdTotalSec = 0;
+
+        function toggleCountdown() {
+            const btn = document.getElementById('cd-start');
+            if(!cdInterval) {
+                const min = parseInt(document.getElementById('cd-min').value) || 0;
+                const sec = parseInt(document.getElementById('cd-sec').value) || 0;
+                cdTotalSec = min * 60 + sec;
+                if(cdTotalSec <= 0) return alert('시간을 설정해 주세요.');
+
+                cdInterval = setInterval(() => {
+                    cdTotalSec--;
+                    updateCdDisplay();
+                    if(cdTotalSec <= 0) {
+                        clearInterval(cdInterval);
+                        cdInterval = null;
+                        btn.innerText = '시작';
+                        playAlarmSound();
+                    }
+                }, 1000);
+                btn.innerText = '정지';
+                if (Notification.permission !== "granted") Notification.requestPermission();
+            } else {
+                clearInterval(cdInterval);
+                cdInterval = null;
+                btn.innerText = '시작';
+            }
+        }
+
+        function updateCdDisplay() {
+            const m = Math.floor(cdTotalSec / 60);
+            const s = cdTotalSec % 60;
+            document.getElementById('countdown-display').innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        function resetCountdown() {
+            clearInterval(cdInterval);
+            cdInterval = null;
+            document.getElementById('cd-start').innerText = '시작';
+            cdTotalSec = 0;
+            updateCdDisplay();
+        }
+
+        document.addEventListener('click', () => {
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        });
+    </script>
+</body>
+</html>
