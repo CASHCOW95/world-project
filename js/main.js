@@ -92,6 +92,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // 4. Feature Locking (on index.html)
     if (currentPage === 'index.html' || currentPage === '') {
         document.querySelectorAll('.feature-card').forEach(card => {
+            const featureType = card.getAttribute('data-feature');
+            if (featureType === 'download') return; // Allow public download access
+
             const lockOverlay = card.querySelector('.lock-overlay');
             const icon = card.querySelector('.feature-icon');
             if (!isLoggedIn) {
