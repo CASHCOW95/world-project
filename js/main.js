@@ -45,18 +45,28 @@ document.addEventListener('DOMContentLoaded', () => {
         mainContent.style.visibility = 'visible';
     }
 
-    const themeToggle = document.getElementById('theme-toggle');
+    const themeLightBtn = document.getElementById('theme-light');
+    const themeDarkBtn = document.getElementById('theme-dark');
     const html = document.documentElement;
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    if (savedTheme === 'light') html.classList.remove('dark');
-    else html.classList.add('dark');
+    
+    const applyTheme = (theme) => {
+        if (theme === 'light') {
+            html.classList.remove('dark');
+            if(themeLightBtn) themeLightBtn.classList.add('bg-white', 'shadow-sm');
+            if(themeDarkBtn) themeDarkBtn.classList.remove('bg-white', 'dark:bg-white/20', 'shadow-sm');
+        } else {
+            html.classList.add('dark');
+            if(themeDarkBtn) themeDarkBtn.classList.add('bg-white', 'dark:bg-white/20', 'shadow-sm');
+            if(themeLightBtn) themeLightBtn.classList.remove('bg-white', 'shadow-sm');
+        }
+        localStorage.setItem('theme', theme);
+    };
 
-    if (themeToggle) {
-        themeToggle.addEventListener('click', () => {
-            const isDark = html.classList.toggle('dark');
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
-        });
-    }
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    applyTheme(savedTheme);
+
+    if (themeLightBtn) themeLightBtn.addEventListener('click', () => applyTheme('light'));
+    if (themeDarkBtn) themeDarkBtn.addEventListener('click', () => applyTheme('dark'));
 
     // 2. Auth Guard for Protected Pages
     const protectedPages = [
