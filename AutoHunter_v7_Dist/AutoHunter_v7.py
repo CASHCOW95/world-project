@@ -106,8 +106,6 @@ class AutoHunterV7_0:
         keyboard.add_hotkey('f11', self.run_manual_sell) # F11로 수동 판매 루틴
 
     def setup_styles(self):
-
-    def setup_styles(self):
         s = self.ui_scale.get()
         style = ttk.Style(); style.theme_use('clam')
         style.configure("TFrame", background="#1e1e1e")
@@ -235,6 +233,13 @@ class AutoHunterV7_0:
         self.sel_canvas.bind("<B1-Motion>", self.on_sel_drag)
         self.sel_canvas.bind("<ButtonRelease-1>", lambda e: self.on_sell_capture_release(e, target))
 
+    def on_sel_press(self, e): self.start_x, self.start_y = e.x, e.y; self.rect = self.sel_canvas.create_rectangle(e.x, e.y, e.x, e.y, outline="cyan", width=3)
+    def on_sel_drag(self, e): self.sel_canvas.coords(self.rect, self.start_x, self.start_y, e.x, e.y)
+    def on_sel_release(self, e):
+        w, h = abs(e.x - self.start_x), abs(e.y - self.start_y)
+        if w > 5: self.reg_l.set(min(self.start_x, e.x)); self.reg_t.set(min(self.start_y, e.y)); self.reg_w.set(w); self.reg_h.set(h); self.x_max.set(w-15); self.log(f"영역 설정: {w}x{h}")
+        self.selector.destroy()
+
     def on_sell_capture_release(self, e, target):
         w, h = abs(e.x - self.start_x), abs(e.y - self.start_y)
         if w > 2 and h > 2:
@@ -283,45 +288,31 @@ class AutoHunterV7_0:
         self.log("💰 [판매 루틴] 시작")
         try:
             time.sleep(1.0)
-            
-            # 1. 상점 아이콘 입장 (여러 후보 중 하나 찾기)
             shop_icons = ["sell1-1.png", "sell1-2.png", "sell1-3.png"]
             found_shop = False
             for icon_file in shop_icons:
-                if self.find_and_click(icon_file, double=True, msg=f"상점 아이콘({icon_file}) 발견"):
-                    found_shop = True
-                    break
+                if self.find_and_click(icon_file, double=True, msg=f"상점 아이콘 발견"):
+                    found_shop = True; break
             
-            if not found_shop:
-                raise Exception("상점 아이콘(sell1-1~3)을 하나도 찾지 못했습니다.")
-            
+            if not found_shop: raise Exception("상점 아이콘을 찾지 못했습니다.")
             time.sleep(1.5)
             
-            # 2. 일괄 판매 버튼 클릭 (sell2.png)
-            if not self.find_and_click("sell2.png", msg="일괄판매 버튼 클릭"):
-                raise Exception("일괄판매 버튼(sell2.png)을 찾지 못했습니다.")
+            if not self.find_and_click("sell2.png", msg="일괄판매 클릭"): raise Exception("일괄판매 버튼 미발견")
             time.sleep(1.2)
             
-            # 3. 확인 버튼 클릭 (sell3.png)
-            if not self.find_and_click("sell3.png", msg="최종 확인 버튼 클릭"):
-                self.log("⚠️ 확인 버튼(sell3.png) 미발견 (이미 처리되었을 수 있음)")
+            if not self.find_and_click("sell3.png", msg="확인 클릭"): self.log("⚠️ 확인 버튼 미발견")
             time.sleep(1.0)
             
-            # 4. 상점 나가기 버튼 클릭 (sell4.png)
-            if not self.find_and_click("sell4.png", msg="상점 종료 및 퇴장"):
-                self.log("⚠️ 나가기 버튼(sell4.png) 미발견")
+            if not self.find_and_click("sell4.png", msg="상점 닫기"): self.log("⚠️ 나가기 버튼 미발견")
             
-            self.log("✨ [판매 루틴] 성공적으로 완료!")
+            self.log("✨ [판매 루틴] 완료")
             winsound.Beep(1000, 200)
-            
         except Exception as e:
-            self.log(f"❌ [판매 루틴 중단] {e}")
+            self.log(f"❌ [판매 실패] {e}")
         
         self.last_sell_time = time.time()
         self.is_selling = False
-        if was_running: 
-            time.sleep(0.5)
-            self.toggle_running() # 사냥 재개
+        if was_running: time.sleep(0.5); self.toggle_running()
 
     def rescale_ui(self):
         self.setup_styles()
@@ -338,49 +329,15 @@ class AutoHunterV7_0:
         self.root.attributes("-topmost", self.always_on_top.get())
         self.root.attributes("-alpha", self.ui_opacity.get())
 
-    def send_telegram(self, msg, photo_path=None):
-        def _send():
-            try:
-                url = f"https://api.telegram.org/bot{self.TELEGRAM_TOKEN}/"
-                if photo_path and os.path.exists(photo_path):
-                    with open(photo_path, 'rb') as f:
-                        requests.post(url + "sendPhoto", data={"chat_id": self.TELEGRAM_CHAT_ID, "caption": msg}, files={"photo": f}, timeout=10)
-                else:
-                    requests.post(url + "sendMessage", json={"chat_id": self.TELEGRAM_CHAT_ID, "text": msg}, timeout=10)
-            except Exception as e:
-                self.log(f"[텔레그램 에러] {e}")
-        threading.Thread(target=_send, daemon=True).start()
-
     def play_custom_sound(self):
         def _play():
-            # 20초간 지옥의 알람 재생
             start_time = time.time()
-            self.log("🔊 [지옥의 알람] 20초간 가동!")
             while time.time() - start_time < 20:
-                # 1단계: 초고주파 엇박자
-                for _ in range(3):
-                    winsound.Beep(3500, 100); winsound.Beep(4000, 50)
-                # 2단계: '드르륵' 소음
+                for _ in range(3): winsound.Beep(3500, 100); winsound.Beep(4000, 50)
                 for freq in range(2500, 4500, 150): winsound.Beep(freq, 20)
-                # 3단계: 긴급 사이렌
-                for _ in range(2):
-                    winsound.Beep(3000, 150); winsound.Beep(1500, 150)
-                if not self.use_sound_alert.get(): break # 도중에 끄면 중단
+                for _ in range(2): winsound.Beep(3000, 150); winsound.Beep(1500, 150)
+                if not self.use_sound_alert.get(): break
         threading.Thread(target=_play, daemon=True).start()
-
-    def open_selector(self):
-        self.selector = tk.Toplevel(self.root); self.selector.attributes("-alpha", 0.3); self.selector.attributes("-fullscreen", True)
-        self.selector.attributes("-topmost", True); self.selector.config(cursor="cross")
-        self.sel_canvas = tk.Canvas(self.selector, cursor="cross", bg="grey"); self.sel_canvas.pack(fill="both", expand=True)
-        self.start_x = None; self.start_y = None; self.rect = None
-        self.sel_canvas.bind("<ButtonPress-1>", self.on_sel_press); self.sel_canvas.bind("<B1-Motion>", self.on_sel_drag); self.sel_canvas.bind("<ButtonRelease-1>", self.on_sel_release)
-
-    def on_sel_press(self, e): self.start_x, self.start_y = e.x, e.y; self.rect = self.sel_canvas.create_rectangle(e.x, e.y, e.x, e.y, outline="cyan", width=3)
-    def on_sel_drag(self, e): self.sel_canvas.coords(self.rect, self.start_x, self.start_y, e.x, e.y)
-    def on_sel_release(self, e):
-        w, h = abs(e.x - self.start_x), abs(e.y - self.start_y)
-        if w > 5: self.reg_l.set(min(self.start_x, e.x)); self.reg_t.set(min(self.start_y, e.y)); self.reg_w.set(w); self.reg_h.set(h); self.x_max.set(w-15); self.log(f"영역 설정: {w}x{h}")
-        self.selector.destroy()
 
     def start_coord_detection(self): threading.Thread(target=self._detection_worker, daemon=True).start()
     def _detection_worker(self):
@@ -403,11 +360,8 @@ class AutoHunterV7_0:
                         low = np.array([max(0, self.base_lower[2]-m), max(0, self.base_lower[1]-m), max(0, self.base_lower[0]-m)])
                         high = np.array([min(255, self.base_upper[2]+m), min(255, self.base_upper[1]+m), min(255, self.base_upper[0]+m)])
                         mask = cv2.inRange(img, low, high); p_img = img.copy()
-                        
-                        # 범위 시각화 (v7.0 추가)
                         cv2.line(p_img, (self.x_min.get(), 0), (self.x_min.get(), self.reg_h.get()), (255, 0, 0), 1)
                         cv2.line(p_img, (self.x_max.get(), 0), (self.x_max.get(), self.reg_h.get()), (0, 0, 255), 1)
-                        
                         if np.any(mask):
                             M = cv2.moments(mask)
                             if M["m00"] > 0: cx, cy = int(M["m10"]/M["m00"]), int(M["m01"]/M["m00"]); cv2.circle(p_img, (cx, cy), 6, (0, 255, 0), -1)
@@ -416,62 +370,29 @@ class AutoHunterV7_0:
                 time.sleep(0.08)
 
     def anti_macro_loop(self):
-        last_alert_time = 0
-        # 감시할 이미지 파일 리스트 (anti4 추가)
-        ANTI_IMAGES = ["anti1.png", "anti2.png", "anti3.png", "anti4.png"]
-        
+        last_alert_time = 0; ANTI_IMAGES = ["anti1.png", "anti2.png", "anti3.png", "anti4.png"]
         with mss.mss() as sct:
             while True:
                 if self.use_anti_macro.get():
                     try:
-                        # 1. 화면 전체 캡처
-                        scr_w, scr_h = pyautogui.size()
-                        monitor = {"top": 0, "left": 0, "width": scr_w, "height": scr_h}
-                        img = np.array(sct.grab(monitor))
-                        img_gray = cv2.cvtColor(img, cv2.COLOR_BGRA2GRAY)
-                        
+                        scr_w, scr_h = pyautogui.size(); monitor = {"top": 0, "left": 0, "width": scr_w, "height": scr_h}
+                        img = np.array(sct.grab(monitor)); img_gray = cv2.cvtColor(img, cv2.COLOR_BGRA2GRAY)
                         found = False
                         for img_name in ANTI_IMAGES:
-                            if not os.path.exists(img_name): continue # 파일 없으면 스킵
-                            
-                            # 템플릿 이미지 로드 (회색조)
+                            if not os.path.exists(img_name): continue
                             template = cv2.imread(img_name, cv2.IMREAD_GRAYSCALE)
                             if template is None: continue
-                            
-                            # 2. 이미지 매칭 실행
                             res = cv2.matchTemplate(img_gray, template, cv2.TM_CCOEFF_NORMED)
-                            threshold = 0.5 # [업데이트] 50% 이상 일치하면 검출 (더 민감하게)
-                            loc = np.where(res >= threshold)
-                            
-                            if len(loc[0]) > 0: # 이미지를 찾았다면
-                                found = True
-                                self.log(f"🚨 [거탐 검출] 이미지 일치 포착({int(np.max(res)*100)}%): {img_name}")
-                                break
-                        
+                            if np.max(res) >= 0.5: found = True; break
                         if found:
                             now = time.time()
-                            if now - last_alert_time > 60: # 1분 이내 중복 방지
-                                # [업데이트] 사냥 중단 로직 제거 (사용자 요청)
-                                
-                                # [지옥의 알람 재생]
-                                if self.use_sound_alert.get():
-                                    self.play_custom_sound()
-                                
-                                # [대기 및 캡처] 5.5초 대기 후 중앙 게임 화면 캡처
-                                time.sleep(5.5)
-                                self.log("📸 중앙 게임 화면 캡처 중...")
-                                
-                                center_roi = {"top": (scr_h // 2) - 300, "left": (scr_w // 2) - 400, "width": 800, "height": 600}
-                                shot = np.array(sct.grab(center_roi))
-                                cv2.imwrite("anti_game_center.png", cv2.cvtColor(shot, cv2.COLOR_BGRA2BGR))
-                                self.log("✅ 캡처 완료 (텔레그램 전송은 비활성 상태).")
-                                
-                                last_alert_time = now
-                                time.sleep(30) # 상황 정리 대기
-                    except Exception as e:
-                        print(f"이미지 매칭 루프 오류: {e}")
-                
-                time.sleep(1.0) # 이미지 매칭은 연산량이 있으므로 주기를 1초로 설정
+                            if now - last_alert_time > 60:
+                                if self.use_sound_alert.get(): self.play_custom_sound()
+                                time.sleep(5.5); center_roi = {"top": (scr_h // 2) - 300, "left": (scr_w // 2) - 400, "width": 800, "height": 600}
+                                shot = np.array(sct.grab(center_roi)); cv2.imwrite("anti_game_center.png", cv2.cvtColor(shot, cv2.COLOR_BGRA2BGR))
+                                last_alert_time = now; time.sleep(30)
+                    except: pass
+                time.sleep(1.0)
 
     def update_preview(self, img):
         try:
@@ -494,25 +415,15 @@ class AutoHunterV7_0:
         cur_dir = 'right'; last_x, stuck_cnt = -1, 0; l_att, l_dash = 0, 0; l_del_time = time.time(); start_cx = None
         while self.is_running:
             if self.is_anti_macro_working or self.is_selling: time.sleep(0.5); continue
-            
-            # 자동 판매 루틴 체크
-            if self.use_auto_sell.get() and (time.time() - self.last_sell_time) >= (self.sell_interval_min.get() * 60):
-                self.run_sell_routine(); continue
-
-            # [추가] 15분 주기 스크린샷 저장 (누적 가동 시간 기준)
+            if self.use_auto_sell.get() and (time.time() - self.last_sell_time) >= (self.sell_interval_min.get() * 60): self.run_sell_routine(); continue
             now = time.time()
             if now - self.last_screenshot_time >= self.screenshot_interval_sec:
                 try:
                     with mss.mss() as s_sct:
-                        filename = f"hunt_{time.strftime('%Y%m%d_%H%M%S')}.png"
-                        filepath = os.path.join(self.SCREENSHOT_DIR, filename)
-                        shot = np.array(s_sct.grab(s_sct.monitors[1]))
-                        cv2.imwrite(filepath, cv2.cvtColor(shot, cv2.COLOR_BGRA2BGR))
-                        self.log(f"📸 주기적 스크린샷 저장 완료: {filename}")
+                        filename = f"hunt_{time.strftime('%Y%m%d_%H%M%S')}.png"; filepath = os.path.join(self.SCREENSHOT_DIR, filename)
+                        shot = np.array(s_sct.grab(s_sct.monitors[1])); cv2.imwrite(filepath, cv2.cvtColor(shot, cv2.COLOR_BGRA2BGR))
                         self.last_screenshot_time = now
-                except Exception as e:
-                    self.log(f"[스크린샷 에러] {e}")
-
+                except: pass
             with mss.mss() as sct:
                 region = {"top": self.reg_t.get(), "left": self.reg_l.get(), "width": self.reg_w.get(), "height": self.reg_h.get()}
                 try:
@@ -525,23 +436,22 @@ class AutoHunterV7_0:
                         M = cv2.moments(mask); cx = -1
                         if M["m00"] > 0:
                             cx = int(M["m10"] / M["m00"])
-                            if self.hunt_mode.get() == 1: # 제자리
+                            if self.hunt_mode.get() == 1:
                                 if start_cx is None: start_cx = cx
                                 r = self.stationary_range.get()
                                 if cx >= start_cx + r and cur_dir == 'right': pyautogui.keyUp('right'); cur_dir = 'left'
                                 elif cx <= start_cx - r and cur_dir == 'left': pyautogui.keyUp('left'); cur_dir = 'right'
                                 pyautogui.keyDown(cur_dir)
-                            else: # 이동
+                            else:
                                 start_cx = None
                                 if cx >= self.x_max.get() and cur_dir == 'right': pyautogui.keyUp('right'); cur_dir = 'left'
                                 elif cx <= self.x_min.get() and cur_dir == 'left': pyautogui.keyUp('left'); cur_dir = 'right'
                                 pyautogui.keyDown(cur_dir)
-                            now = time.time() * 1000
-                            if now - l_att >= self.attack_delay_ms.get(): self.press_key(self.KEY_ATTACK.get()); l_att = now
-                            if self.use_dash.get() and now - l_dash >= self.dash_delay_ms.get(): self.press_key(self.KEY_DASH.get()); l_dash = now
+                            now_ms = time.time() * 1000
+                            if now_ms - l_att >= self.attack_delay_ms.get(): self.press_key(self.KEY_ATTACK.get()); l_att = now_ms
+                            if self.use_dash.get() and now_ms - l_dash >= self.dash_delay_ms.get(): self.press_key(self.KEY_DASH.get()); l_dash = now_ms
                             if self.use_periodic.get() and (time.time() - l_del_time) >= (self.periodic_interval_min.get() * 60):
                                 self.log("[펫먹이] 아이템 사용"); self.press_key(self.KEY_PETFOOD.get()); l_del_time = time.time()
-                        
                         if cx != -1:
                             if abs(cx - last_x) < 2: stuck_cnt += 1
                             else: stuck_cnt = 0; last_x = cx
@@ -549,131 +459,36 @@ class AutoHunterV7_0:
                 except: pass
             time.sleep(0.04)
 
-    def open_point_selector(self, target):
-        self.selector = tk.Toplevel(self.root); self.selector.attributes("-alpha", 0.3); self.selector.attributes("-fullscreen", True)
-        self.selector.attributes("-topmost", True); self.selector.config(cursor="hand2")
-        self.sel_canvas = tk.Canvas(self.selector, bg="grey"); self.sel_canvas.pack(fill="both", expand=True)
-        self.log(f"[{target}] 위치를 마우스로 클릭하세요.")
-        self.sel_canvas.bind("<Button-1>", lambda e: self.on_point_release(e, target))
-
-    def on_point_release(self, e, target):
-        if target == "npc": self.shop_npc_pos = [e.x, e.y]; self.log(f"NPC 좌표 설정: {e.x}, {e.y}")
-        elif target == "btn": self.shop_sell_btn_pos = [e.x, e.y]; self.log(f"판매버튼 좌표 설정: {e.x}, {e.y}")
-        self.selector.destroy()
-
-    def run_sell_routine(self):
-        self.is_selling = True; self.log("[상점] 판매 루틴 시작"); pyautogui.keyUp('left'); pyautogui.keyUp('right')
-        try:
-            # 1. NPC 클릭 (지정된 좌표)
-            if self.shop_npc_pos != [0, 0]:
-                pyautogui.click(self.shop_npc_pos[0], self.shop_npc_pos[1]); time.sleep(1.5)
-            else:
-                self.press_key(self.KEY_SHOP.get()); time.sleep(1.5)
-            
-            # 2. 판매 버튼 클릭 (지정된 좌표)
-            if self.shop_sell_btn_pos != [0, 0]:
-                pyautogui.click(self.shop_sell_btn_pos[0], self.shop_sell_btn_pos[1]); time.sleep(1.0)
-            
-            # 3. 확인창 엔터 등
-            for _ in range(2): self.press_key('enter'); time.sleep(0.5)
-            self.log("[상점] 판매 완료"); winsound.Beep(800, 300)
-        except: self.log("[오류] 판매 루틴 실패")
-        self.last_sell_time = time.time(); self.is_selling = False
-
     def save_current_profile(self):
         n = self.current_profile_name.get()
-        if not n: 
-            messagebox.showwarning("경고", "사냥터 이름을 입력하세요.")
-            return
-            
+        if not n: return
         self.profiles_data[n] = {
             "reg": {"t": self.reg_t.get(), "l": self.reg_l.get(), "w": self.reg_w.get(), "h": self.reg_h.get()},
             "range": {"min": self.x_min.get(), "max": self.x_max.get()},
             "keys": {"att": self.KEY_ATTACK.get(), "dash": self.KEY_DASH.get(), "jump": self.KEY_JUMP.get(), "pet": self.KEY_PETFOOD.get(), "shop": self.KEY_SHOP.get()},
-            "shop_pos": {"npc": self.shop_npc_pos, "btn": self.shop_sell_btn_pos},
-            "params": {
-                "margin": self.color_margin.get(), "ad": self.attack_delay_ms.get(), "dd": self.dash_delay_ms.get(),
-                "use_dash": self.use_dash.get(), "use_anti": self.use_anti_macro.get(), "mode": self.hunt_mode.get(),
-                "use_per": self.use_periodic.get(), "per_int": self.periodic_interval_min.get(), "st_range": self.stationary_range.get(),
-                "use_sound": self.use_sound_alert.get(), "top": self.always_on_top.get(), "opacity": self.ui_opacity.get(),
-                "use_sell": self.use_auto_sell.get(), "sell_int": self.sell_interval_min.get()
-            }
+            "params": {"margin": self.color_margin.get(), "ad": self.attack_delay_ms.get(), "dd": self.dash_delay_ms.get(), "use_dash": self.use_dash.get(), "use_anti": self.use_anti_macro.get(), "mode": self.hunt_mode.get(), "use_per": self.use_periodic.get(), "per_int": self.periodic_interval_min.get(), "st_range": self.stationary_range.get(), "use_sound": self.use_sound_alert.get(), "top": self.always_on_top.get(), "opacity": self.ui_opacity.get(), "use_sell": self.use_auto_sell.get(), "sell_int": self.sell_interval_min.get()}
         }
-        try:
-            with open(CONFIG_FILE, "w", encoding="utf-8") as f: 
-                json.dump(self.profiles_data, f, ensure_ascii=False, indent=4)
-            self.update_profile_list()
-            self.log(f"사냥터 저장 완료: {n}")
-            messagebox.showinfo("완료", f"'{n}' 사냥터가 저장되었습니다.")
-        except Exception as e:
-            self.log(f"[저장 실패] {e}")
+        with open(CONFIG_FILE, "w", encoding="utf-8") as f: json.dump(self.profiles_data, f, ensure_ascii=False, indent=4)
+        self.update_profile_list(); messagebox.showinfo("완료", f"'{n}' 사냥터 저장 완료")
 
     def load_all_profiles(self):
         if os.path.exists(CONFIG_FILE):
             try:
-                with open(CONFIG_FILE, "r", encoding="utf-8") as f: 
-                    self.profiles_data = json.load(f)
+                with open(CONFIG_FILE, "r", encoding="utf-8") as f: self.profiles_data = json.load(f)
                 self.update_profile_list()
-                if self.profiles_data: 
-                    n = list(self.profiles_data.keys())[0]
-                    self.apply_profile_data(n)
-                    self.profile_combo.set(n)
-            except Exception as e:
-                self.log(f"[불러오기 실패] {e}")
+                if self.profiles_data: n = list(self.profiles_data.keys())[0]; self.apply_profile_data(n); self.profile_combo.set(n)
+            except: pass
 
-    def update_profile_list(self): 
-        self.profile_combo['values'] = list(self.profiles_data.keys())
-
+    def update_profile_list(self): self.profile_combo['values'] = list(self.profiles_data.keys())
     def on_profile_change(self, e): 
         n = self.profile_combo.get()
-        if n in self.profiles_data:
-            self.apply_profile_data(n)
-            self.current_profile_name.set(n)
-            self.log(f"사냥터 변경: {n}")
+        if n in self.profiles_data: self.apply_profile_data(n); self.current_profile_name.set(n)
 
     def apply_profile_data(self, n):
-        if n not in self.profiles_data: return
-        d = self.profiles_data[n]; p = d["params"]; k = d.get("keys", {}); s = d.get("shop_pos", {})
-        
-        # 영역 및 범위
+        d = self.profiles_data[n]; p = d["params"]; k = d.get("keys", {})
         self.reg_t.set(d["reg"]["t"]); self.reg_l.set(d["reg"]["l"]); self.reg_w.set(d["reg"]["w"]); self.reg_h.set(d["reg"]["h"])
         self.x_min.set(d["range"]["min"]); self.x_max.set(d["range"]["max"])
-        
-        # 키 설정
-        self.KEY_ATTACK.set(k.get("att", "end"))
-        self.KEY_DASH.set(k.get("dash", "space"))
-        self.KEY_JUMP.set(k.get("jump", "alt"))
-        self.KEY_PETFOOD.set(k.get("pet", k.get("per", "del"))) # 이전 버전(per) 호환
-        self.KEY_SHOP.set(k.get("shop", "m"))
-        
-        # 상점 좌표
-        self.shop_npc_pos = s.get("npc", [0, 0]); self.shop_sell_btn_pos = s.get("btn", [0, 0])
-        
-        # 기타 파라미터
-        self.color_margin.set(p.get("margin", 60))
-        self.attack_delay_ms.set(p.get("ad", 500))
-        self.dash_delay_ms.set(p.get("dd", 1500))
-        self.use_dash.set(p.get("use_dash", True))
-        self.use_anti_macro.set(p.get("use_anti", True))
-        self.hunt_mode.set(p.get("mode", 0))
-        self.use_periodic.set(p.get("use_per", True))
-        self.periodic_interval_min.set(p.get("per_int", 5))
-        self.stationary_range.set(p.get("st_range", 5))
-        self.use_sound_alert.set(p.get("use_sound", True))
-        self.always_on_top.set(p.get("top", True))
-        self.ui_opacity.set(p.get("opacity", 1.0))
-        self.use_auto_sell.set(p.get("use_sell", False))
-        self.sell_interval_min.set(p.get("sell_int", 30))
-        
-        self.update_ui_settings()
-        self.log(f"'{n}' 설정 적용 완료")
-
-if __name__ == "__main__":
-    root = tk.Tk(); app = AutoHunterV7_0(root); root.mainloop()
-"]["l"]); self.reg_w.set(d["reg"]["w"]); self.reg_h.set(d["reg"]["h"])
-        self.x_min.set(d["range"]["min"]); self.x_max.set(d["range"]["max"])
-        self.shop_npc_pos = s.get("npc", [0, 0]); self.shop_sell_btn_pos = s.get("btn", [0, 0])
-        self.KEY_ATTACK.set(k.get("att", "end")); self.KEY_DASH.set(k.get("dash", "space")); self.KEY_JUMP.set(k.get("jump", "alt")); self.KEY_PERIODIC.set(k.get("per", "del")); self.KEY_SHOP.set(k.get("shop", "m"))
+        self.KEY_ATTACK.set(k.get("att", "end")); self.KEY_DASH.set(k.get("dash", "space")); self.KEY_JUMP.set(k.get("jump", "alt")); self.KEY_PETFOOD.set(k.get("pet", "del")); self.KEY_SHOP.set(k.get("shop", "m"))
         self.color_margin.set(p.get("margin", 60)); self.attack_delay_ms.set(p.get("ad", 500)); self.dash_delay_ms.set(p.get("dd", 1500))
         self.use_dash.set(p.get("use_dash", True)); self.use_anti_macro.set(p.get("use_anti", True)); self.hunt_mode.set(p.get("mode", 0))
         self.use_periodic.set(p.get("use_per", True)); self.periodic_interval_min.set(p.get("per_int", 5)); self.stationary_range.set(p.get("st_range", 5))
