@@ -113,7 +113,43 @@ document.addEventListener('DOMContentLoaded', () => {
         updateDashboardSummary();
     }
 
-    // 5. Scroll Animations (CRITICAL: Required for .scroll-reveal elements to show)
+    // 7. Feedback Modal Logic
+    const feedbackModal = document.getElementById('feedback-modal');
+    const openFeedbackBtn = document.getElementById('open-feedback');
+    const closeFeedbackBtn = document.getElementById('close-feedback');
+    const submitFeedbackBtn = document.getElementById('submit-feedback');
+
+    if (openFeedbackBtn && feedbackModal) {
+        openFeedbackBtn.addEventListener('click', () => {
+            feedbackModal.classList.add('active');
+        });
+    }
+
+    if (closeFeedbackBtn && feedbackModal) {
+        closeFeedbackBtn.addEventListener('click', () => {
+            feedbackModal.classList.remove('active');
+        });
+    }
+
+    if (submitFeedbackBtn) {
+        submitFeedbackBtn.addEventListener('click', () => {
+            const title = document.getElementById('feedback-title').value;
+            const content = document.getElementById('feedback-content').value;
+
+            if (!title || !content) {
+                alert('제목과 내용을 모두 입력해주세요.');
+                return;
+            }
+
+            const mailtoLink = `mailto:ydh2455@naver.com?subject=${encodeURIComponent('[문의] ' + title)}&body=${encodeURIComponent(content)}`;
+            window.location.href = mailtoLink;
+            
+            feedbackModal.classList.remove('active');
+            showToast('📧 메일 클라이언트가 열립니다.');
+        });
+    }
+
+    // 8. Scroll Animations (CRITICAL: Required for .scroll-reveal elements to show)
     const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
