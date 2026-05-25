@@ -97,8 +97,8 @@ class ShapeMonitorWindow(QMainWindow):
 class AutoHunterV7_0(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("AUTOmaple 도형거탐버전 v9.4.0 (2026.05.26)")
-        self.setMinimumSize(1250, 920)
+        self.setWindowTitle("AUTOmaple 도형거탐버전 v9.5.0 (2026.05.26)")
+        self.setMinimumSize(1400, 950) # 가로폭 확장
         self.setWindowFlags(Qt.WindowStaysOnTopHint)
         
         # 1. 상태 변수 초기화
@@ -110,7 +110,7 @@ class AutoHunterV7_0(QMainWindow):
         self.actions_cnt = 0
         self.err_cnt = 0
         self.last_sell_time = time.time()
-        self.frame_num = 0 # 디버깅용 프레임 번호
+        self.frame_num = 0
         
         # 2. 사냥 설정 초기화
         self.reg_t, self.reg_l = 100, 100
@@ -137,33 +137,30 @@ class AutoHunterV7_0(QMainWindow):
         self.signals = Communicate()
         self.signals.log_signal.connect(self.update_log)
         self.signals.preview_signal.connect(self.update_minimap_preview)
-        self.signals.shape_monitor_signal.connect(self.update_shape_preview_all)
+        self.signals.shape_monitor_signal.connect(self.update_shape_analytics)
         self.signals.status_signal.connect(self.update_status_ui)
         self.signals.alert_signal.connect(self.play_custom_sound)
 
-        # 4. 모니터링 창 초기화
-        self.monitor_win = None
-
-        # 5. UI 구성
+        # 4. UI 구성
         self.setup_ui()
         self.apply_qss()
         
-        # 6. 시그널-버튼 물리적 연결
+        # 5. 시그널-버튼 물리적 연결
         self.signals.start_signal.connect(self.start_btn.click)
         self.signals.stop_signal.connect(self.stop_btn.click)
         self.signals.sell_signal.connect(self.manual_sell_btn.click)
 
-        # 7. 프로필 로드
+        # 6. 프로필 로드
         self.load_all_profiles()
 
-        # 8. 백그라운드 스레드 가동
+        # 7. 백그라운드 스레드 가동
         self.stop_threads = False
         threading.Thread(target=self.monitor_loop, daemon=True).start()
         threading.Thread(target=self.anti_macro_loop, daemon=True).start()
         threading.Thread(target=self.shape_tracking_loop, daemon=True).start()
         threading.Thread(target=self.status_update_loop, daemon=True).start()
         
-        # 9. 전역 단축키 등록
+        # 8. 전역 단축키 등록
         try:
             keyboard.unhook_all()
             keyboard.add_hotkey('f8', self.hotkey_start_handler)
@@ -171,18 +168,21 @@ class AutoHunterV7_0(QMainWindow):
             keyboard.add_hotkey('f11', lambda: self.signals.sell_signal.emit())
         except: pass
 
-    def open_shape_monitor(self):
-        if self.monitor_win is None:
-            self.monitor_win = ShapeMonitorWindow(self)
-        self.monitor_win.show()
-
-    def update_shape_preview_all(self, data):
+    def update_shape_analytics(self, data):
         img, log_msg = data
         self.update_shape_preview(img)
-        if self.monitor_win and self.monitor_win.isVisible():
-            self.monitor_win.update_frame(img)
-            if log_msg:
-                self.monitor_win.append_console(log_msg)
+        if log_msg:
+            self.append_shape_console(log_msg)
+
+    def append_shape_console(self, msg):
+        self.shape_console.append(msg)
+        self.shape_console.verticalScrollBar().setValue(self.shape_console.verticalScrollBar().maximum())
+        if self.shape_console.document().blockCount() > 50:
+            cursor = self.shape_console.textCursor()
+            cursor.movePosition(cursor.Start)
+            cursor.select(cursor.BlockUnderCursor)
+            cursor.removeSelectedText()
+            cursor.deleteChar()
 
     def update_minimap_preview(self, img):
         h, w, c = img.shape; bytes_per_line = c * w; q_img = QImage(img.data, w, h, bytes_per_line, QImage.Format_RGB888).rgbSwapped()
@@ -190,9 +190,7 @@ class AutoHunterV7_0(QMainWindow):
 
     def update_shape_preview(self, img):
         h, w, c = img.shape; bytes_per_line = c * w; q_img = QImage(img.data, w, h, bytes_per_line, QImage.Format_RGB888).rgbSwapped()
-        pixmap = QPixmap.fromImage(q_img).scaled(370, 210, Qt.KeepAspectRatio, Qt.SmoothTransformation); self.shape_preview.setPixmap(pixmap)
-        if self.monitor_win and self.monitor_win.isVisible():
-            self.monitor_win.update_frame(frame)
+        pixmap = QPixmap.fromImage(q_img).scaled(self.shape_preview.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation); self.shape_preview.setPixmap(pixmap)
 
     def setup_ui(self):
         central_widget = QWidget()
@@ -223,103 +221,112 @@ class AutoHunterV7_0(QMainWindow):
 
         content_layout = QHBoxLayout(); content_layout.setSpacing(20)
 
-        # Left Panel (Metrics)
-        left_frame = QFrame(objectName="panelFrame"); left_frame.setFixedWidth(330)
-        left_vbox = QVBoxLayout(left_frame); left_vbox.setContentsMargins(20, 30, 20, 30)
-        left_vbox.addWidget(QLabel("SYSTEM METRICS", objectName="panelTitle"))
+        # [변경 1] Analytics Panel (기존 우측 -> 좌측 이동)
+        left_frame = QFrame(); left_frame.setObjectName("panelFrame"); left_frame.setFixedWidth(500)
+        left_vbox = QVBoxLayout(left_frame); left_vbox.setContentsMargins(15, 20, 15, 15)
         
-        self.cpu_label = QLabel("CPU 사용률(0%)", objectName="subLabel"); left_vbox.addWidget(self.cpu_label)
-        self.cpu_bar = QProgressBar(objectName="metricBar"); self.cpu_bar.setFixedHeight(15); self.cpu_bar.setTextVisible(False); left_vbox.addWidget(self.cpu_bar)
+        # Minimap Section with Small Button
+        mini_header = QHBoxLayout()
+        mini_header.addWidget(QLabel("MINIMAP ANALYTICS", objectName="panelTitle"))
+        mini_header.addStretch()
+        self.sel_btn = QPushButton("영역 설정"); self.sel_btn.setFixedSize(80, 25)
+        self.sel_btn.setStyleSheet("font-size: 10px; padding: 2px; border-radius: 5px;")
+        self.sel_btn.clicked.connect(self.open_selector)
+        mini_header.addWidget(self.sel_btn)
+        left_vbox.addLayout(mini_header)
+        
+        self.minimap_preview = QLabel("WAITING..."); self.minimap_preview.setObjectName("previewLabel")
+        self.minimap_preview.setFixedSize(470, 200); self.minimap_preview.setAlignment(Qt.AlignCenter)
+        left_vbox.addWidget(self.minimap_preview)
         
         left_vbox.addSpacing(15)
-        self.ram_label = QLabel("RAM 점유율(0%)", objectName="subLabel"); left_vbox.addWidget(self.ram_label)
-        self.ram_bar = QProgressBar(objectName="metricBar"); self.ram_bar.setFixedHeight(15); self.ram_bar.setTextVisible(False); left_vbox.addWidget(self.ram_bar)
         
-        left_vbox.addSpacing(35)
-        self.data_runtime = self.create_data_row(left_vbox, "현재 가동 시간", "00:00:00")
-        self.data_total_time = self.create_data_row(left_vbox, "총 누적 사냥", "00:00:00")
-        self.data_actions = self.create_data_row(left_vbox, "실행 명령 횟수", "0")
-        self.data_errors = self.create_data_row(left_vbox, "보안 탐지 기록", "0회")
-        left_vbox.addStretch()
+        # Shape Detection Section
+        left_vbox.addWidget(QLabel("MACRO DETECTION ENGINE [LIVE]", objectName="panelTitle"))
+        self.shape_preview = QLabel("SEARCHING..."); self.shape_preview.setObjectName("previewLabel")
+        self.shape_preview.setFixedSize(470, 260); self.shape_preview.setAlignment(Qt.AlignCenter)
+        left_vbox.addWidget(self.shape_preview)
+        
+        self.shape_console = QTextEdit(); self.shape_console.setReadOnly(True)
+        self.shape_console.setFixedHeight(100); self.shape_console.setObjectName("logTerminal")
+        self.shape_console.setStyleSheet("color: #58a6ff; font-size: 10px;")
+        left_vbox.addWidget(self.shape_console)
+        
         content_layout.addWidget(left_frame)
 
-        # Center Panel (Config)
+        # [변경 2] Algorithm Panel (중앙 유지)
         center_frame = QFrame(objectName="panelFrame")
         center_vbox = QVBoxLayout(center_frame); center_vbox.setContentsMargins(15, 30, 15, 15)
         center_vbox.addWidget(QLabel("CORE ALGORITHM", objectName="panelTitle"))
         
         self.main_tabs = QTabWidget(); center_vbox.addWidget(self.main_tabs)
         
-        # Tab 1: Mode Settings
-        self.mode_tabs = QTabWidget()
-        self.mode_tabs.currentChanged.connect(self.on_hunt_mode_tab_changed)
-        
+        # Tabs (LR, ST, Skill, Advanced)
+        self.mode_tabs = QTabWidget(); self.mode_tabs.currentChanged.connect(self.on_hunt_mode_tab_changed)
         tab_lr_widget = QWidget(); tab_lr_vbox = QVBoxLayout(tab_lr_widget)
-        self.x_min_slider = self.create_slider_row(tab_lr_vbox, "좌측 이동 경계:", 0, 400, self.x_min, self.update_x_min)
-        self.x_max_slider = self.create_slider_row(tab_lr_vbox, "우측 이동 경계:", 0, 400, self.x_max, self.update_x_max)
-        tab_lr_vbox.addStretch(); self.mode_tabs.addTab(tab_lr_widget, "좌우 이동 모드")
+        self.x_min_slider = self.create_slider_row(tab_lr_vbox, "좌측 경계:", 0, 400, self.x_min, self.update_x_min)
+        self.x_max_slider = self.create_slider_row(tab_lr_vbox, "우측 경계:", 0, 400, self.x_max, self.update_x_max)
+        tab_lr_vbox.addStretch(); self.mode_tabs.addTab(tab_lr_widget, "좌우 이동")
         
         tab_st_widget = QWidget(); tab_st_vbox = QVBoxLayout(tab_st_widget)
-        self.stat_range_slider = self.create_slider_row(tab_st_vbox, "제자리 활동 범위:", 1, 100, self.stationary_range, self.update_stat_range)
-        tab_st_vbox.addStretch(); self.mode_tabs.addTab(tab_st_widget, "제자리 사냥 모드")
-        
+        self.stat_range_slider = self.create_slider_row(tab_st_vbox, "제자리 범위:", 1, 100, self.stationary_range, self.update_stat_range)
+        tab_st_vbox.addStretch(); self.mode_tabs.addTab(tab_st_widget, "제자리 사냥")
         self.main_tabs.addTab(self.mode_tabs, "작동 모드")
 
-        # Tab 2: Skill & Precision
         tab_skill_widget = QWidget(); tab_skill_vbox = QVBoxLayout(tab_skill_widget)
-        self.precision_slider = self.create_slider_row(tab_skill_vbox, "인식 정밀도(0~3):", 1, 30, int(self.precision_val*10), self.update_precision, is_float=True)
-        self.att_slider = self.create_slider_row(tab_skill_vbox, "공격 주기(ms):", 100, 3000, self.attack_delay_ms, self.update_att_delay)
-        self.dash_slider = self.create_slider_row(tab_skill_vbox, "이동 주기(ms):", 100, 10000, self.dash_delay_ms, self.update_dash_delay)
-        self.pet_slider = self.create_slider_row(tab_skill_vbox, "소모품 사용(분):", 1, 60, self.periodic_interval_min, self.update_pet_interval)
-        
+        self.precision_slider = self.create_slider_row(tab_skill_vbox, "인식 정밀도:", 1, 30, int(self.precision_val*10), self.update_precision, is_float=True)
+        self.att_slider = self.create_slider_row(tab_skill_vbox, "공격 주기:", 100, 3000, self.attack_delay_ms, self.update_att_delay)
+        self.dash_slider = self.create_slider_row(tab_skill_vbox, "이동 주기:", 100, 10000, self.dash_delay_ms, self.update_dash_delay)
+        self.pet_slider = self.create_slider_row(tab_skill_vbox, "소모품(분):", 1, 60, self.periodic_interval_min, self.update_pet_interval)
         key_grid = QGridLayout(); key_grid.setSpacing(12)
-        self.key_att_cb = self.create_key_combo(key_grid, "공격", 0, 0, "end")
-        self.key_dash_cb = self.create_key_combo(key_grid, "이동", 0, 1, "space")
-        self.key_jump_cb = self.create_key_combo(key_grid, "점프", 1, 0, "alt")
-        self.key_pet_cb = self.create_key_combo(key_grid, "소모품", 1, 1, "del")
-        tab_skill_vbox.addLayout(key_grid); tab_skill_vbox.addStretch()
-        self.main_tabs.addTab(tab_skill_widget, "단축키/정밀도")
+        self.key_att_cb = self.create_key_combo(key_grid, "공격", 0, 0, "end"); self.key_dash_cb = self.create_key_combo(key_grid, "이동", 0, 1, "space")
+        self.key_jump_cb = self.create_key_combo(key_grid, "점프", 1, 0, "alt"); self.key_pet_cb = self.create_key_combo(key_grid, "소모품", 1, 1, "del")
+        tab_skill_vbox.addLayout(key_grid); tab_skill_vbox.addStretch(); self.main_tabs.addTab(tab_skill_widget, "단축키/정밀도")
 
-        # Tab 3: Advanced Settings
         tab_adv_widget = QWidget(); tab_adv_vbox = QVBoxLayout(tab_adv_widget)
-        self.chk_alert = QCheckBox("거짓말 탐지기 인식 시 알람 울리기"); self.chk_alert.setChecked(True); self.chk_alert.toggled.connect(self.update_use_alert)
-        tab_adv_vbox.addWidget(self.chk_alert)
-        self.chk_shape_anti = QCheckBox("투명 도형 거탐 실시간 추적 엔진 활성화"); self.chk_shape_anti.setChecked(False); self.chk_shape_anti.toggled.connect(self.update_use_shape_anti)
-        tab_adv_vbox.addWidget(self.chk_shape_anti)
-        
-        self.monitor_btn = QPushButton("도형거탐 실시간 모니터링 창 열기")
-        self.monitor_btn.setFixedHeight(40); self.monitor_btn.clicked.connect(self.open_shape_monitor)
-        tab_adv_vbox.addWidget(self.monitor_btn)
-        
-        self.chk_sell = QCheckBox("자동 판매 로직 활성화 (준비 중)"); self.chk_sell.setEnabled(False)
-        tab_adv_vbox.addWidget(self.chk_sell)
-        self.sell_slider = self.create_slider_row(tab_adv_vbox, "판매 시퀀스 주기:", 10, 60, self.sell_interval_min, self.update_sell_interval)
-        self.chk_top = QCheckBox("창 항상 맨 위로 고정"); self.chk_top.setChecked(True); self.chk_top.toggled.connect(self.update_window_flags)
-        tab_adv_vbox.addWidget(self.chk_top)
-        self.opacity_slider = self.create_slider_row(tab_adv_vbox, "인터페이스 투명도:", 30, 100, 100, self.update_opacity)
-        tab_adv_vbox.addStretch()
-        self.main_tabs.addTab(tab_adv_widget, "시스템 환경")
-
+        self.chk_alert = QCheckBox("거탐 알람 울리기"); self.chk_alert.setChecked(True); self.chk_alert.toggled.connect(self.update_use_alert); tab_adv_vbox.addWidget(self.chk_alert)
+        self.chk_shape_anti = QCheckBox("투명 도형 추적 엔진 활성화"); self.chk_shape_anti.setChecked(False); self.chk_shape_anti.toggled.connect(self.update_use_shape_anti); tab_adv_vbox.addWidget(self.chk_shape_anti)
+        self.chk_sell = QCheckBox("자동 판매 (준비 중)"); self.chk_sell.setEnabled(False); tab_adv_vbox.addWidget(self.chk_sell)
+        self.sell_slider = self.create_slider_row(tab_adv_vbox, "판매 주기:", 10, 60, self.sell_interval_min, self.update_sell_interval)
+        self.chk_top = QCheckBox("창 맨 위로 고정"); self.chk_top.setChecked(True); self.chk_top.toggled.connect(self.update_window_flags); tab_adv_vbox.addWidget(self.chk_top)
+        self.opacity_slider = self.create_slider_row(tab_adv_vbox, "투명도:", 30, 100, 100, self.update_opacity)
+        tab_adv_vbox.addStretch(); self.main_tabs.addTab(tab_adv_widget, "시스템 환경")
         content_layout.addWidget(center_frame)
 
-        # 3. Right Panel (Preview & Logs)
-        right_frame = QFrame(); right_frame.setObjectName("panelFrame"); right_frame.setFixedWidth(400)
-        right_vbox = QVBoxLayout(right_frame); right_vbox.setContentsMargins(15, 30, 15, 15)
-        right_vbox.addWidget(QLabel("LIVE ANALYTICS", objectName="panelTitle"))
+        # [변경 3] Metrics & Logs Panel (기존 좌측 -> 우측 이동)
+        right_frame = QFrame(objectName="panelFrame"); right_frame.setFixedWidth(330)
+        right_vbox = QVBoxLayout(right_frame); right_vbox.setContentsMargins(20, 30, 20, 20)
         
-        self.preview_label = QLabel("AWAITING SIGNAL..."); self.preview_label.setObjectName("previewLabel")
-        self.preview_label.setFixedSize(370, 280); self.preview_label.setAlignment(Qt.AlignCenter)
-        right_vbox.addWidget(self.preview_label)
+        right_vbox.addWidget(QLabel("SYSTEM METRICS", objectName="panelTitle"))
+        self.cpu_label = QLabel("CPU 사용률(0%)", objectName="subLabel"); right_vbox.addWidget(self.cpu_label)
+        self.cpu_bar = QProgressBar(objectName="metricBar"); self.cpu_bar.setFixedHeight(12); self.cpu_bar.setTextVisible(False); right_vbox.addWidget(self.cpu_bar)
+        right_vbox.addSpacing(10)
+        self.ram_label = QLabel("RAM 점유율(0%)", objectName="subLabel"); right_vbox.addWidget(self.ram_label)
+        self.ram_bar = QProgressBar(objectName="metricBar"); self.ram_bar.setFixedHeight(12); self.ram_bar.setTextVisible(False); right_vbox.addWidget(self.ram_bar)
         
-        self.sel_btn = QPushButton("미니맵 영역 드래그 설정"); self.sel_btn.setFixedHeight(50); self.sel_btn.clicked.connect(self.open_selector)
-        right_vbox.addWidget(self.sel_btn)
+        right_vbox.addSpacing(25)
+        self.data_runtime = self.create_data_row(right_vbox, "가동 시간", "00:00:00")
+        self.data_total_time = self.create_data_row(right_vbox, "누적 사냥", "00:00:00")
+        self.data_actions = self.create_data_row(right_vbox, "명령 횟수", "0")
+        self.data_errors = self.create_data_row(right_vbox, "탐지 기록", "0회")
         
-        right_vbox.addSpacing(15); right_vbox.addWidget(QLabel("OPERATION LOGS", objectName="panelTitle"))
+        right_vbox.addSpacing(25)
+        
+        # System Logs (Moved here)
+        right_vbox.addWidget(QLabel("SYSTEM LOGS", objectName="panelTitle"))
         self.log_text = QTextEdit(); self.log_text.setObjectName("logTerminal"); self.log_text.setReadOnly(True)
         right_vbox.addWidget(self.log_text)
         
-        content_layout.addWidget(right_frame); main_layout.addLayout(content_layout)
+        content_layout.addWidget(right_frame)
+        main_layout.addLayout(content_layout)
 
+        # Footer Actions
+        footer = QHBoxLayout(); footer.setSpacing(15)
+        self.start_btn = QPushButton("사냥 시작 [F8]", objectName="startBtn"); self.start_btn.setFixedHeight(85); self.start_btn.clicked.connect(self.start_hunting); footer.addWidget(self.start_btn, 2)
+        self.stop_btn = QPushButton("사냥 중지 [F9]", objectName="stopBtn"); self.stop_btn.setFixedHeight(85); self.stop_btn.clicked.connect(self.stop_hunting); self.stop_btn.setEnabled(False); footer.addWidget(self.stop_btn, 2)
+        self.manual_sell_btn = QPushButton("판매 [F11]", objectName="sellBtn"); self.manual_sell_btn.setFixedHeight(85); self.manual_sell_btn.clicked.connect(self.run_manual_sell); footer.addWidget(self.manual_sell_btn, 1)
+        self.stop_all_btn = QPushButton("종료"); self.stop_all_btn.setObjectName("stopBtn"); self.stop_all_btn.setFixedHeight(85); self.stop_all_btn.clicked.connect(self.close); footer.addWidget(self.stop_all_btn, 1)
+        main_layout.addLayout(footer)
         # Footer Actions
         footer = QHBoxLayout(); footer.setSpacing(15)
         self.start_btn = QPushButton("사냥 시작 [F8]", objectName="startBtn"); self.start_btn.setFixedHeight(85); self.start_btn.clicked.connect(self.start_hunting)
