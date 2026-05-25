@@ -1,0 +1,234 @@
+{
+  "main": {
+    "id": "444bf42711a8c2a4",
+    "type": "split",
+    "children": [
+      {
+        "id": "e6cec60ba8a531dc",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "20665381e6159af6",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Untitled.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Untitled"
+            }
+          },
+          {
+            "id": "ace7692f7f3d0bc4",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "메모/무제.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "무제"
+            }
+          }
+        ],
+        "currentTab": 1
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "a006a172d2c0c681",
+    "type": "split",
+    "children": [
+      {
+        "id": "476d393f35a59e73",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "08af166cf2a5736f",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "파일 탐색기"
+            }
+          },
+          {
+            "id": "b4f03870adfabb71",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "검색"
+            }
+          },
+          {
+            "id": "66866a10e276ff82",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "북마크"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "8dfdf1a78f4b501b",
+    "type": "split",
+    "children": [
+      {
+        "id": "700959b0c43b00eb",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "252ee0d515fefa9f",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "GEMINI.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "GEMINI 의 백링크"
+            }
+          },
+          {
+            "id": "5c77d39f21da117c",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "GEMINI.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "GEMINI 의 나가는 링크"
+            }
+          },
+          {
+            "id": "d110c89a171d572f",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "태그"
+            }
+          },
+          {
+            "id": "4ff4254ce477bad5",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "모든 속성"
+            }
+          },
+          {
+            "id": "e9e19327ec88a61e",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "GEMINI.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "GEMINI 의 개요"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:빠른 전환기 열기": false,
+      "graph:그래프 뷰 열기": false,
+      "canvas:새 캔버스 만들기": false,
+      "daily-notes:오늘의 일일 노트 열기": false,
+      "templates:템플릿 삽입": false,
+      "command-palette:명령어 팔레트 열기": false,
+      "bases:새 베이스 생성하기": false
+    }
+  },
+  "active": "08af166cf2a5736f",
+  "lastOpenFiles": [
+    "Untitled.md",
+    "메모/무제.md",
+    "메모",
+    "wiki/core/MOC - 코드 엔지니어링.md",
+    "wiki/core/MOC - 인생진리.md",
+    "wiki/core/MOC - AI 트렌드.md",
+    "wiki/금리 쇼크의 실체.md",
+    "wiki/core/MOC - 경제지식.md",
+    "wiki/core/MOC - 보컬 트레이닝.md",
+    "wiki/core/MOC - 시스템 & 철학.md",
+    "wiki/코드 엔지니어링 - 클로드 코드 활용.md",
+    "wiki/공허를 이기는 치열함.md",
+    "wiki/나를 복제하는 세컨드 브레인.md",
+    "wiki/인간 평가의 두 구역.md",
+    "wiki/목적주의.md",
+    "wiki/지식의 복리.md",
+    "wiki/자존감의 본질.md",
+    "wiki/사스포칼립스.md",
+    "wiki/충만주의와 현존.md",
+    "wiki/지식의 복리와 사고 모델.md",
+    "wiki/보컬 트레이닝 - 발성 체계화.md",
+    "wiki/코인 트레이딩 - 매매 복기.md",
+    "wiki/index.md",
+    "wiki/LLM Wiki 개요.md",
+    "wiki/건강검진.md",
+    "wiki/재정 지배.md",
+    "raw 데이터.md",
+    "wiki/core",
+    "wiki",
+    "raw"
+  ]
+}

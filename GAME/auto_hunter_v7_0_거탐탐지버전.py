@@ -1,523 +1,399 @@
-import tkinter as tk
-from tkinter import ttk, messagebox
+import sys
+import os
+import time
+import json
+import random
+import threading
+import ctypes
+import winsound
 import cv2
 import numpy as np
 import mss
 import pyautogui
-import time
-import random
 import keyboard
-import threading
-import json
-import os
-import ctypes
-import winsound
-from PIL import Image, ImageTk
+import psutil
+from PIL import Image
 
-# 설정 파일 경로 (v7.0 전용)
+from PySide6.QtCore import Qt, QTimer, Signal, QObject, QSize, QPoint
+from PySide6.QtGui import QColor, QFont, QImage, QPixmap, QIcon, QAction
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
+    QGridLayout, QFrame, QLabel, QPushButton, QComboBox, QSlider, 
+    QLineEdit, QTabWidget, QCheckBox, QRadioButton, QButtonGroup,
+    QProgressBar, QTextEdit, QSizePolicy, QSpacerItem, QMessageBox
+)
+
+# 설정 파일 경로
 CONFIG_FILE = "hunter_premium_v7_0_config.json"
 
 # --- DPI 보정 ---
 try:
     ctypes.windll.shcore.SetProcessDpiAwareness(1)
 except:
-    try:
-        ctypes.windll.user32.SetProcessDPIAware()
-    except:
-        pass
+    pass
 
-class AutoHunterV7_0:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("오토헌터 v7.0")
-        self.root.geometry("450x800")
-        self.root.configure(bg="#1e1e1e")
-        self.root.attributes("-topmost", True) # 기본 항상 위
+class Communicate(QObject):
+    log_signal = Signal(str)
+    preview_signal = Signal(np.ndarray)
+    status_signal = Signal(dict)
+    alert_signal = Signal()
+    start_signal = Signal() # 사냥 시작 전용
+    stop_signal = Signal()  # 사냥 중지 전용
+    sell_signal = Signal()  # 판매 전용
+    shape_monitor_signal = Signal(object) # (img, log_msg) 튜플 전용
+
+class ShapeMonitorWindow(QMainWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("AI 도형거탐 디버깅 엔진 [MOTION TRACKER]")
+        self.setFixedSize(1000, 700)
+        self.setWindowFlags(Qt.WindowStaysOnTopHint)
+        self.setStyleSheet("background-color: #0b0e14; color: white;")
         
+        main_layout = QVBoxLayout()
+        
+        # 1. 시각화 영역
+        self.img_label = QLabel("디버깅 엔진 대기 중...")
+        self.img_label.setAlignment(Qt.AlignCenter)
+        self.img_label.setStyleSheet("background-color: #000000; border: 2px solid #30363d; border-radius: 10px;")
+        main_layout.addWidget(self.img_label, 7)
+        
+        # 2. 실시간 연산 로그 (터미널 스타일)
+        self.console_log = QTextEdit()
+        self.console_log.setReadOnly(True)
+        self.console_log.setStyleSheet("""
+            background-color: #0d1117; 
+            color: #58a6ff; 
+            font-family: 'Consolas', 'Courier New', monospace; 
+            font-size: 11px; 
+            border: 1px solid #30363d;
+            border-radius: 5px;
+        """)
+        main_layout.addWidget(self.console_log, 3)
+        
+        container = QWidget()
+        container.setLayout(main_layout)
+        self.setCentralWidget(container)
+
+    def update_frame(self, frame):
+        h, w, c = frame.shape
+        bytes_per_line = c * w
+        q_img = QImage(frame.data, w, h, bytes_per_line, QImage.Format_RGB888).rgbSwapped()
+        pixmap = QPixmap.fromImage(q_img).scaled(self.img_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.img_label.setPixmap(pixmap)
+
+    def append_console(self, msg):
+        self.console_log.append(msg)
+        # 자동 스크롤
+        self.console_log.verticalScrollBar().setValue(self.console_log.verticalScrollBar().maximum())
+        # 로그 과부하 방지 (최근 100줄 유지)
+        if self.console_log.document().blockCount() > 100:
+            cursor = self.console_log.textCursor()
+            cursor.movePosition(cursor.Start)
+            cursor.select(cursor.BlockUnderCursor)
+            cursor.removeSelectedText()
+            cursor.deleteChar()
+
+class AutoHunterV7_0(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("AUTOmaple 도형거탐버전 v9.4.0 (2026.05.26)")
+        self.setMinimumSize(1250, 920)
+        self.setWindowFlags(Qt.WindowStaysOnTopHint)
+        
+        # 1. 상태 변수 초기화
         self.is_running = False
-        self.is_previewing = True
-        self.is_anti_macro_working = False
         self.is_selling = False
-        
-        # 거탐 추적용
-        self.last_anti_pos = None; self.last_anti_vel = (0, 0); self.anti_lost_time = 0
-        
-        # 기본 키 설정
-        self.KEY_ATTACK = tk.StringVar(value="end")
-        self.KEY_DASH = tk.StringVar(value="space")
-        self.KEY_JUMP = tk.StringVar(value="alt")
-        self.KEY_PETFOOD = tk.StringVar(value="del")
-        self.KEY_SHOP = tk.StringVar(value="m") # 상점 NPC 대화 키 등
-        
-        # 인식 범위 (노랑/빨강)
-        self.base_lower = np.array([245, 230, 0]); self.base_upper = np.array([254, 255, 129])
-        self.anti_lower = np.array([0, 0, 220]); self.anti_upper = np.array([180, 30, 255])
-        
-        # 변수 설정
-        self.profiles_data = {}
-        self.current_profile_name = tk.StringVar(value="기본 사냥터")
-        self.reg_t = tk.IntVar(value=100); self.reg_l = tk.IntVar(value=100)
-        self.reg_w = tk.IntVar(value=200); self.reg_h = tk.IntVar(value=150)
-        self.x_min = tk.IntVar(value=20); self.x_max = tk.IntVar(value=180)
-        self.color_margin = tk.IntVar(value=60) 
-        self.attack_delay_ms = tk.IntVar(value=500); self.dash_delay_ms = tk.IntVar(value=1500)
-        self.use_dash = tk.BooleanVar(value=True); self.use_anti_macro = tk.BooleanVar(value=True)
-        self.use_sound_alert = tk.BooleanVar(value=True)
-        self.hunt_mode = tk.IntVar(value=0) # 0:이동, 1:제자리
-        self.stationary_range = tk.IntVar(value=5)
-        self.use_periodic = tk.BooleanVar(value=True); self.periodic_interval_min = tk.IntVar(value=5)
-        self.always_on_top = tk.BooleanVar(value=True)
-        self.ui_opacity = tk.DoubleVar(value=1.0)
-        self.ui_scale = tk.DoubleVar(value=1.0) # UI 배율
-        self.custom_sound_path = tk.StringVar(value="")
-        
-        # [추가] 자동 판매 이미지 설정 (숫자 기반으로 변경)
-        self.sell_img_files = {
-            "icon": "sell1.png",     # 1. 상점 아이콘 (더블클릭)
-            "btn_sell": "sell2.png", # 2. 일괄판매 버튼
-            "btn_conf": "sell3.png", # 3. 확인 버튼
-            "btn_exit": "sell4.png"  # 4. 나가기 버튼
-        }
-        
-        # 스크린샷 관련 변수 초기화
-        self.last_screenshot_time = time.time()
-        self.screenshot_interval_sec = 15 * 60 # 15분
-        self.SCREENSHOT_DIR = "screenshots"
-        if not os.path.exists(self.SCREENSHOT_DIR): os.makedirs(self.SCREENSHOT_DIR)
-
-        # 텔레그램 설정
-        self.TELEGRAM_TOKEN = "8204355471:AAHSapDO4DNvuVgRD0vxSWFymQcg_4l6mzw"
-        self.TELEGRAM_CHAT_ID = "6046121539"
-        
-        # 판매 루틴 변수
-        self.use_auto_sell = tk.BooleanVar(value=False)
-        self.sell_interval_min = tk.IntVar(value=30)
+        self.total_hunting_time = 0
+        self.current_hunt_start = 0
+        self.program_start_time = time.time()
+        self.actions_cnt = 0
+        self.err_cnt = 0
         self.last_sell_time = time.time()
-        self.shop_npc_pos = [0, 0] 
-        self.shop_sell_btn_pos = [0, 0] 
-
-        self.setup_styles()
-        self.setup_ui()
-        self.load_all_profiles()
+        self.frame_num = 0 # 디버깅용 프레임 번호
         
+        # 2. 사냥 설정 초기화
+        self.reg_t, self.reg_l = 100, 100
+        self.reg_w, self.reg_h = 200, 150
+        self.x_min, self.x_max = 20, 180
+        self.stationary_range = 15
+        self.precision_val = 1.0
+        self.color_margin = 60
+        self.attack_delay_ms = 500
+        self.dash_delay_ms = 1500
+        self.periodic_interval_min = 5
+        self.sell_interval_min = 15
+        self.use_auto_sell = False
+        self.use_anti_macro = True
+        self.use_shape_anti = False
+        self.use_sound_alert = True
+        self.hunt_mode = 0 
+        
+        self.base_lower = np.array([245, 230, 0])
+        self.base_upper = np.array([254, 255, 129])
+        self.profiles_data = {}
+
+        # 3. 시그널 생성
+        self.signals = Communicate()
+        self.signals.log_signal.connect(self.update_log)
+        self.signals.preview_signal.connect(self.update_minimap_preview)
+        self.signals.shape_monitor_signal.connect(self.update_shape_preview_all)
+        self.signals.status_signal.connect(self.update_status_ui)
+        self.signals.alert_signal.connect(self.play_custom_sound)
+
+        # 4. 모니터링 창 초기화
+        self.monitor_win = None
+
+        # 5. UI 구성
+        self.setup_ui()
+        self.apply_qss()
+        
+        # 6. 시그널-버튼 물리적 연결
+        self.signals.start_signal.connect(self.start_btn.click)
+        self.signals.stop_signal.connect(self.stop_btn.click)
+        self.signals.sell_signal.connect(self.manual_sell_btn.click)
+
+        # 7. 프로필 로드
+        self.load_all_profiles()
+
+        # 8. 백그라운드 스레드 가동
+        self.stop_threads = False
         threading.Thread(target=self.monitor_loop, daemon=True).start()
         threading.Thread(target=self.anti_macro_loop, daemon=True).start()
-        keyboard.add_hotkey('f12', self.toggle_running_from_key)
-        keyboard.add_hotkey('f11', self.run_manual_sell) # F11로 수동 판매 루틴
-
-    def setup_styles(self):
-
-    def setup_styles(self):
-        s = self.ui_scale.get()
-        style = ttk.Style(); style.theme_use('clam')
-        style.configure("TFrame", background="#1e1e1e")
-        style.configure("TNotebook", background="#1e1e1e", borderwidth=0)
-        style.configure("TNotebook.Tab", background="#393e46", foreground="#eeeeee", padding=[int(8*s), int(4*s)])
-        style.map("TNotebook.Tab", background=[("selected", "#00adb5")], foreground=[("selected", "white")])
-        style.configure("TLabelframe", background="#1e1e1e", foreground="#00adb5", bordercolor="#393e46")
-        style.configure("TLabelframe.Label", foreground="#00adb5", font=("Malgun Gothic", int(9*s), "bold"))
-        style.configure("TLabel", background="#1e1e1e", foreground="#eeeeee", font=("Malgun Gothic", int(9*s)))
-        style.configure("TButton", background="#393e46", foreground="#eeeeee", font=("Malgun Gothic", int(8*s), "bold"))
-        style.map("TButton", background=[('active', '#00adb5')])
-        style.configure("TCheckbutton", background="#1e1e1e", foreground="#eeeeee", font=("Malgun Gothic", int(8*s)))
-        style.configure("TRadiobutton", background="#1e1e1e", foreground="#eeeeee", font=("Malgun Gothic", int(8*s)))
-        style.configure("TCombobox", fieldbackground="#393e46", background="#393e46", foreground="white", font=("Malgun Gothic", int(8*s)))
-
-    def setup_ui(self):
-        for child in self.root.winfo_children(): child.destroy() # 리스케일 시 초기화
-        s = self.ui_scale.get()
-        self.root.geometry(f"{int(380*s)}x{int(680*s)}")
-
-        # 상단 제어 바
-        top_bar = ttk.Frame(self.root); top_bar.pack(fill=tk.X, padx=2, pady=2)
-        self.profile_combo = ttk.Combobox(top_bar, textvariable=self.current_profile_name, width=12)
-        self.profile_combo.pack(side=tk.LEFT, padx=2)
-        self.profile_combo.bind("<<ComboboxSelected>>", self.on_profile_change)
-        ttk.Button(top_bar, text="저장", command=self.save_current_profile, width=4).pack(side=tk.LEFT, padx=1)
+        threading.Thread(target=self.shape_tracking_loop, daemon=True).start()
+        threading.Thread(target=self.status_update_loop, daemon=True).start()
         
-        self.start_btn = tk.Button(top_bar, text="시작(F12)", bg="#00adb5", fg="white", font=("Malgun Gothic", int(9*s), "bold"), command=self.toggle_running, relief=tk.FLAT)
-        self.start_btn.pack(side=tk.RIGHT, padx=2, fill=tk.Y)
-
-        # 탭 시스템
-        self.notebook = ttk.Notebook(self.root)
-        self.notebook.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
-
-        # 1. 메인 탭
-        self.tab_main = ttk.Frame(self.notebook); self.notebook.add(self.tab_main, text="메인")
-        
-        self.preview_label = tk.Label(self.tab_main, text="미니맵 대기 중", bg="#121212", fg="#393e46", height=int(7*s))
-        self.preview_label.pack(fill=tk.X, padx=2, pady=2)
-        
-        btn_f = ttk.Frame(self.tab_main); btn_f.pack(fill=tk.X, padx=2)
-        ttk.Button(btn_f, text="드래그", command=self.open_selector).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=1)
-        ttk.Button(btn_f, text="좌표(F1/F2)", command=self.start_coord_detection).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=1)
-        
-        mode_f = ttk.LabelFrame(self.tab_main, text=" 사냥 모드 "); mode_f.pack(fill=tk.X, padx=2, pady=2)
-        ttk.Radiobutton(mode_f, text="이동", variable=self.hunt_mode, value=0).pack(side=tk.LEFT, padx=5)
-        ttk.Radiobutton(mode_f, text="제자리", variable=self.hunt_mode, value=1).pack(side=tk.LEFT, padx=5)
-        ttk.Checkbutton(mode_f, text="거탐알림", variable=self.use_sound_alert).pack(side=tk.RIGHT, padx=5)
-
-        range_f = ttk.LabelFrame(self.tab_main, text=" 이동 범위 "); range_f.pack(fill=tk.X, padx=2, pady=2)
-        r_row = ttk.Frame(range_f); r_row.pack(fill=tk.X)
-        ttk.Label(r_row, text="MIN X:").pack(side=tk.LEFT); ttk.Scale(r_row, from_=0, to=300, variable=self.x_min).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=2)
-        ttk.Entry(r_row, textvariable=self.x_min, width=4).pack(side=tk.RIGHT)
-        r_row2 = ttk.Frame(range_f); r_row2.pack(fill=tk.X)
-        ttk.Label(r_row2, text="MAX X:").pack(side=tk.LEFT); ttk.Scale(r_row2, from_=0, to=300, variable=self.x_max).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=2)
-        ttk.Entry(r_row2, textvariable=self.x_max, width=4).pack(side=tk.RIGHT)
-
-        # 2. 스킬/수치 탭
-        self.tab_skill = ttk.Frame(self.notebook); self.notebook.add(self.tab_skill, text="스킬")
-        
-        s_group = ttk.LabelFrame(self.tab_skill, text=" 설정 "); s_group.pack(fill=tk.X, padx=2, pady=2)
-        for label, var, min_v, max_v in [
-            ("공격(ms):", self.attack_delay_ms, 100, 3000), 
-            ("이동(ms):", self.dash_delay_ms, 100, 10000),
-            ("반경:", self.stationary_range, 1, 20),
-            ("펫먹이(분):", self.periodic_interval_min, 1, 60),
-            ("여유분:", self.color_margin, 0, 150)
-        ]:
-            f = ttk.Frame(s_group); f.pack(fill=tk.X, pady=1)
-            ttk.Label(f, text=label, width=10).pack(side=tk.LEFT)
-            ttk.Scale(f, from_=min_v, to=max_v, variable=var).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=2)
-            ttk.Entry(f, textvariable=var, width=5).pack(side=tk.RIGHT)
-
-        k_group = ttk.LabelFrame(self.tab_skill, text=" 키 설정 "); k_group.pack(fill=tk.X, padx=2, pady=2)
-        special_keys = ["space", "ctrl", "alt", "shift", "insert", "del", "home", "end", "pgup", "pgdn", "enter", "tab", "esc"]
-        arrow_keys = ["up", "down", "left", "right"]
-        alpha_keys = list("abcdefghijklmnopqrstuvwxyz")
-        num_keys = [str(i) for i in range(10)]
-        keys_list = special_keys + arrow_keys + alpha_keys + num_keys
-        
-        for label, var in [("공격:", self.KEY_ATTACK), ("이동:", self.KEY_DASH), ("점프:", self.KEY_JUMP), ("펫먹이:", self.KEY_PETFOOD)]:
-            f = ttk.Frame(k_group); f.pack(side=tk.LEFT, expand=True, padx=1)
-            ttk.Label(f, text=label).pack()
-            ttk.Combobox(f, textvariable=var, values=keys_list, width=7).pack()
-
-        # 3. 기능 탭
-        self.tab_extra = ttk.Frame(self.notebook); self.notebook.add(self.tab_extra, text="기능")
-        
-        sell_f = ttk.LabelFrame(self.tab_extra, text=" 원클릭 자동 판매 (F11) "); sell_f.pack(fill=tk.X, padx=2, pady=2)
-        ttk.Checkbutton(sell_f, text="자동 판매(주기) 활성화", variable=self.use_auto_sell).pack(anchor=tk.W, padx=2)
-        
-        f_s1 = ttk.Frame(sell_f); f_s1.pack(fill=tk.X, pady=2)
-        ttk.Label(f_s1, text="판매 주기(분):", width=12).pack(side=tk.LEFT)
-        ttk.Scale(f_s1, from_=10, to=30, variable=self.sell_interval_min).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=2)
-        ttk.Entry(f_s1, textvariable=self.sell_interval_min, width=4).pack(side=tk.RIGHT)
-        
-        f_s2 = ttk.Frame(sell_f); f_s2.pack(fill=tk.X, pady=2)
-        ttk.Button(f_s2, text="1.상점아이콘 캡처", command=lambda: self.capture_sell_img("icon")).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=1)
-        ttk.Button(f_s2, text="2.일괄판매 캡처", command=lambda: self.capture_sell_img("btn_sell")).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=1)
-        f_s3 = ttk.Frame(sell_f); f_s3.pack(fill=tk.X, pady=2)
-        ttk.Button(f_s3, text="3.확인버튼 캡처", command=lambda: self.capture_sell_img("btn_conf")).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=1)
-        ttk.Button(f_s3, text="4.나가기 캡처", command=lambda: self.capture_sell_img("btn_exit")).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=1)
-        
-        ui_f = ttk.LabelFrame(self.tab_extra, text=" UI/배율 설정 "); ui_f.pack(fill=tk.X, padx=2, pady=2)
-        ttk.Checkbutton(ui_f, text="항상 위", variable=self.always_on_top, command=self.update_ui_settings).pack(anchor=tk.W, padx=2)
-        
-        f_sc = ttk.Frame(ui_f); f_sc.pack(fill=tk.X, pady=1)
-        ttk.Label(f_sc, text="UI 배율:").pack(side=tk.LEFT)
-        sc_cb = ttk.Combobox(f_sc, textvariable=self.ui_scale, values=[0.5, 0.75, 1.0, 1.25, 1.5], width=5)
-        sc_cb.pack(side=tk.LEFT, padx=5); sc_cb.bind("<<ComboboxSelected>>", lambda e: self.rescale_ui())
-
-        f_op = ttk.Frame(ui_f); f_op.pack(fill=tk.X)
-        ttk.Label(f_op, text="투명도:").pack(side=tk.LEFT); ttk.Scale(f_op, from_=0.2, to=1.0, variable=self.ui_opacity, command=lambda x: self.update_ui_settings()).pack(side=tk.LEFT, expand=True, fill=tk.X, padx=2)
-
-        # 로그 영역
-        self.log_text = tk.Text(self.root, height=5, bg="#121212", fg="#aaaaaa", borderwidth=0, font=("Consolas", int(8*s)), padx=2, pady=2)
-        self.log_text.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
-
-    def capture_sell_img(self, target):
-        self.selector = tk.Toplevel(self.root); self.selector.attributes("-alpha", 0.3); self.selector.attributes("-fullscreen", True)
-        self.selector.attributes("-topmost", True); self.selector.config(cursor="cross")
-        self.sel_canvas = tk.Canvas(self.selector, cursor="cross", bg="grey"); self.sel_canvas.pack(fill="both", expand=True)
-        self.start_x = None; self.start_y = None; self.rect = None
-        self.sel_canvas.bind("<ButtonPress-1>", self.on_sel_press)
-        self.sel_canvas.bind("<B1-Motion>", self.on_sel_drag)
-        self.sel_canvas.bind("<ButtonRelease-1>", lambda e: self.on_sell_capture_release(e, target))
-
-    def on_sell_capture_release(self, e, target):
-        w, h = abs(e.x - self.start_x), abs(e.y - self.start_y)
-        if w > 2 and h > 2:
-            left, top = min(self.start_x, e.x), min(self.start_y, e.y)
-            with mss.mss() as sct:
-                monitor = {"top": top, "left": left, "width": w, "height": h}
-                img = np.array(sct.grab(monitor))
-                cv2.imwrite(self.sell_img_files[target], cv2.cvtColor(img, cv2.COLOR_BGRA2BGR))
-                self.log(f"📸 {target} 이미지 저장 완료")
-        self.selector.destroy()
-
-    def run_manual_sell(self):
-        if self.is_selling: return
-        threading.Thread(target=self.run_sell_routine, daemon=True).start()
-
-    def find_and_click(self, img_path, double=False, msg=""):
-        if not os.path.exists(img_path):
-            self.log(f"❌ 파일 없음: {img_path}")
-            return False
-        
-        template = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
-        with mss.mss() as sct:
-            scr = np.array(sct.grab(sct.monitors[0]))
-            scr_gray = cv2.cvtColor(scr, cv2.COLOR_BGRA2GRAY)
-            res = cv2.matchTemplate(scr_gray, template, cv2.TM_CCOEFF_NORMED)
-            _, max_val, _, max_loc = cv2.minMaxLoc(res)
-            
-            if max_val > 0.8:
-                h, w = template.shape
-                target_x = max_loc[0] + w // 2
-                target_y = max_loc[1] + h // 2
-                if double:
-                    pyautogui.doubleClick(target_x, target_y)
-                else:
-                    pyautogui.click(target_x, target_y)
-                if msg: self.log(f"✅ {msg}")
-                return True
-        return False
-
-    def run_sell_routine(self):
-        if self.is_selling: return
-        self.is_selling = True
-        was_running = self.is_running
-        if was_running: self.toggle_running() # 사냥 잠시 중단
-        
-        self.log("💰 [판매 루틴] 시작")
+        # 9. 전역 단축키 등록
         try:
-            time.sleep(1.0)
-            
-            # 1. 상점 아이콘 입장 (여러 후보 중 하나 찾기)
-            shop_icons = ["sell1-1.png", "sell1-2.png", "sell1-3.png"]
-            found_shop = False
-            for icon_file in shop_icons:
-                if self.find_and_click(icon_file, double=True, msg=f"상점 아이콘({icon_file}) 발견"):
-                    found_shop = True
-                    break
-            
-            if not found_shop:
-                raise Exception("상점 아이콘(sell1-1~3)을 하나도 찾지 못했습니다.")
-            
-            time.sleep(1.5)
-            
-            # 2. 일괄 판매 버튼 클릭 (sell2.png)
-            if not self.find_and_click("sell2.png", msg="일괄판매 버튼 클릭"):
-                raise Exception("일괄판매 버튼(sell2.png)을 찾지 못했습니다.")
-            time.sleep(1.2)
-            
-            # 3. 확인 버튼 클릭 (sell3.png)
-            if not self.find_and_click("sell3.png", msg="최종 확인 버튼 클릭"):
-                self.log("⚠️ 확인 버튼(sell3.png) 미발견 (이미 처리되었을 수 있음)")
-            time.sleep(1.0)
-            
-            # 4. 상점 나가기 버튼 클릭 (sell4.png)
-            if not self.find_and_click("sell4.png", msg="상점 종료 및 퇴장"):
-                self.log("⚠️ 나가기 버튼(sell4.png) 미발견")
-            
-            self.log("✨ [판매 루틴] 성공적으로 완료!")
-            winsound.Beep(1000, 200)
-            
-        except Exception as e:
-            self.log(f"❌ [판매 루틴 중단] {e}")
-        
-        self.last_sell_time = time.time()
-        self.is_selling = False
-        if was_running: 
-            time.sleep(0.5)
-            self.toggle_running() # 사냥 재개
-
-    def rescale_ui(self):
-        self.setup_styles()
-        self.setup_ui()
-        self.update_ui_settings()
-        self.log(f"UI 배율 변경: {self.ui_scale.get()}x")
-
-    def log(self, msg):
-        self.log_text.config(state=tk.NORMAL)
-        self.log_text.insert(tk.END, f"[{time.strftime('%H:%M:%S')}] {msg}\n")
-        self.log_text.see(tk.END); self.log_text.config(state=tk.DISABLED)
-
-    def update_ui_settings(self):
-        self.root.attributes("-topmost", self.always_on_top.get())
-        self.root.attributes("-alpha", self.ui_opacity.get())
-
-    def send_telegram(self, msg, photo_path=None):
-        def _send():
-            try:
-                url = f"https://api.telegram.org/bot{self.TELEGRAM_TOKEN}/"
-                if photo_path and os.path.exists(photo_path):
-                    with open(photo_path, 'rb') as f:
-                        requests.post(url + "sendPhoto", data={"chat_id": self.TELEGRAM_CHAT_ID, "caption": msg}, files={"photo": f}, timeout=10)
-                else:
-                    requests.post(url + "sendMessage", json={"chat_id": self.TELEGRAM_CHAT_ID, "text": msg}, timeout=10)
-            except Exception as e:
-                self.log(f"[텔레그램 에러] {e}")
-        threading.Thread(target=_send, daemon=True).start()
-
-    def play_custom_sound(self):
-        def _play():
-            # 20초간 지옥의 알람 재생
-            start_time = time.time()
-            self.log("🔊 [지옥의 알람] 20초간 가동!")
-            while time.time() - start_time < 20:
-                # 1단계: 초고주파 엇박자
-                for _ in range(3):
-                    winsound.Beep(3500, 100); winsound.Beep(4000, 50)
-                # 2단계: '드르륵' 소음
-                for freq in range(2500, 4500, 150): winsound.Beep(freq, 20)
-                # 3단계: 긴급 사이렌
-                for _ in range(2):
-                    winsound.Beep(3000, 150); winsound.Beep(1500, 150)
-                if not self.use_sound_alert.get(): break # 도중에 끄면 중단
-        threading.Thread(target=_play, daemon=True).start()
-
-    def open_selector(self):
-        self.selector = tk.Toplevel(self.root); self.selector.attributes("-alpha", 0.3); self.selector.attributes("-fullscreen", True)
-        self.selector.attributes("-topmost", True); self.selector.config(cursor="cross")
-        self.sel_canvas = tk.Canvas(self.selector, cursor="cross", bg="grey"); self.sel_canvas.pack(fill="both", expand=True)
-        self.start_x = None; self.start_y = None; self.rect = None
-        self.sel_canvas.bind("<ButtonPress-1>", self.on_sel_press); self.sel_canvas.bind("<B1-Motion>", self.on_sel_drag); self.sel_canvas.bind("<ButtonRelease-1>", self.on_sel_release)
-
-    def on_sel_press(self, e): self.start_x, self.start_y = e.x, e.y; self.rect = self.sel_canvas.create_rectangle(e.x, e.y, e.x, e.y, outline="cyan", width=3)
-    def on_sel_drag(self, e): self.sel_canvas.coords(self.rect, self.start_x, self.start_y, e.x, e.y)
-    def on_sel_release(self, e):
-        w, h = abs(e.x - self.start_x), abs(e.y - self.start_y)
-        if w > 5: self.reg_l.set(min(self.start_x, e.x)); self.reg_t.set(min(self.start_y, e.y)); self.reg_w.set(w); self.reg_h.set(h); self.x_max.set(w-15); self.log(f"영역 설정: {w}x{h}")
-        self.selector.destroy()
-
-    def start_coord_detection(self): threading.Thread(target=self._detection_worker, daemon=True).start()
-    def _detection_worker(self):
-        t_l = None; self.log("F1(좌상단) -> F2(우하단) 입력하세요.")
-        while True:
-            if keyboard.is_pressed('f1'): p = pyautogui.position(); self.reg_l.set(p.x); self.reg_t.set(p.y); self.log("좌상단 확정"); t_l = p; time.sleep(0.5)
-            if keyboard.is_pressed('f2'):
-                p = pyautogui.position()
-                if t_l: w, h = p.x - t_l.x, p.y - t_l.y; self.reg_w.set(w); self.reg_h.set(h); self.x_max.set(w-15); self.log(f"좌표 확정: {w}x{h}"); break
-            time.sleep(0.1)
-
-    def monitor_loop(self):
-        with mss.mss() as sct:
-            while self.is_previewing:
-                if self.reg_w.get() > 5:
-                    region = {"top": self.reg_t.get(), "left": self.reg_l.get(), "width": self.reg_w.get(), "height": self.reg_h.get()}
-                    try:
-                        shot = np.array(sct.grab(region)); img = cv2.cvtColor(shot, cv2.COLOR_BGRA2BGR)
-                        m = self.color_margin.get()
-                        low = np.array([max(0, self.base_lower[2]-m), max(0, self.base_lower[1]-m), max(0, self.base_lower[0]-m)])
-                        high = np.array([min(255, self.base_upper[2]+m), min(255, self.base_upper[1]+m), min(255, self.base_upper[0]+m)])
-                        mask = cv2.inRange(img, low, high); p_img = img.copy()
-                        
-                        # 범위 시각화 (v7.0 추가)
-                        cv2.line(p_img, (self.x_min.get(), 0), (self.x_min.get(), self.reg_h.get()), (255, 0, 0), 1)
-                        cv2.line(p_img, (self.x_max.get(), 0), (self.x_max.get(), self.reg_h.get()), (0, 0, 255), 1)
-                        
-                        if np.any(mask):
-                            M = cv2.moments(mask)
-                            if M["m00"] > 0: cx, cy = int(M["m10"]/M["m00"]), int(M["m01"]/M["m00"]); cv2.circle(p_img, (cx, cy), 6, (0, 255, 0), -1)
-                        self.update_preview(p_img)
-                    except: pass
-                time.sleep(0.08)
-
-    def anti_macro_loop(self):
-        last_alert_time = 0
-        # 감시할 이미지 파일 리스트 (anti4 추가)
-        ANTI_IMAGES = ["anti1.png", "anti2.png", "anti3.png", "anti4.png"]
-        
-        with mss.mss() as sct:
-            while True:
-                if self.use_anti_macro.get():
-                    try:
-                        # 1. 화면 전체 캡처
-                        scr_w, scr_h = pyautogui.size()
-                        monitor = {"top": 0, "left": 0, "width": scr_w, "height": scr_h}
-                        img = np.array(sct.grab(monitor))
-                        img_gray = cv2.cvtColor(img, cv2.COLOR_BGRA2GRAY)
-                        
-                        found = False
-                        for img_name in ANTI_IMAGES:
-                            if not os.path.exists(img_name): continue # 파일 없으면 스킵
-                            
-                            # 템플릿 이미지 로드 (회색조)
-                            template = cv2.imread(img_name, cv2.IMREAD_GRAYSCALE)
-                            if template is None: continue
-                            
-                            # 2. 이미지 매칭 실행
-                            res = cv2.matchTemplate(img_gray, template, cv2.TM_CCOEFF_NORMED)
-                            threshold = 0.5 # [업데이트] 50% 이상 일치하면 검출 (더 민감하게)
-                            loc = np.where(res >= threshold)
-                            
-                            if len(loc[0]) > 0: # 이미지를 찾았다면
-                                found = True
-                                self.log(f"🚨 [거탐 검출] 이미지 일치 포착({int(np.max(res)*100)}%): {img_name}")
-                                break
-                        
-                        if found:
-                            now = time.time()
-                            if now - last_alert_time > 60: # 1분 이내 중복 방지
-                                # [업데이트] 사냥 중단 로직 제거 (사용자 요청)
-                                
-                                # [지옥의 알람 재생]
-                                if self.use_sound_alert.get():
-                                    self.play_custom_sound()
-                                
-                                # [대기 및 캡처] 5.5초 대기 후 중앙 게임 화면 캡처
-                                time.sleep(5.5)
-                                self.log("📸 중앙 게임 화면 캡처 중...")
-                                
-                                center_roi = {"top": (scr_h // 2) - 300, "left": (scr_w // 2) - 400, "width": 800, "height": 600}
-                                shot = np.array(sct.grab(center_roi))
-                                cv2.imwrite("anti_game_center.png", cv2.cvtColor(shot, cv2.COLOR_BGRA2BGR))
-                                self.log("✅ 캡처 완료 (텔레그램 전송은 비활성 상태).")
-                                
-                                last_alert_time = now
-                                time.sleep(30) # 상황 정리 대기
-                    except Exception as e:
-                        print(f"이미지 매칭 루프 오류: {e}")
-                
-                time.sleep(1.0) # 이미지 매칭은 연산량이 있으므로 주기를 1초로 설정
-
-    def update_preview(self, img):
-        try:
-            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB); img_pil = Image.fromarray(img_rgb).resize((400, 200), Image.Resampling.LANCZOS)
-            img_tk = ImageTk.PhotoImage(img_pil); self.preview_label.config(image=img_tk, text=""); self.preview_label.image = img_tk
+            keyboard.unhook_all()
+            keyboard.add_hotkey('f8', self.hotkey_start_handler)
+            keyboard.add_hotkey('f9', self.hotkey_stop_handler)
+            keyboard.add_hotkey('f11', lambda: self.signals.sell_signal.emit())
         except: pass
 
-    def press_key(self, key): pyautogui.keyDown(key); time.sleep(random.uniform(0.08, 0.12)); pyautogui.keyUp(key)
+    def open_shape_monitor(self):
+        if self.monitor_win is None:
+            self.monitor_win = ShapeMonitorWindow(self)
+        self.monitor_win.show()
 
-    def toggle_running_from_key(self): self.root.after(0, self.toggle_running)
-    def toggle_running(self):
-        if self.is_running:
-            self.is_running = False; self.start_btn.config(text="시작 (F12)", bg="#00adb5"); self.log("사냥 중단")
-            pyautogui.keyUp('left'); pyautogui.keyUp('right')
-        else:
-            self.is_running = True; self.start_btn.config(text="중지 (F12)", bg="#ff4b2b"); self.log("사냥 시작!")
+    def update_shape_preview_all(self, data):
+        img, log_msg = data
+        self.update_shape_preview(img)
+        if self.monitor_win and self.monitor_win.isVisible():
+            self.monitor_win.update_frame(img)
+            if log_msg:
+                self.monitor_win.append_console(log_msg)
+
+    def update_minimap_preview(self, img):
+        h, w, c = img.shape; bytes_per_line = c * w; q_img = QImage(img.data, w, h, bytes_per_line, QImage.Format_RGB888).rgbSwapped()
+        pixmap = QPixmap.fromImage(q_img).scaled(370, 210, Qt.KeepAspectRatio, Qt.SmoothTransformation); self.minimap_preview.setPixmap(pixmap)
+
+    def update_shape_preview(self, img):
+        h, w, c = img.shape; bytes_per_line = c * w; q_img = QImage(img.data, w, h, bytes_per_line, QImage.Format_RGB888).rgbSwapped()
+        pixmap = QPixmap.fromImage(q_img).scaled(370, 210, Qt.KeepAspectRatio, Qt.SmoothTransformation); self.shape_preview.setPixmap(pixmap)
+        if self.monitor_win and self.monitor_win.isVisible():
+            self.monitor_win.update_frame(frame)
+
+    def setup_ui(self):
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        main_layout = QVBoxLayout(central_widget)
+        main_layout.setContentsMargins(25, 25, 25, 25)
+        main_layout.setSpacing(20)
+
+        header = QHBoxLayout()
+        self.title_label = QLabel("AUTOmaple")
+        self.title_label.setObjectName("mainTitle")
+        header.addWidget(self.title_label); header.addStretch()
+        
+        p_box = QVBoxLayout()
+        p_box.addWidget(QLabel("AI 프로필 관리 센터 /", objectName="subLabel"))
+        self.profile_combo = QComboBox()
+        self.profile_combo.setMinimumWidth(320); self.profile_combo.setFixedHeight(45)
+        self.profile_combo.setEditable(True)
+        self.profile_combo.currentTextChanged.connect(self.on_profile_change)
+        p_box.addWidget(self.profile_combo)
+        header.addLayout(p_box)
+        
+        self.save_btn = QPushButton("설정 저장")
+        self.save_btn.setObjectName("saveBtn"); self.save_btn.setFixedSize(140, 60)
+        self.save_btn.clicked.connect(self.save_current_profile)
+        header.addWidget(self.save_btn)
+        main_layout.addLayout(header)
+
+        content_layout = QHBoxLayout(); content_layout.setSpacing(20)
+
+        # Left Panel (Metrics)
+        left_frame = QFrame(objectName="panelFrame"); left_frame.setFixedWidth(330)
+        left_vbox = QVBoxLayout(left_frame); left_vbox.setContentsMargins(20, 30, 20, 30)
+        left_vbox.addWidget(QLabel("SYSTEM METRICS", objectName="panelTitle"))
+        
+        self.cpu_label = QLabel("CPU 사용률(0%)", objectName="subLabel"); left_vbox.addWidget(self.cpu_label)
+        self.cpu_bar = QProgressBar(objectName="metricBar"); self.cpu_bar.setFixedHeight(15); self.cpu_bar.setTextVisible(False); left_vbox.addWidget(self.cpu_bar)
+        
+        left_vbox.addSpacing(15)
+        self.ram_label = QLabel("RAM 점유율(0%)", objectName="subLabel"); left_vbox.addWidget(self.ram_label)
+        self.ram_bar = QProgressBar(objectName="metricBar"); self.ram_bar.setFixedHeight(15); self.ram_bar.setTextVisible(False); left_vbox.addWidget(self.ram_bar)
+        
+        left_vbox.addSpacing(35)
+        self.data_runtime = self.create_data_row(left_vbox, "현재 가동 시간", "00:00:00")
+        self.data_total_time = self.create_data_row(left_vbox, "총 누적 사냥", "00:00:00")
+        self.data_actions = self.create_data_row(left_vbox, "실행 명령 횟수", "0")
+        self.data_errors = self.create_data_row(left_vbox, "보안 탐지 기록", "0회")
+        left_vbox.addStretch()
+        content_layout.addWidget(left_frame)
+
+        # Center Panel (Config)
+        center_frame = QFrame(objectName="panelFrame")
+        center_vbox = QVBoxLayout(center_frame); center_vbox.setContentsMargins(15, 30, 15, 15)
+        center_vbox.addWidget(QLabel("CORE ALGORITHM", objectName="panelTitle"))
+        
+        self.main_tabs = QTabWidget(); center_vbox.addWidget(self.main_tabs)
+        
+        # Tab 1: Mode Settings
+        self.mode_tabs = QTabWidget()
+        self.mode_tabs.currentChanged.connect(self.on_hunt_mode_tab_changed)
+        
+        tab_lr_widget = QWidget(); tab_lr_vbox = QVBoxLayout(tab_lr_widget)
+        self.x_min_slider = self.create_slider_row(tab_lr_vbox, "좌측 이동 경계:", 0, 400, self.x_min, self.update_x_min)
+        self.x_max_slider = self.create_slider_row(tab_lr_vbox, "우측 이동 경계:", 0, 400, self.x_max, self.update_x_max)
+        tab_lr_vbox.addStretch(); self.mode_tabs.addTab(tab_lr_widget, "좌우 이동 모드")
+        
+        tab_st_widget = QWidget(); tab_st_vbox = QVBoxLayout(tab_st_widget)
+        self.stat_range_slider = self.create_slider_row(tab_st_vbox, "제자리 활동 범위:", 1, 100, self.stationary_range, self.update_stat_range)
+        tab_st_vbox.addStretch(); self.mode_tabs.addTab(tab_st_widget, "제자리 사냥 모드")
+        
+        self.main_tabs.addTab(self.mode_tabs, "작동 모드")
+
+        # Tab 2: Skill & Precision
+        tab_skill_widget = QWidget(); tab_skill_vbox = QVBoxLayout(tab_skill_widget)
+        self.precision_slider = self.create_slider_row(tab_skill_vbox, "인식 정밀도(0~3):", 1, 30, int(self.precision_val*10), self.update_precision, is_float=True)
+        self.att_slider = self.create_slider_row(tab_skill_vbox, "공격 주기(ms):", 100, 3000, self.attack_delay_ms, self.update_att_delay)
+        self.dash_slider = self.create_slider_row(tab_skill_vbox, "이동 주기(ms):", 100, 10000, self.dash_delay_ms, self.update_dash_delay)
+        self.pet_slider = self.create_slider_row(tab_skill_vbox, "소모품 사용(분):", 1, 60, self.periodic_interval_min, self.update_pet_interval)
+        
+        key_grid = QGridLayout(); key_grid.setSpacing(12)
+        self.key_att_cb = self.create_key_combo(key_grid, "공격", 0, 0, "end")
+        self.key_dash_cb = self.create_key_combo(key_grid, "이동", 0, 1, "space")
+        self.key_jump_cb = self.create_key_combo(key_grid, "점프", 1, 0, "alt")
+        self.key_pet_cb = self.create_key_combo(key_grid, "소모품", 1, 1, "del")
+        tab_skill_vbox.addLayout(key_grid); tab_skill_vbox.addStretch()
+        self.main_tabs.addTab(tab_skill_widget, "단축키/정밀도")
+
+        # Tab 3: Advanced Settings
+        tab_adv_widget = QWidget(); tab_adv_vbox = QVBoxLayout(tab_adv_widget)
+        self.chk_alert = QCheckBox("거짓말 탐지기 인식 시 알람 울리기"); self.chk_alert.setChecked(True); self.chk_alert.toggled.connect(self.update_use_alert)
+        tab_adv_vbox.addWidget(self.chk_alert)
+        self.chk_shape_anti = QCheckBox("투명 도형 거탐 실시간 추적 엔진 활성화"); self.chk_shape_anti.setChecked(False); self.chk_shape_anti.toggled.connect(self.update_use_shape_anti)
+        tab_adv_vbox.addWidget(self.chk_shape_anti)
+        
+        self.monitor_btn = QPushButton("도형거탐 실시간 모니터링 창 열기")
+        self.monitor_btn.setFixedHeight(40); self.monitor_btn.clicked.connect(self.open_shape_monitor)
+        tab_adv_vbox.addWidget(self.monitor_btn)
+        
+        self.chk_sell = QCheckBox("자동 판매 로직 활성화 (준비 중)"); self.chk_sell.setEnabled(False)
+        tab_adv_vbox.addWidget(self.chk_sell)
+        self.sell_slider = self.create_slider_row(tab_adv_vbox, "판매 시퀀스 주기:", 10, 60, self.sell_interval_min, self.update_sell_interval)
+        self.chk_top = QCheckBox("창 항상 맨 위로 고정"); self.chk_top.setChecked(True); self.chk_top.toggled.connect(self.update_window_flags)
+        tab_adv_vbox.addWidget(self.chk_top)
+        self.opacity_slider = self.create_slider_row(tab_adv_vbox, "인터페이스 투명도:", 30, 100, 100, self.update_opacity)
+        tab_adv_vbox.addStretch()
+        self.main_tabs.addTab(tab_adv_widget, "시스템 환경")
+
+        content_layout.addWidget(center_frame)
+
+        # 3. Right Panel (Preview & Logs)
+        right_frame = QFrame(); right_frame.setObjectName("panelFrame"); right_frame.setFixedWidth(400)
+        right_vbox = QVBoxLayout(right_frame); right_vbox.setContentsMargins(15, 30, 15, 15)
+        right_vbox.addWidget(QLabel("LIVE ANALYTICS", objectName="panelTitle"))
+        
+        self.preview_label = QLabel("AWAITING SIGNAL..."); self.preview_label.setObjectName("previewLabel")
+        self.preview_label.setFixedSize(370, 280); self.preview_label.setAlignment(Qt.AlignCenter)
+        right_vbox.addWidget(self.preview_label)
+        
+        self.sel_btn = QPushButton("미니맵 영역 드래그 설정"); self.sel_btn.setFixedHeight(50); self.sel_btn.clicked.connect(self.open_selector)
+        right_vbox.addWidget(self.sel_btn)
+        
+        right_vbox.addSpacing(15); right_vbox.addWidget(QLabel("OPERATION LOGS", objectName="panelTitle"))
+        self.log_text = QTextEdit(); self.log_text.setObjectName("logTerminal"); self.log_text.setReadOnly(True)
+        right_vbox.addWidget(self.log_text)
+        
+        content_layout.addWidget(right_frame); main_layout.addLayout(content_layout)
+
+        # Footer Actions
+        footer = QHBoxLayout(); footer.setSpacing(15)
+        self.start_btn = QPushButton("사냥 시작 [F8]", objectName="startBtn"); self.start_btn.setFixedHeight(85); self.start_btn.clicked.connect(self.start_hunting)
+        footer.addWidget(self.start_btn, 2)
+        
+        self.stop_btn = QPushButton("사냥 중지 [F9]", objectName="stopBtn"); self.stop_btn.setFixedHeight(85); self.stop_btn.clicked.connect(self.stop_hunting); self.stop_btn.setEnabled(False)
+        footer.addWidget(self.stop_btn, 2)
+        
+        self.manual_sell_btn = QPushButton("인벤 판매 [F11]", objectName="sellBtn"); self.manual_sell_btn.setFixedHeight(85); self.manual_sell_btn.clicked.connect(self.run_manual_sell)
+        footer.addWidget(self.manual_sell_btn, 1)
+        
+        self.stop_all_btn = QPushButton("종료"); self.stop_all_btn.setObjectName("stopBtn"); self.stop_all_btn.setFixedHeight(85); self.stop_all_btn.clicked.connect(self.close)
+        footer.addWidget(self.stop_all_btn, 1)
+        main_layout.addLayout(footer)
+
+    def apply_qss(self):
+        font_stack = "'Pretendard', 'NanumSquare', 'Segoe UI', sans-serif"
+        style = f"""
+            QMainWindow {{ background-color: #0b0e14; font-family: {font_stack}; }}
+            #mainTitle {{ color: #ffffff; font-size: 42px; font-weight: 900; letter-spacing: -1.5px; }}
+            #panelTitle {{ color: #00d2ff; font-size: 16px; font-weight: 800; text-transform: uppercase; }}
+            #subLabel {{ color: #8a99af; font-size: 13px; font-weight: 600; }}
+            #dataLabel {{ color: #64748b; font-size: 15px; font-weight: 500; }}
+            #dataValue {{ color: #ffffff; font-size: 18px; font-family: 'Consolas'; font-weight: 700; }}
+            #panelFrame {{ background-color: #161b22; border: 1px solid #30363d; border-radius: 25px; }}
+            QTabWidget::pane {{ border: 1px solid #30363d; background: #161b22; border-radius: 15px; top: -1px; }}
+            QTabBar::tab {{ background: #0d1117; color: #8b949e; padding: 12px 25px; font-size: 13px; font-weight: 700; border-top-left-radius: 12px; border-top-right-radius: 12px; margin-right: 5px; }}
+            QTabBar::tab:selected {{ background: #161b22; color: #00d2ff; border-bottom: 3px solid #00d2ff; }}
+            QPushButton {{ background-color: #21262d; color: #c9d1d9; border: 1px solid #30363d; border-radius: 15px; padding: 10px; font-size: 15px; font-weight: 700; }}
+            #startBtn {{ background-color: #238636; color: #ffffff; border: none; font-size: 28px; font-weight: 900; }}
+            #startBtn:disabled {{ background-color: #1a3a21; color: #8b949e; }}
+            #stopBtn {{ background-color: #161b22; color: #f85149; border: 2px solid #f85149; font-size: 24px; font-weight: 900; }}
+            #stopBtn:disabled {{ border-color: #3a1a1a; color: #64302d; }}
+            #sellBtn {{ color: #e3b341; border: 2px solid #e3b341; }}
+            #saveBtn {{ background-color: #1f6feb; color: white; border: none; }}
+            QProgressBar#metricBar {{ background-color: #0d1117; border: 1px solid #30363d; border-radius: 4px; }}
+            QProgressBar#metricBar::chunk {{ background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #00d2ff, stop:1 #3a7bd5); border-radius: 3px; }}
+            QTextEdit#logTerminal {{ background-color: #0d1117; color: #8b949e; border: 1px solid #30363d; font-family: 'Consolas'; font-size: 11px; border-radius: 15px; padding: 12px; }}
+            QLabel#previewLabel {{ background-color: #000000; border-radius: 20px; border: 2px solid #30363d; color: #484f58; }}
+            QComboBox {{ background-color: #0d1117; color: white; border: 1px solid #30363d; border-radius: 12px; padding: 10px; font-size: 14px; }}
+            QSlider::handle:horizontal {{ background: #00d2ff; width: 22px; height: 22px; border-radius: 11px; margin: -9px 0; }}
+            QSlider::groove:horizontal {{ background: #30363d; height: 4px; border-radius: 2px; }}
+            QCheckBox {{ color: #c9d1d9; font-size: 14px; font-weight: 600; padding: 5px; }}
+        """
+        self.setStyleSheet(style)
+
+    def start_hunting(self):
+        if not self.is_running:
+            self.is_running = True; self.start_btn.setEnabled(False); self.stop_btn.setEnabled(True)
+            self.current_hunt_start = time.time(); self.log("AI 오토메이션 엔진이 가동되었습니다.")
             threading.Thread(target=self.hunter_core, daemon=True).start()
+
+    def stop_hunting(self):
+        if self.is_running:
+            self.is_running = False; self.start_btn.setEnabled(True); self.stop_btn.setEnabled(False)
+            self.log("AI 시퀀스를 중단했습니다.")
+            self.total_hunting_time += int(time.time() - self.current_hunt_start)
+            pyautogui.keyUp('left'); pyautogui.keyUp('right')
+
+    def hotkey_start_handler(self):
+        self.log("단축키 신호가 감지되었습니다. (F8)"); self.signals.start_signal.emit()
+
+    def hotkey_stop_handler(self):
+        self.log("단축키 신호가 감지되었습니다. (F9)"); self.signals.stop_signal.emit()
 
     def hunter_core(self):
         cur_dir = 'right'; last_x, stuck_cnt = -1, 0; l_att, l_dash = 0, 0; l_del_time = time.time(); start_cx = None
         while self.is_running:
-            if self.is_anti_macro_working or self.is_selling: time.sleep(0.5); continue
-            
-            # 자동 판매 루틴 체크
-            if self.use_auto_sell.get() and (time.time() - self.last_sell_time) >= (self.sell_interval_min.get() * 60):
-                self.run_sell_routine(); continue
-
-            # [추가] 15분 주기 스크린샷 저장 (누적 가동 시간 기준)
-            now = time.time()
-            if now - self.last_screenshot_time >= self.screenshot_interval_sec:
-                try:
-                    with mss.mss() as s_sct:
-                        filename = f"hunt_{time.strftime('%Y%m%d_%H%M%S')}.png"
-                        filepath = os.path.join(self.SCREENSHOT_DIR, filename)
-                        shot = np.array(s_sct.grab(s_sct.monitors[1]))
-                        cv2.imwrite(filepath, cv2.cvtColor(shot, cv2.COLOR_BGRA2BGR))
-                        self.log(f"📸 주기적 스크린샷 저장 완료: {filename}")
-                        self.last_screenshot_time = now
-                except Exception as e:
-                    self.log(f"[스크린샷 에러] {e}")
-
+            if keyboard.is_pressed('f9'): self.signals.stop_signal.emit(); break
+            if self.is_selling: time.sleep(0.5); continue
             with mss.mss() as sct:
-                region = {"top": self.reg_t.get(), "left": self.reg_l.get(), "width": self.reg_w.get(), "height": self.reg_h.get()}
+                region = {"top": self.reg_t, "left": self.reg_l, "width": self.reg_w, "height": self.reg_h}
                 try:
-                    shot = np.array(sct.grab(region)); img = cv2.cvtColor(shot, cv2.COLOR_BGRA2BGR)
-                    m = self.color_margin.get()
+                    shot = np.array(sct.grab(region)); img = cv2.cvtColor(shot, cv2.COLOR_BGRA2BGR); m = self.color_margin
                     low = np.array([max(0, self.base_lower[2]-m), max(0, self.base_lower[1]-m), max(0, self.base_lower[0]-m)])
                     high = np.array([min(255, self.base_upper[2]+m), min(255, self.base_upper[1]+m), min(255, self.base_upper[0]+m)])
                     mask = cv2.inRange(img, low, high)
@@ -525,161 +401,358 @@ class AutoHunterV7_0:
                         M = cv2.moments(mask); cx = -1
                         if M["m00"] > 0:
                             cx = int(M["m10"] / M["m00"])
-                            if self.hunt_mode.get() == 1: # 제자리
+                            if self.hunt_mode == 1:
                                 if start_cx is None: start_cx = cx
-                                r = self.stationary_range.get()
-                                if cx >= start_cx + r and cur_dir == 'right': pyautogui.keyUp('right'); cur_dir = 'left'
-                                elif cx <= start_cx - r and cur_dir == 'left': pyautogui.keyUp('left'); cur_dir = 'right'
+                                if cx >= start_cx + self.stationary_range and cur_dir == 'right': pyautogui.keyUp('right'); cur_dir = 'left'
+                                elif cx <= start_cx - self.stationary_range and cur_dir == 'left': pyautogui.keyUp('left'); cur_dir = 'right'
                                 pyautogui.keyDown(cur_dir)
-                            else: # 이동
+                            else:
                                 start_cx = None
-                                if cx >= self.x_max.get() and cur_dir == 'right': pyautogui.keyUp('right'); cur_dir = 'left'
-                                elif cx <= self.x_min.get() and cur_dir == 'left': pyautogui.keyUp('left'); cur_dir = 'right'
+                                if cx >= self.x_max and cur_dir == 'right': pyautogui.keyUp('right'); cur_dir = 'left'
+                                elif cx <= self.x_min and cur_dir == 'left': pyautogui.keyUp('left'); cur_dir = 'right'
                                 pyautogui.keyDown(cur_dir)
-                            now = time.time() * 1000
-                            if now - l_att >= self.attack_delay_ms.get(): self.press_key(self.KEY_ATTACK.get()); l_att = now
-                            if self.use_dash.get() and now - l_dash >= self.dash_delay_ms.get(): self.press_key(self.KEY_DASH.get()); l_dash = now
-                            if self.use_periodic.get() and (time.time() - l_del_time) >= (self.periodic_interval_min.get() * 60):
-                                self.log("[펫먹이] 아이템 사용"); self.press_key(self.KEY_PETFOOD.get()); l_del_time = time.time()
-                        
+                            now_ms = time.time() * 1000
+                            if now_ms - l_att >= self.attack_delay_ms: self.press_key(self.key_att_cb.currentText()); l_att = now_ms
+                            if now_ms - l_dash >= self.dash_delay_ms: self.press_key(self.key_dash_cb.currentText()); l_dash = now_ms
+                            if (time.time() - l_del_time) >= (self.periodic_interval_min * 60):
+                                self.log("소모품을 자동으로 사용했습니다."); self.press_key(self.key_pet_cb.currentText()); l_del_time = time.time()
                         if cx != -1:
                             if abs(cx - last_x) < 2: stuck_cnt += 1
                             else: stuck_cnt = 0; last_x = cx
-                            if stuck_cnt > 35: self.press_key(self.KEY_JUMP.get()); stuck_cnt = 0
+                            if stuck_cnt > 40: self.press_key(self.key_jump_cb.currentText()); stuck_cnt = 0
                 except: pass
             time.sleep(0.04)
 
-    def open_point_selector(self, target):
-        self.selector = tk.Toplevel(self.root); self.selector.attributes("-alpha", 0.3); self.selector.attributes("-fullscreen", True)
-        self.selector.attributes("-topmost", True); self.selector.config(cursor="hand2")
-        self.sel_canvas = tk.Canvas(self.selector, bg="grey"); self.sel_canvas.pack(fill="both", expand=True)
-        self.log(f"[{target}] 위치를 마우스로 클릭하세요.")
-        self.sel_canvas.bind("<Button-1>", lambda e: self.on_point_release(e, target))
+    def run_manual_sell(self):
+        self.log("인벤토리 판매 기능은 현재 업데이트 준비 중입니다.")
+        winsound.Beep(500, 100)
 
-    def on_point_release(self, e, target):
-        if target == "npc": self.shop_npc_pos = [e.x, e.y]; self.log(f"NPC 좌표 설정: {e.x}, {e.y}")
-        elif target == "btn": self.shop_sell_btn_pos = [e.x, e.y]; self.log(f"판매버튼 좌표 설정: {e.x}, {e.y}")
-        self.selector.destroy()
+    def find_and_click(self, img_path, double=False):
+        if not os.path.exists(img_path): return False
+        template = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+        with mss.mss() as sct:
+            monitor = sct.monitors[0]
+            scr = np.array(sct.grab(monitor)); scr_gray = cv2.cvtColor(scr, cv2.COLOR_BGRA2GRAY)
+            res = cv2.matchTemplate(scr_gray, template, cv2.TM_CCOEFF_NORMED); _, max_val, _, max_loc = cv2.minMaxLoc(res)
+            self.log(f"[{os.path.basename(img_path)}] 매칭률: {max_val:.2f}")
+            if max_val >= 0.75:
+                h, w = template.shape; tx, ty = max_loc[0] + w // 2, max_loc[1] + h // 2
+                if double: pyautogui.doubleClick(tx, ty)
+                else: pyautogui.click(tx, ty)
+                return True
+        return False
 
-    def run_sell_routine(self):
-        self.is_selling = True; self.log("[상점] 판매 루틴 시작"); pyautogui.keyUp('left'); pyautogui.keyUp('right')
-        try:
-            # 1. NPC 클릭 (지정된 좌표)
-            if self.shop_npc_pos != [0, 0]:
-                pyautogui.click(self.shop_npc_pos[0], self.shop_npc_pos[1]); time.sleep(1.5)
-            else:
-                self.press_key(self.KEY_SHOP.get()); time.sleep(1.5)
-            
-            # 2. 판매 버튼 클릭 (지정된 좌표)
-            if self.shop_sell_btn_pos != [0, 0]:
-                pyautogui.click(self.shop_sell_btn_pos[0], self.shop_sell_btn_pos[1]); time.sleep(1.0)
-            
-            # 3. 확인창 엔터 등
-            for _ in range(2): self.press_key('enter'); time.sleep(0.5)
-            self.log("[상점] 판매 완료"); winsound.Beep(800, 300)
-        except: self.log("[오류] 판매 루틴 실패")
-        self.last_sell_time = time.time(); self.is_selling = False
+    def update_status_ui(self, data):
+        self.data_runtime.setText(data.get("uptime", "00:00:00")); self.data_total_time.setText(data.get("total_uptime", "00:00:00"))
+        cpu = data.get('cpu', 0); ram = data.get('ram', 0)
+        self.cpu_label.setText(f"CPU 사용률({cpu}%)"); self.cpu_bar.setValue(cpu)
+        self.ram_label.setText(f"RAM 점유율({ram}%)"); self.ram_bar.setValue(ram)
+        self.data_actions.setText(str(data.get("actions", 0))); self.data_errors.setText(f"{data.get('err_cnt', 0)}회")
+
+    def update_x_min(self, v): self.x_min = v
+    def update_x_max(self, v): self.x_max = v
+    def update_stat_range(self, v): self.stationary_range = v
+    def update_precision(self, v): self.precision_val = v / 10.0; self.color_margin = int(self.precision_val * 50)
+    def update_att_delay(self, v): self.attack_delay_ms = v
+    def update_dash_delay(self, v): self.dash_delay_ms = v
+    def update_pet_interval(self, v): self.periodic_interval_min = v
+    def update_sell_interval(self, v): self.sell_interval_min = v
+    def update_use_sell(self, b): self.use_auto_sell = b
+    def update_use_alert(self, b): self.use_sound_alert = b
+    def update_use_shape_anti(self, b): self.use_shape_anti = b
+    def update_opacity(self, v): self.setWindowOpacity(v / 100.0)
+    def on_hunt_mode_tab_changed(self, idx): self.hunt_mode = idx
+
+    def create_data_row(self, layout, label, value):
+        row = QHBoxLayout(); lbl = QLabel(label); lbl.setObjectName("dataLabel"); val = QLabel(value); val.setObjectName("dataValue"); row.addWidget(lbl); row.addStretch(); row.addWidget(val); layout.addLayout(row); return val
+
+    def create_slider_row(self, layout, label, min_v, max_v, current_v, callback, is_float=False):
+        row = QHBoxLayout(); lbl = QLabel(label); lbl.setFixedWidth(140); lbl.setObjectName("dataLabel"); slider = QSlider(Qt.Horizontal); slider.setRange(min_v, max_v); slider.setValue(int(current_v)); slider.setFixedHeight(30)
+        val_lbl = QLabel(str(current_v/10.0 if is_float else current_v)); val_lbl.setFixedWidth(40); val_lbl.setStyleSheet("color: #00d2ff; font-weight: bold;")
+        slider.valueChanged.connect(lambda v: (val_lbl.setText(str(v/10.0 if is_float else v)), callback(v))); row.addWidget(lbl); row.addWidget(slider); row.addWidget(val_lbl); layout.addLayout(row); return slider
+
+    def create_key_combo(self, grid, title, r, c, default_v):
+        box = QVBoxLayout(); lbl = QLabel(title); lbl.setObjectName("subLabel"); cb = QComboBox(); cb.setFixedHeight(35); cb.addItems(["space", "ctrl", "alt", "shift", "insert", "del", "home", "end", "pgup", "pgdn", "enter", "tab", "esc", "up", "down", "left", "right"] + list("abcdefghijklmnopqrstuvwxyz") + [str(i) for i in range(10)])
+        cb.setCurrentText(default_v); box.addWidget(lbl); box.addWidget(cb); grid.addLayout(box, r, c); return cb
+
+    def update_log(self, msg):
+        timestamp = time.strftime("%H:%M:%S")
+        self.log_text.append(f"<span style='color:#484f58'>[{timestamp}]</span> <span style='color:#c9d1d9'>{msg}</span>")
+        self.log_text.verticalScrollBar().setValue(self.log_text.verticalScrollBar().maximum())
+
+    def update_minimap_preview(self, img):
+        h, w, c = img.shape; bytes_per_line = c * w; q_img = QImage(img.data, w, h, bytes_per_line, QImage.Format_RGB888).rgbSwapped()
+        pixmap = QPixmap.fromImage(q_img).scaled(370, 210, Qt.KeepAspectRatio, Qt.SmoothTransformation); self.minimap_preview.setPixmap(pixmap)
+
+    def update_shape_preview(self, img):
+        h, w, c = img.shape; bytes_per_line = c * w; q_img = QImage(img.data, w, h, bytes_per_line, QImage.Format_RGB888).rgbSwapped()
+        pixmap = QPixmap.fromImage(q_img).scaled(370, 210, Qt.KeepAspectRatio, Qt.SmoothTransformation); self.shape_preview.setPixmap(pixmap)
+
+    def update_window_flags(self):
+        if self.chk_top.isChecked(): self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
+        else: self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint)
+        self.show()
+
+    def play_custom_sound(self):
+        if not self.use_sound_alert: return
+        def _play():
+            start = time.time()
+            while time.time() - start < 15:
+                winsound.Beep(3500, 100); winsound.Beep(4000, 50)
+                if not self.use_sound_alert: break
+        threading.Thread(target=_play, daemon=True).start()
+
+    def monitor_loop(self):
+        with mss.mss() as sct:
+            while not self.stop_threads:
+                if self.reg_w > 5:
+                    region = {"top": self.reg_t, "left": self.reg_l, "width": self.reg_w, "height": self.reg_h}
+                    try:
+                        shot = np.array(sct.grab(region)); img = cv2.cvtColor(shot, cv2.COLOR_BGRA2BGR); m = self.color_margin
+                        low = np.array([max(0, self.base_lower[2]-m), max(0, self.base_lower[1]-m), max(0, self.base_lower[0]-m)])
+                        high = np.array([min(255, self.base_upper[2]+m), min(255, self.base_upper[1]+m), min(255, self.base_upper[0]+m)])
+                        mask = cv2.inRange(img, low, high); p_img = img.copy()
+                        cv2.line(p_img, (self.x_min, 0), (self.x_min, self.reg_h), (59, 130, 246), 3)
+                        cv2.line(p_img, (self.x_max, 0), (self.x_max, self.reg_h), (239, 68, 68), 3)
+                        if np.any(mask):
+                            M = cv2.moments(mask)
+                            if M["m00"] > 0: cx, cy = int(M["m10"]/M["m00"]), int(M["m01"]/M["m00"]); cv2.circle(p_img, (cx, cy), 7, (34, 197, 94), -1)
+                        self.signals.preview_signal.emit(p_img)
+                    except: pass
+                time.sleep(0.1)
+
+    def anti_macro_loop(self):
+        ANTI_IMAGES = ["anti1.png", "anti2.png", "anti3.png", "anti4.png"]
+        last_alert = 0
+        with mss.mss() as sct:
+            while not self.stop_threads:
+                if self.use_anti_macro:
+                    try:
+                        scr_w, scr_h = pyautogui.size(); monitor = {"top": 0, "left": 0, "width": scr_w, "height": scr_h}
+                        img = np.array(sct.grab(monitor)); img_gray = cv2.cvtColor(img, cv2.COLOR_BGRA2GRAY)
+                        for img_name in ANTI_IMAGES:
+                            if not os.path.exists(img_name): continue
+                            template = cv2.imread(img_name, cv2.IMREAD_GRAYSCALE)
+                            res = cv2.matchTemplate(img_gray, template, cv2.TM_CCOEFF_NORMED)
+                            if np.max(res) >= 0.8:
+                                if time.time() - last_alert > 60:
+                                    self.err_cnt += 1; self.log(f"⚠️ 경고: 거탐 감지! (누적 {self.err_cnt}회)"); self.signals.alert_signal.emit()
+                                    last_alert = time.time()
+                                break
+                    except: pass
+                time.sleep(2.0)
 
     def save_current_profile(self):
-        n = self.current_profile_name.get()
-        if not n: 
-            messagebox.showwarning("경고", "사냥터 이름을 입력하세요.")
-            return
-            
+        n = self.profile_combo.currentText()
+        if not n: return
         self.profiles_data[n] = {
-            "reg": {"t": self.reg_t.get(), "l": self.reg_l.get(), "w": self.reg_w.get(), "h": self.reg_h.get()},
-            "range": {"min": self.x_min.get(), "max": self.x_max.get()},
-            "keys": {"att": self.KEY_ATTACK.get(), "dash": self.KEY_DASH.get(), "jump": self.KEY_JUMP.get(), "pet": self.KEY_PETFOOD.get(), "shop": self.KEY_SHOP.get()},
-            "shop_pos": {"npc": self.shop_npc_pos, "btn": self.shop_sell_btn_pos},
-            "params": {
-                "margin": self.color_margin.get(), "ad": self.attack_delay_ms.get(), "dd": self.dash_delay_ms.get(),
-                "use_dash": self.use_dash.get(), "use_anti": self.use_anti_macro.get(), "mode": self.hunt_mode.get(),
-                "use_per": self.use_periodic.get(), "per_int": self.periodic_interval_min.get(), "st_range": self.stationary_range.get(),
-                "use_sound": self.use_sound_alert.get(), "top": self.always_on_top.get(), "opacity": self.ui_opacity.get(),
-                "use_sell": self.use_auto_sell.get(), "sell_int": self.sell_interval_min.get()
-            }
+            "reg": {"t": self.reg_t, "l": self.reg_l, "w": self.reg_w, "h": self.reg_h},
+            "range": {"min": self.x_min, "max": self.x_max, "stat": self.stationary_range},
+            "keys": {"att": self.key_att_cb.currentText(), "dash": self.key_dash_cb.currentText(), "jump": self.key_jump_cb.currentText(), "pet": self.key_pet_cb.currentText()},
+            "params": {"margin": self.color_margin, "precision": self.precision_val, "ad": self.attack_delay_ms, "dd": self.dash_delay_ms, "mode": self.hunt_mode, "per_int": self.periodic_interval_min, "sell_int": self.sell_interval_min, "auto_sell": self.use_auto_sell, "sound": self.use_sound_alert, "shape_anti": self.use_shape_anti}
         }
-        try:
-            with open(CONFIG_FILE, "w", encoding="utf-8") as f: 
-                json.dump(self.profiles_data, f, ensure_ascii=False, indent=4)
-            self.update_profile_list()
-            self.log(f"사냥터 저장 완료: {n}")
-            messagebox.showinfo("완료", f"'{n}' 사냥터가 저장되었습니다.")
-        except Exception as e:
-            self.log(f"[저장 실패] {e}")
+        with open(CONFIG_FILE, "w", encoding="utf-8") as f: json.dump(self.profiles_data, f, ensure_ascii=False, indent=4)
+        self.update_profile_list(); QMessageBox.information(self, "저장 완료", f"'{n}' 사냥터 프로필이 성공적으로 저장되었습니다.")
+
+    def apply_profile_data(self, n):
+        if n not in self.profiles_data: return
+        d = self.profiles_data[n]; p = d["params"]; k = d.get("keys", {}); r = d.get("range", {})
+        self.reg_t, self.reg_l = d["reg"]["t"], d["reg"]["l"]; self.reg_w, self.reg_h = d["reg"]["w"], d["reg"]["h"]
+        self.x_min_slider.setValue(r.get("min", 20)); self.x_max_slider.setValue(r.get("max", 180)); self.stat_range_slider.setValue(r.get("stat", 15))
+        self.precision_slider.setValue(int(p.get("precision", 1.0)*10)); self.att_slider.setValue(p.get("ad", 500)); self.dash_slider.setValue(p.get("dd", 1500))
+        self.pet_slider.setValue(p.get("per_int", 5)); self.sell_slider.setValue(p.get("sell_int", 15))
+        self.chk_alert.setChecked(p.get("sound", True))
+        self.chk_shape_anti.setChecked(p.get("shape_anti", False))
+        self.key_att_cb.setCurrentText(k.get("att", "end")); self.key_dash_cb.setCurrentText(k.get("dash", "space")); self.key_jump_cb.setCurrentText(k.get("jump", "alt")); self.key_pet_cb.setCurrentText(k.get("pet", "del"))
+        mode = p.get("mode", 0); self.hunt_mode = mode; self.mode_tabs.setCurrentIndex(mode)
 
     def load_all_profiles(self):
         if os.path.exists(CONFIG_FILE):
             try:
-                with open(CONFIG_FILE, "r", encoding="utf-8") as f: 
-                    self.profiles_data = json.load(f)
+                with open(CONFIG_FILE, "r", encoding="utf-8") as f: self.profiles_data = json.load(f)
                 self.update_profile_list()
-                if self.profiles_data: 
-                    n = list(self.profiles_data.keys())[0]
-                    self.apply_profile_data(n)
-                    self.profile_combo.set(n)
-            except Exception as e:
-                self.log(f"[불러오기 실패] {e}")
+                if self.profiles_data: n = list(self.profiles_data.keys())[0]; self.profile_combo.setCurrentText(n); self.apply_profile_data(n)
+            except: pass
 
-    def update_profile_list(self): 
-        self.profile_combo['values'] = list(self.profiles_data.keys())
+    def update_profile_list(self): self.profile_combo.blockSignals(True); self.profile_combo.clear(); self.profile_combo.addItems(list(self.profiles_data.keys())); self.profile_combo.blockSignals(False)
 
-    def on_profile_change(self, e): 
-        n = self.profile_combo.get()
-        if n in self.profiles_data:
-            self.apply_profile_data(n)
-            self.current_profile_name.set(n)
-            self.log(f"사냥터 변경: {n}")
+    def on_profile_change(self, n):
+        if n in self.profiles_data: self.apply_profile_data(n)
 
-    def apply_profile_data(self, n):
-        if n not in self.profiles_data: return
-        d = self.profiles_data[n]; p = d["params"]; k = d.get("keys", {}); s = d.get("shop_pos", {})
+    def open_selector(self):
+        self.selector = QWidget(); self.selector.setWindowOpacity(0.3); self.selector.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint); self.selector.showFullScreen(); self.selector.setCursor(Qt.CrossCursor)
+        self.selector.mousePressEvent = self.sel_press; self.selector.mouseReleaseEvent = self.sel_release; self.sel_start = None
+        self.selector.show()
+
+    def sel_press(self, e): self.sel_start = e.pos()
+
+    def sel_release(self, e):
+        if self.sel_start is not None:
+            end = e.pos()
+            self.reg_l, self.reg_t = min(self.sel_start.x(), end.x()), min(self.sel_start.y(), end.y())
+            self.reg_w, self.reg_h = abs(self.sel_start.x() - end.x()), abs(self.sel_start.y() - end.y())
+            self.log(f"사냥 범위 재설정: {self.reg_w}x{self.reg_h}")
+        self.selector.close()
+        self.selector.deleteLater()
+
+    def bezier_move(self, target_x, target_y):
+        try:
+            pyautogui.PAUSE = 0
+            start_x, start_y = pyautogui.position()
+            
+            # 거리 기반 단계 조절
+            dist = np.hypot(target_x - start_x, target_y - start_y)
+            if dist < 5: return # 이미 근처면 이동 생략
+            
+            steps = min(max(int(dist / 15), 10), 25)
+            
+            control_x = (start_x + target_x) / 2 + random.randint(-100, 100)
+            control_y = (start_y + target_y) / 2 + random.randint(-100, 100)
+            
+            for i in range(steps + 1):
+                t = i / steps
+                ease_t = t * t * (3 - 2 * t)
+                x = (1 - ease_t)**2 * start_x + 2 * (1 - ease_t) * ease_t * control_x + ease_t**2 * target_x
+                y = (1 - ease_t)**2 * start_y + 2 * (1 - ease_t) * ease_t * control_y + ease_t**2 * target_y
+                
+                # Jitter (사람의 미세 떨림)
+                jx, jy = x + random.uniform(-1, 1), y + random.uniform(-1, 1)
+                pyautogui.moveTo(jx, jy)
+                if i % 3 == 0: time.sleep(0.001)
+            
+            # 최종 정밀 안착
+            pyautogui.moveTo(target_x + random.uniform(-1, 1), target_y + random.uniform(-1, 1))
+        except: pass
+
+    def shape_tracking_loop(self):
+        # 실행 파일/스크립트의 실제 경로 확보
+        if getattr(sys, 'frozen', False):
+            base_dir = os.path.dirname(sys.executable)
+        else:
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            
+        BG_PATTERN = os.path.join(base_dir, "game_background_pattern.png")
+        last_log = 0
         
-        # 영역 및 범위
-        self.reg_t.set(d["reg"]["t"]); self.reg_l.set(d["reg"]["l"]); self.reg_w.set(d["reg"]["w"]); self.reg_h.set(d["reg"]["h"])
-        self.x_min.set(d["range"]["min"]); self.x_max.set(d["range"]["max"])
-        
-        # 키 설정
-        self.KEY_ATTACK.set(k.get("att", "end"))
-        self.KEY_DASH.set(k.get("dash", "space"))
-        self.KEY_JUMP.set(k.get("jump", "alt"))
-        self.KEY_PETFOOD.set(k.get("pet", k.get("per", "del"))) # 이전 버전(per) 호환
-        self.KEY_SHOP.set(k.get("shop", "m"))
-        
-        # 상점 좌표
-        self.shop_npc_pos = s.get("npc", [0, 0]); self.shop_sell_btn_pos = s.get("btn", [0, 0])
-        
-        # 기타 파라미터
-        self.color_margin.set(p.get("margin", 60))
-        self.attack_delay_ms.set(p.get("ad", 500))
-        self.dash_delay_ms.set(p.get("dd", 1500))
-        self.use_dash.set(p.get("use_dash", True))
-        self.use_anti_macro.set(p.get("use_anti", True))
-        self.hunt_mode.set(p.get("mode", 0))
-        self.use_periodic.set(p.get("use_per", True))
-        self.periodic_interval_min.set(p.get("per_int", 5))
-        self.stationary_range.set(p.get("st_range", 5))
-        self.use_sound_alert.set(p.get("use_sound", True))
-        self.always_on_top.set(p.get("top", True))
-        self.ui_opacity.set(p.get("opacity", 1.0))
-        self.use_auto_sell.set(p.get("use_sell", False))
-        self.sell_interval_min.set(p.get("sell_int", 30))
-        
-        self.update_ui_settings()
-        self.log(f"'{n}' 설정 적용 완료")
+        while not self.stop_threads:
+            if self.use_shape_anti:
+                try:
+                    with mss.mss() as sct:
+                        # 1. 파일 체크
+                        if not os.path.exists(BG_PATTERN):
+                            if time.time() - last_log > 10:
+                                self.log(f"⚠️ [도형엔진] 파일을 찾을 수 없습니다: {os.path.basename(BG_PATTERN)}")
+                                last_log = time.time()
+                            time.sleep(1); continue
+
+                        # 2. 화면 캡처 (주 모니터)
+                        monitor = sct.monitors[1]
+                        scr = np.array(sct.grab(monitor))
+                        scr_bgr = cv2.cvtColor(scr, cv2.COLOR_BGRA2BGR)
+                        scr_gray = cv2.cvtColor(scr_bgr, cv2.COLOR_BGR2GRAY)
+                        
+                        # 3. 배경 이미지 로드 및 리사이징
+                        bg_ref = cv2.imread(BG_PATTERN, cv2.IMREAD_GRAYSCALE)
+                        if bg_ref is None: continue
+                        if scr_gray.shape != bg_ref.shape:
+                            bg_ref = cv2.resize(bg_ref, (scr_gray.shape[1], scr_gray.shape[0]))
+
+                        # 4. 차분 연산 및 노이즈 필터링
+                        diff = cv2.absdiff(scr_gray, bg_ref)
+                        _, thresh = cv2.threshold(diff, 25, 255, cv2.THRESH_BINARY)
+                        kernel = np.ones((5,5), np.uint8)
+                        mask = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
+                        
+                        # 시각적 디버깅용 베이스 이미지 (어둡게 처리하여 가시성 확보)
+                        debug_feed = scr_bgr.copy()
+                        debug_feed = cv2.addWeighted(debug_feed, 0.4, np.zeros(debug_feed.shape, debug_feed.dtype), 0, 0)
+                        
+                        self.frame_num += 1
+                        log_msg = ""
+                        conf = 0.0
+
+                        # 5. 외곽선 탐지 및 인프레임 렌더링
+                        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                        if contours:
+                            best_cnt = max(contours, key=cv2.contourArea)
+                            area = cv2.contourArea(best_cnt)
+                            if area > 50:
+                                # 신뢰도 계산 (면적 및 형태 기반)
+                                conf = min(area / 1000.0, 1.0)
+                                M = cv2.moments(best_cnt)
+                                if M["m00"] > 0:
+                                    cX_local = int(M["m10"]/M["m00"])
+                                    cY_local = int(M["m01"]/M["m00"])
+                                    cX_global = cX_local + monitor["left"]
+                                    cY_global = cY_local + monitor["top"]
+                                    
+                                    # [기능 1] 감지 구역 바운딩 박스 (빨간색 사각형)
+                                    x, y, w, h = cv2.boundingRect(best_cnt)
+                                    cv2.rectangle(debug_feed, (x, y), (x+w, y+h), (0, 0, 255), 2)
+                                    
+                                    # [기능 2] 중심점 타겟 마킹 (초록색 조준점)
+                                    cv2.drawMarker(debug_feed, (cX_local, cY_local), (0, 255, 0), 
+                                                 markerType=cv2.MARKER_CROSS, markerSize=20, thickness=2)
+                                    
+                                    # 상단 정보 표시
+                                    cv2.putText(debug_feed, f"TRACKING: {conf:.2f}", (x, y-10), 
+                                               cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+
+                                    # 실제 마우스 이동
+                                    self.bezier_move(cX_global, cY_global)
+                                    
+                                    # [기능 3] 콘솔 로그 생성
+                                    log_msg = f"f [{self.frame_num:05d}] tracked conf={conf:.4f} tracker=motion"
+                        
+                        if not log_msg:
+                            log_msg = f"f [{self.frame_num:05d}] searching..."
+
+                        # 화면에 프레임 번호 고정 출력
+                        cv2.putText(debug_feed, f"FRAME: {self.frame_num}", (10, 30), 
+                                   cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+
+                        # 프리뷰 및 디버그 신호 전송
+                        self.signals.shape_monitor_signal.emit((debug_feed, log_msg))
+
+                except Exception as e:
+                    pass
+            time.sleep(0.05)
+
+    def log(self, msg):
+        self.signals.log_signal.emit(msg)
+
+    def status_update_loop(self):
+        while not self.stop_threads:
+            try:
+                # 가동 시간 계산
+                uptime_sec = int(time.time() - self.current_hunt_start) if self.is_running else 0
+                total_uptime_sec = int(time.time() - self.program_start_time)
+                
+                h, m, s = uptime_sec // 3600, (uptime_sec % 3600) // 60, uptime_sec % 60
+                th, tm, ts = total_uptime_sec // 3600, (total_uptime_sec % 3600) // 60, total_uptime_sec % 60
+                
+                status_data = {
+                    "uptime": f"{h:02d}:{m:02d}:{s:02d}",
+                    "total_uptime": f"{th:02d}:{tm:02d}:{ts:02d}",
+                    "cpu": int(psutil.cpu_percent()),
+                    "ram": int(psutil.virtual_memory().percent),
+                    "actions": self.actions_cnt,
+                    "err_cnt": self.err_cnt
+                }
+                self.signals.status_signal.emit(status_data)
+            except: pass
+            time.sleep(1.0)
+
+    def press_key(self, key): 
+        pyautogui.keyDown(key)
+        time.sleep(random.uniform(0.05, 0.1))
+        pyautogui.keyUp(key)
+        self.actions_cnt += 1
+
+    def closeEvent(self, event): 
+        self.stop_threads = True
+        self.is_running = False
+        event.accept()
 
 if __name__ == "__main__":
-    root = tk.Tk(); app = AutoHunterV7_0(root); root.mainloop()
-"]["l"]); self.reg_w.set(d["reg"]["w"]); self.reg_h.set(d["reg"]["h"])
-        self.x_min.set(d["range"]["min"]); self.x_max.set(d["range"]["max"])
-        self.shop_npc_pos = s.get("npc", [0, 0]); self.shop_sell_btn_pos = s.get("btn", [0, 0])
-        self.KEY_ATTACK.set(k.get("att", "end")); self.KEY_DASH.set(k.get("dash", "space")); self.KEY_JUMP.set(k.get("jump", "alt")); self.KEY_PERIODIC.set(k.get("per", "del")); self.KEY_SHOP.set(k.get("shop", "m"))
-        self.color_margin.set(p.get("margin", 60)); self.attack_delay_ms.set(p.get("ad", 500)); self.dash_delay_ms.set(p.get("dd", 1500))
-        self.use_dash.set(p.get("use_dash", True)); self.use_anti_macro.set(p.get("use_anti", True)); self.hunt_mode.set(p.get("mode", 0))
-        self.use_periodic.set(p.get("use_per", True)); self.periodic_interval_min.set(p.get("per_int", 5)); self.stationary_range.set(p.get("st_range", 5))
-        self.use_sound_alert.set(p.get("use_sound", True)); self.always_on_top.set(p.get("top", True)); self.ui_opacity.set(p.get("opacity", 1.0))
-        self.use_auto_sell.set(p.get("use_sell", False)); self.sell_interval_min.set(p.get("sell_int", 30))
-        self.update_ui_settings()
-
-if __name__ == "__main__":
-    root = tk.Tk(); app = AutoHunterV7_0(root); root.mainloop()
+    app = QApplication(sys.argv); window = AutoHunterV7_0(); window.show(); sys.exit(app.exec())

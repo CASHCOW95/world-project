@@ -1,10 +1,17 @@
 {
   "manifest_version": 3,
-  "name": "구글폼 자동작성",
-  "version": "1.0",
+  "name": "구글폼 자동작성 (Ultimate)",
+  "version": "1.1",
   "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": ["https://docs.google.com/forms/*"],
   "action": {
     "default_popup": "popup.html"
-  }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://docs.google.com/forms/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
 }
