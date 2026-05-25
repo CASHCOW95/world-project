@@ -1,0 +1,11 @@
+{
+  "name": "world-project",
+  "version": "1.0.0",
+  "description": "Static deployment for WORLD project",
+  "scripts": {
+    "build": "echo 'Static site, no build needed'"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
