@@ -151,11 +151,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const mailtoLink = `mailto:ydh2455@naver.com?subject=${encodeURIComponent('[문의] ' + title)}&body=${encodeURIComponent(content)}`;
-            window.location.href = mailtoLink;
-            
-            feedbackModal.classList.remove('active');
-            showToast('📧 메일 클라이언트가 열립니다.');
+            // Google Form Submission
+            const formUrl = "https://docs.google.com/forms/d/e/1FAIpQLSdhEJ5QH3WalbOR7ppAT4n9Bma4ykYh4xRbZTKK-eOtmCtOaw/formResponse";
+            const entryId = "entry.1665673091";
+            const combinedMessage = `[${title}]\n${content}`;
+
+            const formData = new FormData();
+            formData.append(entryId, combinedMessage);
+
+            // Use fetch with no-cors to submit without redirecting to Google's success page
+            fetch(formUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: formData
+            }).then(() => {
+                showToast('🚀 문의사항이 구글 폼으로 전송되었습니다.');
+                feedbackModal.classList.remove('active');
+                document.getElementById('feedback-title').value = '';
+                document.getElementById('feedback-content').value = '';
+            }).catch(err => {
+                console.error('Submission error:', err);
+                showToast('❌ 전송 중 오류가 발생했습니다.');
+            });
         });
     }
 
