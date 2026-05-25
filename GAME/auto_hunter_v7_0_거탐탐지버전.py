@@ -42,63 +42,11 @@ class Communicate(QObject):
     sell_signal = Signal()  # 판매 전용
     shape_monitor_signal = Signal(object) # (img, log_msg) 튜플 전용
 
-class ShapeMonitorWindow(QMainWindow):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("AI 도형거탐 디버깅 엔진 [MOTION TRACKER]")
-        self.setFixedSize(1000, 700)
-        self.setWindowFlags(Qt.WindowStaysOnTopHint)
-        self.setStyleSheet("background-color: #0b0e14; color: white;")
-        
-        main_layout = QVBoxLayout()
-        
-        # 1. 시각화 영역
-        self.img_label = QLabel("디버깅 엔진 대기 중...")
-        self.img_label.setAlignment(Qt.AlignCenter)
-        self.img_label.setStyleSheet("background-color: #000000; border: 2px solid #30363d; border-radius: 10px;")
-        main_layout.addWidget(self.img_label, 7)
-        
-        # 2. 실시간 연산 로그 (터미널 스타일)
-        self.console_log = QTextEdit()
-        self.console_log.setReadOnly(True)
-        self.console_log.setStyleSheet("""
-            background-color: #0d1117; 
-            color: #58a6ff; 
-            font-family: 'Consolas', 'Courier New', monospace; 
-            font-size: 11px; 
-            border: 1px solid #30363d;
-            border-radius: 5px;
-        """)
-        main_layout.addWidget(self.console_log, 3)
-        
-        container = QWidget()
-        container.setLayout(main_layout)
-        self.setCentralWidget(container)
-
-    def update_frame(self, frame):
-        h, w, c = frame.shape
-        bytes_per_line = c * w
-        q_img = QImage(frame.data, w, h, bytes_per_line, QImage.Format_RGB888).rgbSwapped()
-        pixmap = QPixmap.fromImage(q_img).scaled(self.img_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        self.img_label.setPixmap(pixmap)
-
-    def append_console(self, msg):
-        self.console_log.append(msg)
-        # 자동 스크롤
-        self.console_log.verticalScrollBar().setValue(self.console_log.verticalScrollBar().maximum())
-        # 로그 과부하 방지 (최근 100줄 유지)
-        if self.console_log.document().blockCount() > 100:
-            cursor = self.console_log.textCursor()
-            cursor.movePosition(cursor.Start)
-            cursor.select(cursor.BlockUnderCursor)
-            cursor.removeSelectedText()
-            cursor.deleteChar()
-
 class AutoHunterV7_0(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("AUTOmaple 도형거탐버전 v9.5.0 (2026.05.26)")
-        self.setMinimumSize(1400, 950) # 가로폭 확장
+        self.setWindowTitle("AUTOmaple 도형거탐버전 v9.7.0 (2026.05.26)")
+        self.setMinimumSize(1400, 950)
         self.setWindowFlags(Qt.WindowStaysOnTopHint)
         
         # 1. 상태 변수 초기화
@@ -186,17 +134,19 @@ class AutoHunterV7_0(QMainWindow):
 
     def update_minimap_preview(self, img):
         h, w, c = img.shape; bytes_per_line = c * w; q_img = QImage(img.data, w, h, bytes_per_line, QImage.Format_RGB888).rgbSwapped()
-        pixmap = QPixmap.fromImage(q_img).scaled(370, 210, Qt.KeepAspectRatio, Qt.SmoothTransformation); self.minimap_preview.setPixmap(pixmap)
+        pixmap = QPixmap.fromImage(q_img).scaled(self.minimap_preview.size(), Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+        self.minimap_preview.setPixmap(pixmap)
 
     def update_shape_preview(self, img):
         h, w, c = img.shape; bytes_per_line = c * w; q_img = QImage(img.data, w, h, bytes_per_line, QImage.Format_RGB888).rgbSwapped()
-        pixmap = QPixmap.fromImage(q_img).scaled(self.shape_preview.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation); self.shape_preview.setPixmap(pixmap)
+        pixmap = QPixmap.fromImage(q_img).scaled(self.shape_preview.size(), Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+        self.shape_preview.setPixmap(pixmap)
 
     def setup_ui(self):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QVBoxLayout(central_widget)
-        main_layout.setContentsMargins(25, 25, 25, 25)
+        main_layout.setContentsMargins(25, 25, 25, 40) # 하단 잘림 방지용 여백
         main_layout.setSpacing(20)
 
         header = QHBoxLayout()
@@ -209,6 +159,7 @@ class AutoHunterV7_0(QMainWindow):
         self.profile_combo = QComboBox()
         self.profile_combo.setMinimumWidth(320); self.profile_combo.setFixedHeight(45)
         self.profile_combo.setEditable(True)
+        self.profile_combo.setPlaceholderText("프로필 선택 또는 기본 프로필")
         self.profile_combo.currentTextChanged.connect(self.on_profile_change)
         p_box.addWidget(self.profile_combo)
         header.addLayout(p_box)
@@ -221,16 +172,15 @@ class AutoHunterV7_0(QMainWindow):
 
         content_layout = QHBoxLayout(); content_layout.setSpacing(20)
 
-        # [변경 1] Analytics Panel (기존 우측 -> 좌측 이동)
+        # 1. Analytics Panel (좌측)
         left_frame = QFrame(); left_frame.setObjectName("panelFrame"); left_frame.setFixedWidth(500)
         left_vbox = QVBoxLayout(left_frame); left_vbox.setContentsMargins(15, 20, 15, 15)
         
-        # Minimap Section with Small Button
         mini_header = QHBoxLayout()
         mini_header.addWidget(QLabel("MINIMAP ANALYTICS", objectName="panelTitle"))
         mini_header.addStretch()
         self.sel_btn = QPushButton("영역 설정"); self.sel_btn.setFixedSize(80, 25)
-        self.sel_btn.setStyleSheet("font-size: 10px; padding: 2px; border-radius: 5px;")
+        self.sel_btn.setStyleSheet("font-size: 10px; padding: 2px; border-radius: 5px; background-color: #238636; color: white;")
         self.sel_btn.clicked.connect(self.open_selector)
         mini_header.addWidget(self.sel_btn)
         left_vbox.addLayout(mini_header)
@@ -241,7 +191,6 @@ class AutoHunterV7_0(QMainWindow):
         
         left_vbox.addSpacing(15)
         
-        # Shape Detection Section
         left_vbox.addWidget(QLabel("MACRO DETECTION ENGINE [LIVE]", objectName="panelTitle"))
         self.shape_preview = QLabel("SEARCHING..."); self.shape_preview.setObjectName("previewLabel")
         self.shape_preview.setFixedSize(470, 260); self.shape_preview.setAlignment(Qt.AlignCenter)
@@ -251,17 +200,15 @@ class AutoHunterV7_0(QMainWindow):
         self.shape_console.setFixedHeight(100); self.shape_console.setObjectName("logTerminal")
         self.shape_console.setStyleSheet("color: #58a6ff; font-size: 10px;")
         left_vbox.addWidget(self.shape_console)
-        
         content_layout.addWidget(left_frame)
 
-        # [변경 2] Algorithm Panel (중앙 유지)
+        # 2. Algorithm Panel (중앙)
         center_frame = QFrame(objectName="panelFrame")
         center_vbox = QVBoxLayout(center_frame); center_vbox.setContentsMargins(15, 30, 15, 15)
         center_vbox.addWidget(QLabel("CORE ALGORITHM", objectName="panelTitle"))
         
         self.main_tabs = QTabWidget(); center_vbox.addWidget(self.main_tabs)
         
-        # Tabs (LR, ST, Skill, Advanced)
         self.mode_tabs = QTabWidget(); self.mode_tabs.currentChanged.connect(self.on_hunt_mode_tab_changed)
         tab_lr_widget = QWidget(); tab_lr_vbox = QVBoxLayout(tab_lr_widget)
         self.x_min_slider = self.create_slider_row(tab_lr_vbox, "좌측 경계:", 0, 400, self.x_min, self.update_x_min)
@@ -288,12 +235,12 @@ class AutoHunterV7_0(QMainWindow):
         self.chk_shape_anti = QCheckBox("투명 도형 추적 엔진 활성화"); self.chk_shape_anti.setChecked(False); self.chk_shape_anti.toggled.connect(self.update_use_shape_anti); tab_adv_vbox.addWidget(self.chk_shape_anti)
         self.chk_sell = QCheckBox("자동 판매 (준비 중)"); self.chk_sell.setEnabled(False); tab_adv_vbox.addWidget(self.chk_sell)
         self.sell_slider = self.create_slider_row(tab_adv_vbox, "판매 주기:", 10, 60, self.sell_interval_min, self.update_sell_interval)
-        self.chk_top = QCheckBox("창 맨 위로 고정"); self.chk_top.setChecked(True); self.chk_top.toggled.connect(self.update_window_flags); tab_adv_vbox.addWidget(self.chk_top)
+        self.chk_top = QCheckBox("창 항상 맨 위로 고정"); self.chk_top.setChecked(True); self.chk_top.toggled.connect(self.update_window_flags); tab_adv_vbox.addWidget(self.chk_top)
         self.opacity_slider = self.create_slider_row(tab_adv_vbox, "투명도:", 30, 100, 100, self.update_opacity)
         tab_adv_vbox.addStretch(); self.main_tabs.addTab(tab_adv_widget, "시스템 환경")
         content_layout.addWidget(center_frame)
 
-        # [변경 3] Metrics & Logs Panel (기존 좌측 -> 우측 이동)
+        # 3. Metrics & Logs Panel (우측)
         right_frame = QFrame(objectName="panelFrame"); right_frame.setFixedWidth(330)
         right_vbox = QVBoxLayout(right_frame); right_vbox.setContentsMargins(20, 30, 20, 20)
         
@@ -311,8 +258,6 @@ class AutoHunterV7_0(QMainWindow):
         self.data_errors = self.create_data_row(right_vbox, "탐지 기록", "0회")
         
         right_vbox.addSpacing(25)
-        
-        # System Logs (Moved here)
         right_vbox.addWidget(QLabel("SYSTEM LOGS", objectName="panelTitle"))
         self.log_text = QTextEdit(); self.log_text.setObjectName("logTerminal"); self.log_text.setReadOnly(True)
         right_vbox.addWidget(self.log_text)
@@ -324,22 +269,8 @@ class AutoHunterV7_0(QMainWindow):
         footer = QHBoxLayout(); footer.setSpacing(15)
         self.start_btn = QPushButton("사냥 시작 [F8]", objectName="startBtn"); self.start_btn.setFixedHeight(85); self.start_btn.clicked.connect(self.start_hunting); footer.addWidget(self.start_btn, 2)
         self.stop_btn = QPushButton("사냥 중지 [F9]", objectName="stopBtn"); self.stop_btn.setFixedHeight(85); self.stop_btn.clicked.connect(self.stop_hunting); self.stop_btn.setEnabled(False); footer.addWidget(self.stop_btn, 2)
-        self.manual_sell_btn = QPushButton("판매 [F11]", objectName="sellBtn"); self.manual_sell_btn.setFixedHeight(85); self.manual_sell_btn.clicked.connect(self.run_manual_sell); footer.addWidget(self.manual_sell_btn, 1)
+        self.manual_sell_btn = QPushButton("인벤 판매 [F11]", objectName="sellBtn"); self.manual_sell_btn.setFixedHeight(85); self.manual_sell_btn.clicked.connect(self.run_manual_sell); footer.addWidget(self.manual_sell_btn, 1)
         self.stop_all_btn = QPushButton("종료"); self.stop_all_btn.setObjectName("stopBtn"); self.stop_all_btn.setFixedHeight(85); self.stop_all_btn.clicked.connect(self.close); footer.addWidget(self.stop_all_btn, 1)
-        main_layout.addLayout(footer)
-        # Footer Actions
-        footer = QHBoxLayout(); footer.setSpacing(15)
-        self.start_btn = QPushButton("사냥 시작 [F8]", objectName="startBtn"); self.start_btn.setFixedHeight(85); self.start_btn.clicked.connect(self.start_hunting)
-        footer.addWidget(self.start_btn, 2)
-        
-        self.stop_btn = QPushButton("사냥 중지 [F9]", objectName="stopBtn"); self.stop_btn.setFixedHeight(85); self.stop_btn.clicked.connect(self.stop_hunting); self.stop_btn.setEnabled(False)
-        footer.addWidget(self.stop_btn, 2)
-        
-        self.manual_sell_btn = QPushButton("인벤 판매 [F11]", objectName="sellBtn"); self.manual_sell_btn.setFixedHeight(85); self.manual_sell_btn.clicked.connect(self.run_manual_sell)
-        footer.addWidget(self.manual_sell_btn, 1)
-        
-        self.stop_all_btn = QPushButton("종료"); self.stop_all_btn.setObjectName("stopBtn"); self.stop_all_btn.setFixedHeight(85); self.stop_all_btn.clicked.connect(self.close)
-        footer.addWidget(self.stop_all_btn, 1)
         main_layout.addLayout(footer)
 
     def apply_qss(self):
@@ -353,7 +284,7 @@ class AutoHunterV7_0(QMainWindow):
             #dataValue {{ color: #ffffff; font-size: 18px; font-family: 'Consolas'; font-weight: 700; }}
             #panelFrame {{ background-color: #161b22; border: 1px solid #30363d; border-radius: 25px; }}
             QTabWidget::pane {{ border: 1px solid #30363d; background: #161b22; border-radius: 15px; top: -1px; }}
-            QTabBar::tab {{ background: #0d1117; color: #8b949e; padding: 12px 25px; font-size: 13px; font-weight: 700; border-top-left-radius: 12px; border-top-right-radius: 12px; margin-right: 5px; }}
+            QTabBar::tab {{ background: #0d1117; color: #8b949e; padding: 12px 10px; font-size: 13px; font-weight: 700; border-top-left-radius: 12px; border-top-right-radius: 12px; margin-right: 5px; min-width: 110px; }}
             QTabBar::tab:selected {{ background: #161b22; color: #00d2ff; border-bottom: 3px solid #00d2ff; }}
             QPushButton {{ background-color: #21262d; color: #c9d1d9; border: 1px solid #30363d; border-radius: 15px; padding: 10px; font-size: 15px; font-weight: 700; }}
             #startBtn {{ background-color: #238636; color: #ffffff; border: none; font-size: 28px; font-weight: 900; }}
@@ -454,6 +385,13 @@ class AutoHunterV7_0(QMainWindow):
         cpu = data.get('cpu', 0); ram = data.get('ram', 0)
         self.cpu_label.setText(f"CPU 사용률({cpu}%)"); self.cpu_bar.setValue(cpu)
         self.ram_label.setText(f"RAM 점유율({ram}%)"); self.ram_bar.setValue(ram)
+        
+        # RAM 위험도 색상 변경 (80% 이상시 빨간색 계열)
+        if ram >= 80:
+            self.ram_bar.setStyleSheet("QProgressBar#metricBar::chunk { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #ff4d4d, stop:1 #f85149); }")
+        else:
+            self.ram_bar.setStyleSheet("") # 기본 스타일로 복구
+
         self.data_actions.setText(str(data.get("actions", 0))); self.data_errors.setText(f"{data.get('err_cnt', 0)}회")
 
     def update_x_min(self, v): self.x_min = v
@@ -471,7 +409,8 @@ class AutoHunterV7_0(QMainWindow):
     def on_hunt_mode_tab_changed(self, idx): self.hunt_mode = idx
 
     def create_data_row(self, layout, label, value):
-        row = QHBoxLayout(); lbl = QLabel(label); lbl.setObjectName("dataLabel"); val = QLabel(value); val.setObjectName("dataValue"); row.addWidget(lbl); row.addStretch(); row.addWidget(val); layout.addLayout(row); return val
+        row = QHBoxLayout(); lbl = QLabel(label); lbl.setObjectName("dataLabel"); val = QLabel(value); val.setObjectName("dataValue"); val.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        row.addWidget(lbl); row.addStretch(); row.addWidget(val); layout.addLayout(row); return val
 
     def create_slider_row(self, layout, label, min_v, max_v, current_v, callback, is_float=False):
         row = QHBoxLayout(); lbl = QLabel(label); lbl.setFixedWidth(140); lbl.setObjectName("dataLabel"); slider = QSlider(Qt.Horizontal); slider.setRange(min_v, max_v); slider.setValue(int(current_v)); slider.setFixedHeight(30)
@@ -488,12 +427,15 @@ class AutoHunterV7_0(QMainWindow):
         self.log_text.verticalScrollBar().setValue(self.log_text.verticalScrollBar().maximum())
 
     def update_minimap_preview(self, img):
+        # 깨짐 방지 스케일링
         h, w, c = img.shape; bytes_per_line = c * w; q_img = QImage(img.data, w, h, bytes_per_line, QImage.Format_RGB888).rgbSwapped()
-        pixmap = QPixmap.fromImage(q_img).scaled(370, 210, Qt.KeepAspectRatio, Qt.SmoothTransformation); self.minimap_preview.setPixmap(pixmap)
+        pixmap = QPixmap.fromImage(q_img).scaled(self.minimap_preview.size(), Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+        self.minimap_preview.setPixmap(pixmap)
 
     def update_shape_preview(self, img):
         h, w, c = img.shape; bytes_per_line = c * w; q_img = QImage(img.data, w, h, bytes_per_line, QImage.Format_RGB888).rgbSwapped()
-        pixmap = QPixmap.fromImage(q_img).scaled(370, 210, Qt.KeepAspectRatio, Qt.SmoothTransformation); self.shape_preview.setPixmap(pixmap)
+        pixmap = QPixmap.fromImage(q_img).scaled(self.shape_preview.size(), Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+        self.shape_preview.setPixmap(pixmap)
 
     def update_window_flags(self):
         if self.chk_top.isChecked(): self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
@@ -695,6 +637,7 @@ class AutoHunterV7_0(QMainWindow):
                                     
                                     # [기능 1] 감지 구역 바운딩 박스 (빨간색 사각형)
                                     x, y, w, h = cv2.boundingRect(best_cnt)
+                                    cv2.rectangle(debug_feed, (x, y), (x+w, y+h), (0, 0, 0), 2)
                                     cv2.rectangle(debug_feed, (x, y), (x+w, y+h), (0, 0, 255), 2)
                                     
                                     # [기능 2] 중심점 타겟 마킹 (초록색 조준점)
@@ -705,8 +648,9 @@ class AutoHunterV7_0(QMainWindow):
                                     cv2.putText(debug_feed, f"TRACKING: {conf:.2f}", (x, y-10), 
                                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
 
-                                    # 실제 마우스 이동
-                                    self.bezier_move(cX_global, cY_global)
+                                    # 실제 마우스 이동 (신뢰도 높을 때만)
+                                    if conf > 0.07:
+                                        self.bezier_move(cX_global, cY_global)
                                     
                                     # [기능 3] 콘솔 로그 생성
                                     log_msg = f"f [{self.frame_num:05d}] tracked conf={conf:.4f} tracker=motion"
