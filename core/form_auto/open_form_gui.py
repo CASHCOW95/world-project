@@ -62,7 +62,12 @@ CHROME_PATH = ""
 for p in [r"C:\Program Files\Google\Chrome\Application\chrome.exe", r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe", os.path.expandvars(r"%LOCALAPPDATA%\Google\Application\chrome.exe")]:
     if os.path.exists(p): CHROME_PATH = p; break
 USER_DATA_PATH = os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\User Data")
-CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.json")
+
+if getattr(sys, 'frozen', False):
+    application_path = os.path.dirname(sys.executable)
+else:
+    application_path = os.path.dirname(__file__)
+CONFIG_FILE = os.path.join(application_path, "open_form_config.json")
 
 # --- QSS 스타일 ---
 CYBERPUNK_QSS = """

@@ -7,7 +7,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 os.chdir(BASE_DIR)
 
 # [규칙 2] 운영체제 의존 경로 제거
-JOBS_DIR = os.path.join(BASE_DIR, "jobs")
+JOBS_DIR = BASE_DIR
 LOG_DIR = os.path.join(BASE_DIR, "logs")
 os.makedirs(LOG_DIR, exist_ok=True)
 
