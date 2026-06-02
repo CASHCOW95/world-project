@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Static deployment for WORLD project",
   "scripts": {
-    "build": "echo 'Static site, no build needed'"
+    "build": "mkdir -p dist && cp -r assets css js *.html dist/"
   },
   "engines": {
     "node": ">=20.0.0"
