@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>틱톡 관리 시스템 - WORLD</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .calendar-day { aspect-ratio: 1 / 1; transition: all 0.3s; }
+        .calendar-day.checked { background: #6366f1; color: white; box-shadow: 0 0 15px rgba(99, 102, 241, 0.5); }
+        .calendar-day.checked::after { content: '✓'; position: absolute; top: 4px; right: 8px; font-size: 10px; font-weight: 900; }
+    </style>
+</head>
+<body class="antialiased bg-bg-light dark:bg-bg-dark text-slate-900 dark:text-slate-100 transition-colors duration-300">
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="w-full bg-white/60 dark:bg-[#030509]/30 backdrop-blur-md border-b border-black/5 dark:border-white/5 px-8 py-3.5 flex justify-between items-center sticky top-0 z-50">
+            <a href="index.html" class="flex items-center space-x-3">
+                <div class="text-xl font-black tracking-tighter flex items-center gap-2">
+                    <div class="w-5 h-5 rounded-full bg-gradient-to-tr from-cyan-400 via-indigo-500 to-purple-500 relative flex items-center justify-center shadow-inner">
+                        <div class="absolute w-6.5 h-2.5 border border-white/50 rounded-full rotate-[-30deg]"></div>
+                    </div>
+                    <span class="text-slate-900 dark:text-white font-extrabold text-lg tracking-wide uppercase">WORLD</span>
+                </div>
+            </a>
+            <div class="flex items-center space-x-4">
+                <button onclick="saveAll()" class="px-6 py-2 rounded-full bg-indigo-600 text-white font-black text-[11px] shadow-lg active:scale-95 transition-all">💾 데이터 저장</button>
+                <button id="theme-toggle" class="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+                    <span id="theme-icon">🌙</span>
+                </button>
+                <a href="index.html" class="px-4 py-1.5 rounded-full border border-black/10 dark:border-white/10 text-slate-700 dark:text-gray-200 text-xs font-bold">HOME</a>
+            </div>
+        </header>
+
+        <main class="flex-grow p-8 max-w-4xl mx-auto w-full">
+            <div class="mb-12 text-center">
+                <h1 class="text-5xl font-black mb-3 tracking-tighter uppercase">📱 틱톡 관리</h1>
+                <p class="text-slate-500 font-medium">원터치 출석 체크 및 일일 메모 시스템</p>
+            </div>
+
+            <div class="glass-card p-10 rounded-[3rem] border border-black/5 dark:border-white/10 shadow-2xl">
+                <div class="flex justify-between items-center mb-10">
+                    <div>
+                        <h3 class="text-3xl font-black">2026년 05월</h3>
+                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">TikTok Attendance Tracker</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">출석률</p>
+                        <p id="attendance-rate" class="text-4xl font-black text-indigo-500">0%</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-7 gap-4 mb-4 text-center text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">
+                    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                </div>
+
+                <div id="calendar-grid" class="grid grid-cols-7 gap-4">
+                    <!-- Days -->
+                </div>
+            </div>
+
+            <!-- Memo Section -->
+            <div id="memo-container" class="mt-8 hidden animate-in">
+                <div class="glass-card p-8 rounded-[2.5rem] border border-indigo-500/20 bg-indigo-500/5">
+                    <h4 id="memo-title" class="text-sm font-black mb-4 uppercase tracking-widest text-indigo-400">5월 1일 메모</h4>
+                    <textarea id="day-memo" class="w-full bg-black/10 dark:bg-white/5 border border-white/10 rounded-2xl p-4 text-sm focus:outline-none focus:border-indigo-500 transition h-32" placeholder="이날의 특이사항을 기록하세요..."></textarea>
+                </div>
+            </div>
+        </main>
+
+        <footer class="p-12 text-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
+            © 2026 World. TikTok Operations.
+        </footer>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        const monthKey = '2026-05';
+        let tiktokData = AppStorage.load(`tiktok_data_${monthKey}`) || { attendance: [], memos: {} };
+        let activeDay = null;
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = '';
+            for(let i=0; i<5; i++) grid.innerHTML += `<div class="calendar-day"></div>`; // May 2026 offset
+
+            for(let d=1; d<=31; d++) {
+                const isChecked = tiktokData.attendance.includes(d);
+                const dayEl = document.createElement('div');
+                dayEl.className = `calendar-day relative flex items-center justify-center rounded-2xl border border-white/5 bg-white/5 cursor-pointer font-black text-lg ${isChecked ? 'checked' : 'hover:bg-white/10'} ${activeDay === d ? 'ring-2 ring-indigo-500' : ''}`;
+                dayEl.innerText = d;
+                
+                // One-touch attendance + open memo
+                dayEl.onclick = () => {
+                    if(activeDay === d) {
+                        // Toggle attendance if already active
+                        toggleAttendance(d);
+                    } else {
+                        openMemo(d);
+                    }
+                };
+                grid.appendChild(dayEl);
+            }
+            updateStats();
+        }
+
+        function toggleAttendance(day) {
+            if(tiktokData.attendance.includes(day)) {
+                tiktokData.attendance = tiktokData.attendance.filter(a => a !== day);
+            } else {
+                tiktokData.attendance.push(day);
+            }
+            renderCalendar();
+        }
+
+        function openMemo(day) {
+            activeDay = day;
+            document.getElementById('memo-container').classList.remove('hidden');
+            document.getElementById('memo-title').innerText = `5월 ${day}일 메모 및 출석`;
+            document.getElementById('day-memo').value = tiktokData.memos[day] || '';
+            renderCalendar();
+        }
+
+        document.getElementById('day-memo').oninput = (e) => {
+            if(activeDay) tiktokData.memos[activeDay] = e.target.value;
+        };
+
+        function updateStats() {
+            const rate = ((tiktokData.attendance.length / 31) * 100).toFixed(1);
+            document.getElementById('attendance-rate').innerText = `${rate}%`;
+        }
+
+        function saveAll() {
+            AppStorage.save(`tiktok_data_${monthKey}`, tiktokData);
+        }
+
+        document.addEventListener('DOMContentLoaded', renderCalendar);
+    </script>
+</body>
+</html>

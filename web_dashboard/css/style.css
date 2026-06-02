@@ -1,0 +1,178 @@
+:root {
+    --bg-color: #030509;
+    --text-color: #f3f4f6;
+    --card-bg: rgba(9, 14, 26, 0.75);
+    --border-color: rgba(255, 255, 255, 0.05);
+    --bg-filter-1: linear-gradient(135deg, rgba(3, 5, 12, 0.15) 0%, rgba(3, 5, 10, 0.2) 100%);
+    --bg-filter-2: linear-gradient(to bottom, transparent 60%, rgba(3, 5, 9, 0.4) 100%);
+    --neon-cyan: rgba(34, 211, 238, 0.5);
+    --neon-pink: rgba(236, 72, 153, 0.5);
+    --neon-emerald: rgba(16, 185, 129, 0.5);
+    --neon-gold: rgba(245, 158, 11, 0.5);
+}
+
+/* Base resets handled by Tailwind antialiased, but adding smooth transitions */
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Background Effects */
+.full-bg {
+    background-image: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
+    min-height: 100vh;
+    width: 100%;
+}
+
+.full-bg::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--bg-filter-1);
+    z-index: 1;
+}
+
+.full-bg::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--bg-filter-2);
+    z-index: 2;
+}
+
+.content-container {
+    position: relative;
+    z-index: 10;
+}
+
+/* Glassmorphism Components */
+.glass-card {
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark .glass-card {
+    background-color: rgba(9, 14, 26, 0.75);
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.glass-card:hover {
+    transform: translateY(-5px);
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark .glass-card:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Neon Glows */
+.card-glow-cyan {
+    box-shadow: 0 0 20px rgba(34, 211, 238, 0.1);
+    border: 1px solid var(--neon-cyan);
+}
+.card-glow-magenta {
+    box-shadow: 0 0 20px rgba(236, 72, 153, 0.1);
+    border: 1px solid var(--neon-pink);
+}
+.card-glow-emerald {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.1);
+    border: 1px solid var(--neon-emerald);
+}
+.card-glow-gold {
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.1);
+    border: 1px solid var(--neon-gold);
+}
+
+/* Typography Utilities */
+.text-shadow-strong {
+    text-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.dark .text-shadow-strong {
+    text-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal.active {
+    display: flex;
+    opacity: 1;
+}
+
+.modal-content {
+    padding: 2.5rem;
+    border-radius: 1.5rem;
+    width: 90%;
+    max-width: 420px;
+    transform: scale(0.9);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.modal.active .modal-content {
+    transform: scale(1);
+}
+
+/* Animation utilities */
+.scroll-reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.animate-in {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+}
+
+/* Feature Page Visibility */
+.page-loading main {
+    opacity: 0;
+}
+
+main {
+    transition: opacity 0.8s ease-out;
+}
+
+/* Auth Lock UI */
+.auth-locked {
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-locked::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(3, 5, 9, 0.8);
+    backdrop-filter: blur(20px);
+    z-index: 90;
+}
+
+#access-denied-message {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100;
+    text-align: center;
+    width: 100%;
+    max-width: 400px;
+}
