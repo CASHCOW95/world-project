@@ -24,7 +24,10 @@ from PySide6.QtWidgets import (
 )
 
 # 경로 설정
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if getattr(sys, 'frozen', False):
+    BASE_DIR = sys._MEIPASS
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_FILE = os.path.join(BASE_DIR, "AUTOmaple_v9.7_config.json")
 
 # --- DPI 보정 ---
@@ -48,8 +51,8 @@ class Communicate(QObject):
 class AUTOmapleV9_7(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.version = "v9.7.4"
-        self.setWindowTitle(f"AUTOmaple Human-Engine {self.version} (2026.06.02)")
+        self.version = "v9.7"
+        self.setWindowTitle(f"AUTOmaple {self.version} (2026.06.02)")
         self.setMinimumSize(1400, 950)
         self.setWindowFlags(Qt.WindowStaysOnTopHint)
         
