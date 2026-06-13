@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   build: {
-    outDir: '../workspace',
+    outDir: '../web_dashboard/workspace',
     emptyOutDir: true
   }
 })
