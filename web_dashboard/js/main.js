@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (currentPage === 'index.html' || currentPage === '') {
         document.querySelectorAll('.feature-card').forEach(card => {
             const featureType = card.getAttribute('data-feature');
-            if (featureType === 'download') return; // Allow public download access
+            if (featureType === 'download' || featureType === 'feedback') return; // Allow public download and feedback access
 
             const lockOverlay = card.querySelector('.lock-overlay');
             const icon = card.querySelector('.feature-icon');
@@ -120,6 +120,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
             }
         });
+
+        // 9. Value Simulator & ROI Calculator Sliders
+        const hoursSlider = document.getElementById('hours-slider');
+        const costSlider = document.getElementById('cost-slider');
+        const hoursValDisplay = document.getElementById('hours-val-display');
+        const costValDisplay = document.getElementById('cost-val-display');
+        const timeSavedDisplay = document.getElementById('time-saved-display');
+        const moneySavedDisplay = document.getElementById('money-saved-display');
+
+        if (hoursSlider && costSlider) {
+            const updateROI = () => {
+                const hours = parseInt(hoursSlider.value);
+                const cost = parseInt(costSlider.value);
+
+                if (hoursValDisplay) hoursValDisplay.innerText = `${hours}시간`;
+                if (costValDisplay) costValDisplay.innerText = `${cost}만원`;
+
+                // Calculate savings
+                const timeSaved = Math.round(hours * 338.33);
+                const moneySaved = Math.round((cost * 12) + (timeSaved * 2.65));
+
+                if (timeSavedDisplay) {
+                    timeSavedDisplay.innerHTML = `<span>${timeSaved.toLocaleString()}</span> <span class="text-sm font-bold text-cyan-500">시간 확보</span>`;
+                }
+                if (moneySavedDisplay) {
+                    moneySavedDisplay.innerHTML = `<span class="text-sm text-amber-500 font-black">~</span> <span>${moneySaved.toLocaleString()}</span> <span class="text-sm font-bold text-amber-500">만원 세이브</span>`;
+                }
+            };
+
+            hoursSlider.addEventListener('input', updateROI);
+            costSlider.addEventListener('input', updateROI);
+            updateROI(); // Initial run
+        }
+
         updateDashboardSummary();
     }
 

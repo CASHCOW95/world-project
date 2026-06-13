@@ -17,8 +17,8 @@ app.use(cors());
 app.use(express.json());
 
 // 포털 메인 및 빌드된 리액트 워크스페이스 정적 웹 호스팅 서비스 추가
-app.use('/workspace', express.static(path.join(__dirname, 'workspace')));
-app.use(express.static(path.join(__dirname, '../')));
+app.use('/workspace', express.static(path.join(__dirname, '../web_dashboard/workspace')));
+app.use(express.static(path.join(__dirname, '../web_dashboard')));
 
 // Model 1: Simulated SaaS Credit Database in memory
 let userCredits = 5;

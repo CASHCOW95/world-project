@@ -13,35 +13,53 @@
 
 /* Base resets handled by Tailwind antialiased, but adding smooth transitions */
 body {
-    font-family: 'Noto Sans KR', sans-serif;
+    font-family: 'Pretendard', 'SUIT', 'Noto Sans KR', sans-serif;
     transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Background Effects */
 .full-bg {
-    background-image: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+    background: #02031b;
+    background: radial-gradient(circle at 50% 0%, #0c0e35 0%, #02031b 75%);
     position: relative;
     min-height: 100vh;
     width: 100%;
 }
 
-.full-bg::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: var(--bg-filter-1);
-    z-index: 1;
+.full-bg::before,
+.full-bg::after {
+    display: none;
 }
 
-.full-bg::after {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: var(--bg-filter-2);
-    z-index: 2;
+/* Title Gradient Styling */
+.title-gradient {
+    background: linear-gradient(
+        90deg,
+        #ff3d3d 0%,
+        #ff6b2c 35%,
+        #ff9d1f 70%,
+        #ffd43b 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+    font-weight: 900;
+    display: inline-block;
+}
+
+/* Card Typography Overrides */
+.feature-card p {
+    font-size: 14px !important;
+    color: #d8d8d8 !important;
+    font-weight: 500;
+    line-height: 1.6;
+}
+
+.feature-card h3 {
+    font-size: 20px !important;
+    font-weight: 800 !important;
+    color: #ffffff !important;
 }
 
 .content-container {
@@ -175,4 +193,156 @@ main {
     text-align: center;
     width: 100%;
     max-width: 400px;
+}
+
+/* ========================================================
+   PREMIUM FLASHY DESIGN ADDITIONS
+   ======================================================== */
+
+/* Premium Sliders styling */
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    background: transparent;
+}
+
+input[type="range"]:focus {
+    outline: none;
+}
+
+/* Chrome/Safari/Opera/Edge Track */
+input[type="range"]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 8px;
+    cursor: pointer;
+    background: #0a0d1e;
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Chrome/Safari/Opera/Edge Thumb */
+input[type="range"]::-webkit-slider-thumb {
+    height: 18px;
+    width: 18px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+    cursor: pointer;
+    -webkit-appearance: none;
+    margin-top: -5px;
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.6);
+    transition: all 0.2s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.9);
+}
+
+/* Firefox Track */
+input[type="range"]::-moz-range-track {
+    width: 100%;
+    height: 8px;
+    cursor: pointer;
+    background: #0a0d1e;
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Firefox Thumb */
+input[type="range"]::-moz-range-thumb {
+    height: 18px;
+    width: 18px;
+    border: none;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.6);
+    transition: all 0.2s ease;
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.9);
+}
+
+/* Premium Glow Card */
+.premium-glow-card {
+    background: rgba(9, 14, 26, 0.85);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    box-shadow: 0 0 30px rgba(99, 102, 241, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    position: relative;
+    z-index: 1;
+}
+
+/* Add a glowing border highlight gradient on hover */
+.premium-glow-card::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(236, 72, 153, 0.3) 50%, rgba(34, 211, 238, 0.3) 100%);
+    border-radius: inherit;
+    z-index: -1;
+    opacity: 0.8;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.premium-glow-card:hover::before {
+    opacity: 1;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.5) 0%, rgba(236, 72, 153, 0.5) 50%, rgba(34, 211, 238, 0.5) 100%);
+}
+
+/* Metric Box Glows */
+.metric-cyan-glow {
+    box-shadow: 0 0 15px rgba(34, 211, 238, 0.08);
+    border: 1px solid rgba(34, 211, 238, 0.2) !important;
+    transition: all 0.3s ease;
+}
+.metric-cyan-glow:hover {
+    box-shadow: 0 0 25px rgba(34, 211, 238, 0.15);
+    border-color: rgba(34, 211, 238, 0.4) !important;
+}
+
+.metric-amber-glow {
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.2) !important;
+    transition: all 0.3s ease;
+}
+.metric-amber-glow:hover {
+    box-shadow: 0 0 25px rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.4) !important;
+}
+
+/* Pulsing glow animation for CTA */
+@keyframes cta-pulse {
+    0% {
+        box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+    }
+    100% {
+        box-shadow: 0 0 30px rgba(245, 158, 11, 0.5), 0 0 10px rgba(239, 68, 68, 0.2);
+    }
+}
+
+.cta-button-glow {
+    animation: cta-pulse 2s infinite alternate;
+}
+
+/* Auth Lock UI & Feature Lock */
+.lock-overlay {
+    background: rgba(3, 5, 9, 0.75) !important;
+    backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(239, 68, 68, 0.1);
+    transition: all 0.3s ease;
+}
+
+.lock-overlay span {
+    filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.6));
+    animation: lock-wobble 2.5s infinite ease-in-out;
+}
+
+@keyframes lock-wobble {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.1) rotate(5deg); }
 }

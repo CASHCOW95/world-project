@@ -1,0 +1,153 @@
+{
+    "기본설정": {
+        "reg": {
+            "t": 125,
+            "l": 46,
+            "w": 166,
+            "h": 120
+        },
+        "range": {
+            "min": 25,
+            "max": 62,
+            "stat": 15
+        },
+        "keys": {
+            "att": "end",
+            "jump": "alt",
+            "teleport": "shift",
+            "pet": "del"
+        },
+        "params": {
+            "margin": 0,
+            "precision": 0.0,
+            "ad": 208,
+            "dd": 1021,
+            "mode": 2,
+            "per_int": 5,
+            "sell_int": 15,
+            "sound": true,
+            "shape_anti": false,
+            "input_mode": 0
+        },
+        "coord": {
+            "use_bottom": false,
+            "bottom_y": 80,
+            "bottom_time": 10,
+            "use_fall": false,
+            "fall_y": 110,
+            "use_escape": false,
+            "lost_time": 5,
+            "use_watch": false,
+            "use_anti_town": false,
+            "use_fishing": false,
+            "fish_x": -1,
+            "fish_y": -1,
+            "use_multifloor": false,
+            "multifloor_up_count": 1,
+            "waypoints": [
+                [
+                    50,
+                    76
+                ],
+                [
+                    36,
+                    72
+                ],
+                [
+                    34,
+                    60
+                ],
+                [
+                    36,
+                    72
+                ],
+                [
+                    33,
+                    85
+                ],
+                [
+                    -1,
+                    -1
+                ]
+            ],
+            "waypoint_record_idx": 0,
+            "teleport_threshold": 15
+        }
+    },
+    "빨코3": {
+        "reg": {
+            "t": 125,
+            "l": 46,
+            "w": 166,
+            "h": 120
+        },
+        "range": {
+            "min": 25,
+            "max": 62,
+            "stat": 15
+        },
+        "keys": {
+            "att": "end",
+            "jump": "alt",
+            "teleport": "shift",
+            "pet": "del"
+        },
+        "params": {
+            "margin": 0,
+            "precision": 0.0,
+            "ad": 208,
+            "dd": 1021,
+            "mode": 2,
+            "per_int": 5,
+            "sell_int": 15,
+            "sound": true,
+            "shape_anti": false,
+            "input_mode": 0
+        },
+        "coord": {
+            "use_bottom": false,
+            "bottom_y": 80,
+            "bottom_time": 10,
+            "use_fall": false,
+            "fall_y": 110,
+            "use_escape": false,
+            "lost_time": 5,
+            "use_watch": false,
+            "use_anti_town": false,
+            "use_fishing": false,
+            "fish_x": -1,
+            "fish_y": -1,
+            "use_multifloor": false,
+            "multifloor_up_count": 1,
+            "waypoints": [
+                [
+                    50,
+                    76
+                ],
+                [
+                    36,
+                    72
+                ],
+                [
+                    34,
+                    60
+                ],
+                [
+                    36,
+                    72
+                ],
+                [
+                    33,
+                    85
+                ],
+                [
+                    -1,
+                    -1
+                ]
+            ],
+            "waypoint_record_idx": 0,
+            "teleport_threshold": 15
+        }
+    },
+    "_last_selected": "빨코3"
+}

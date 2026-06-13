@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings, HelpCircle, Heart } from 'lucide-react';
 import { useTimer } from './hooks/useTimer';
 import TimerDisplay from './components/TimerDisplay';
@@ -28,8 +28,21 @@ export default function App() {
   } = useTimer();
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [currentView, setCurrentView] = useState('timer'); // 'timer' or 'styler'
+  const [currentView, setCurrentView] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('view') === 'styler' ? 'styler' : 'timer';
+  });
+  const hasViewParam = new URLSearchParams(window.location.search).has('view');
   const isFocus = mode === 'focus';
+
+  // Secure redirect if user is not logged in as admin
+  useEffect(() => {
+    const isLoggedIn = sessionStorage.getItem('isAdminLoggedIn') === 'true';
+    if (!isLoggedIn) {
+      const view = new URLSearchParams(window.location.search).get('view') || 'timer';
+      window.location.href = `../login.html?redirect=workspace/index.html?view=${view}`;
+    }
+  }, []);
 
   // Dynamic Kodari Assistant configuration based on timer state
   const getKodariStatus = () => {
@@ -95,20 +108,22 @@ export default function App() {
         </header>
 
         {/* View Switcher Tab bar */}
-        <nav className="flex bg-slate-900/60 p-1.5 rounded-2xl border border-slate-850 gap-1.5 shadow-inner">
-          <button
-            onClick={() => setCurrentView('timer')}
-            className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${currentView === 'timer' ? 'bg-violet-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
-          >
-            ⏱️ 몰입 타이머
-          </button>
-          <button
-            onClick={() => setCurrentView('styler')}
-            className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${currentView === 'styler' ? 'bg-violet-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
-          >
-            ✍️ 스타일러 프로
-          </button>
-        </nav>
+        {!hasViewParam && (
+          <nav className="flex bg-slate-900/60 p-1.5 rounded-2xl border border-slate-850 gap-1.5 shadow-inner">
+            <button
+              onClick={() => setCurrentView('timer')}
+              className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${currentView === 'timer' ? 'bg-violet-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+            >
+              ⏱️ 몰입 타이머
+            </button>
+            <button
+              onClick={() => setCurrentView('styler')}
+              className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${currentView === 'styler' ? 'bg-violet-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+            >
+              ✍️ 스타일러 프로
+            </button>
+          </nav>
+        )}
 
         {/* Kodari Assistant Status Block */}
         <section className={`flex items-center gap-3.5 p-3 rounded-2xl border transition-all duration-700 ${kodari.statusClass}`}>

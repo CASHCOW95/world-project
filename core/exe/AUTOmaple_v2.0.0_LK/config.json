@@ -1,0 +1,100 @@
+{
+    "기본설정": {
+        "reg": {
+            "t": 100,
+            "l": 100,
+            "w": 200,
+            "h": 150
+        },
+        "minimap_x": 100,
+        "minimap_y": 100,
+        "minimap_width": 200,
+        "minimap_height": 150,
+        "use_saved_minimap": true,
+        "range": {
+            "min": 20,
+            "max": 180,
+            "stat": 15
+        },
+        "keys": {
+            "att": "end",
+            "jump": "alt",
+            "teleport": "shift",
+            "pet": "del"
+        },
+        "params": {
+            "margin": 0,
+            "precision": 0.0,
+            "ad": 200,
+            "dd": 500,
+            "mode": 0,
+            "per_int": 5,
+            "sell_int": 15,
+            "sound": true,
+            "input_mode": 0,
+            "top": true
+        },
+        "coord": {
+            "use_bottom": false,
+            "bottom_y": 80,
+            "bottom_time": 10,
+            "use_fall": false,
+            "fall_y": 110,
+            "use_escape": false,
+            "lost_time": 5,
+            "use_fishing": false,
+            "fish_x": -1,
+            "fish_y": -1
+        },
+        "pingpong_recovery": {
+            "use": false,
+            "interval": 60,
+            "duration": 10,
+            "hunt_y": 67,
+            "recovery_y": 81,
+            "hunt_layer_idx": -1,
+            "recovery_layer_idx": -1,
+            "return_x_min": 45,
+            "return_x_max": 50,
+            "rope_climb_time": 1.5,
+            "return_seq": "TELE_UP, ATTACK",
+            "recovery_seq": "",
+            "teleport_x": -1,
+            "teleport_y": -1,
+            "recovery_start_x": -1,
+            "recovery_start_y": -1,
+            "fixed_mode": false,
+            "return_delay": 1.0,
+            "recovery_delay": 1.0,
+            "recovery_teleport": false
+        },
+        "inventory_sell": {
+            "sell_pos1": "0, 0",
+            "sell_pos2": "0, 0",
+            "sell_pos3": "0, 0",
+            "sell_pos4": "0, 0",
+            "sell_pos5": "0, 0",
+            "sell_rows": 8,
+            "sell_start_row": 2,
+            "sell_delay": 0.05,
+            "use_auto_sell": false,
+            "auto_sell_interval": 5,
+            "sell_delay1": 1.5,
+            "sell_delay2": 1.0,
+            "sell_delay3": 0.5,
+            "sell_delay4": 0.12,
+            "sell_delay5": 0.5
+        },
+        "buffs": {
+            "buff1_use": false,
+            "buff1_key": "ctrl",
+            "buff1_int": 180,
+            "buff1_hold": 0.5,
+            "buff2_use": false,
+            "buff2_key": "alt",
+            "buff2_int": 200,
+            "buff2_hold": 0.5
+        },
+        "update_url": ""
+    }
+}

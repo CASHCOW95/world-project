@@ -1,0 +1,789 @@
+{
+    "기본설정": {
+        "reg": {
+            "t": 123,
+            "l": 40,
+            "w": 171,
+            "h": 113
+        },
+        "range": {
+            "min": 25,
+            "max": 146,
+            "stat": 15
+        },
+        "keys": {
+            "att": "end",
+            "jump": "alt",
+            "teleport": "z",
+            "pet": "insert"
+        },
+        "params": {
+            "margin": 0,
+            "precision": 0.0,
+            "ad": 185,
+            "dd": 1500,
+            "mode": 2,
+            "per_int": 5,
+            "sell_int": 15,
+            "sound": true,
+            "shape_anti": false,
+            "input_mode": 0,
+            "top": true
+        },
+        "coord": {
+            "use_bottom": false,
+            "bottom_y": 80,
+            "bottom_time": 10,
+            "use_fall": false,
+            "fall_y": 110,
+            "use_escape": false,
+            "lost_time": 5,
+            "use_watch": false,
+            "use_anti_town": false,
+            "use_fishing": false,
+            "fish_x": -1,
+            "fish_y": -1,
+            "use_multifloor": false,
+            "multifloor_up_count": 1,
+            "waypoints": [
+                {
+                    "x_min": 51,
+                    "x_max": 53,
+                    "y": 72,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": 25,
+                    "x_max": 35,
+                    "y": 67,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": 25,
+                    "x_max": 35,
+                    "y": 56,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": 25,
+                    "x_max": 35,
+                    "y": 67,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": 25,
+                    "x_max": 35,
+                    "y": 80,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": 51,
+                    "x_max": 53,
+                    "y": 80,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                }
+            ],
+            "waypoint_record_idx": 7,
+            "teleport_threshold": 20
+        }
+    },
+    "_last_selected": "달곰",
+    "빨코3": {
+        "reg": {
+            "t": 341,
+            "l": 823,
+            "w": 179,
+            "h": 122
+        },
+        "range": {
+            "min": 26,
+            "max": 153,
+            "stat": 15
+        },
+        "keys": {
+            "att": "end",
+            "jump": "alt",
+            "teleport": "z",
+            "pet": "insert"
+        },
+        "params": {
+            "margin": 0,
+            "precision": 0.0,
+            "ad": 185,
+            "dd": 1500,
+            "mode": 2,
+            "per_int": 5,
+            "sell_int": 15,
+            "sound": true,
+            "shape_anti": false,
+            "input_mode": 0,
+            "top": true
+        },
+        "coord": {
+            "use_bottom": false,
+            "bottom_y": 80,
+            "bottom_time": 10,
+            "use_fall": false,
+            "fall_y": 110,
+            "use_escape": false,
+            "lost_time": 5,
+            "use_watch": false,
+            "use_anti_town": false,
+            "use_fishing": false,
+            "fish_x": -1,
+            "fish_y": -1,
+            "use_multifloor": false,
+            "multifloor_up_count": 1,
+            "waypoints": [
+                {
+                    "x_min": 51,
+                    "x_max": 53,
+                    "y": 72,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": 25,
+                    "x_max": 35,
+                    "y": 67,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": 25,
+                    "x_max": 35,
+                    "y": 56,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": 25,
+                    "x_max": 35,
+                    "y": 67,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": 25,
+                    "x_max": 35,
+                    "y": 80,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": 51,
+                    "x_max": 53,
+                    "y": 80,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                }
+            ],
+            "waypoint_record_idx": 7,
+            "teleport_threshold": 20
+        }
+    },
+    "달곰": {
+        "reg": {
+            "t": 131,
+            "l": 10,
+            "w": 186,
+            "h": 112
+        },
+        "range": {
+            "min": 27,
+            "max": 159,
+            "stat": 15
+        },
+        "keys": {
+            "att": "end",
+            "jump": "alt",
+            "teleport": "z",
+            "pet": "insert"
+        },
+        "params": {
+            "margin": 0,
+            "precision": 0.0,
+            "ad": 185,
+            "dd": 650,
+            "mode": 2,
+            "per_int": 5,
+            "sell_int": 15,
+            "sound": true,
+            "shape_anti": false,
+            "input_mode": 0,
+            "top": true
+        },
+        "coord": {
+            "use_bottom": false,
+            "bottom_y": 80,
+            "bottom_time": 10,
+            "use_fall": false,
+            "fall_y": 110,
+            "use_escape": false,
+            "lost_time": 5,
+            "use_watch": false,
+            "use_anti_town": false,
+            "use_fishing": false,
+            "fish_x": -1,
+            "fish_y": -1,
+            "use_multifloor": false,
+            "multifloor_up_count": 1,
+            "waypoints": [
+                {
+                    "x_min": 50,
+                    "x_max": 53,
+                    "y": 71,
+                    "move_type": "JUMP",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": 58,
+                    "x_max": 60,
+                    "y": 66,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": 88,
+                    "x_max": 98,
+                    "y": 61,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": 85,
+                    "x_max": 95,
+                    "y": 84,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": 50,
+                    "x_max": 53,
+                    "y": 84,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELEPORT",
+                    "stay_time": 2.0
+                }
+            ],
+            "waypoint_record_idx": 5,
+            "teleport_threshold": 20
+        }
+    }
+}

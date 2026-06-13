@@ -77,7 +77,7 @@ QFrame#MainPanel { background-color: rgba(18, 21, 25, 200); border: 1px solid #0
 QLabel { color: #A0A0A0; font-family: '맑은 고딕', sans-serif; font-weight: bold; }
 QLabel#TitleLabel { color: #FFB400; font-size: 18px; letter-spacing: 2px; }
 QLabel#StatusLabel { color: #00FFFF; font-size: 12px; }
-QCheckBox, QRadioButton, QComboBox { color: #E0E0E0; font-size: 11px; font-weight: bold; }
+QCheckBox, QRadioButton, QComboBox { color: #E0E0E0; font-size: 12px; font-weight: bold; }
 QCheckBox#MasterCheckBox { color: #03DAC6; font-size: 13px; }
 QCheckBox::indicator, QRadioButton::indicator { width: 14px; height: 14px; border: 1px solid #323232; background: #121519; }
 QCheckBox::indicator:checked, QRadioButton::indicator:checked { background: #03DAC6; border: 1px solid #00FFFF; }
@@ -113,7 +113,7 @@ class ProfileCard(QFrame):
 class ChromeLauncher(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.all_profile_names = []; self.profile_cards = {}; self.nickname_map = {}; self._block_signals = False
+        self.all_profile_names = []; self.profile_cards = {}; self.nickname_map = {}; self.profile_dir_map = {}; self._block_signals = False
         self.init_ui(); self.load_profiles_data(); self.load_config()
         
         # 글로벌 단축키 연결
@@ -174,7 +174,17 @@ class ChromeLauncher(QMainWindow):
                 with open(lstate, 'r', encoding='utf-8-sig') as f:
                     data = json.load(f); profiles = data.get("profile", {}).get("info_cache", {})
                     for pk, pi in profiles.items():
-                        name = pi.get("name")
+                        # shortcut_name 우선 → name → gaia_name 폴백
+                        sname = pi.get("shortcut_name", "")
+                        if sname:
+                            # 괄호 접미사 제거: "아 (1)" → "아", "민이 (미니)" → "민이"
+                            sname = re.sub(r'\s*\([^)]*\)\s*$', '', sname).strip()
+                        name = sname or pi.get("name", "")
+                        # name이 숫자만인 경우 gaia_name으로 대체
+                        if name and name.isdigit():
+                            gaia = pi.get("gaia_name", "")
+                            if gaia:
+                                name = gaia
                         if name: self.nickname_map[pk] = name
             except Exception: pass
         if os.path.exists(USER_DATA_PATH):
@@ -186,7 +196,11 @@ class ChromeLauncher(QMainWindow):
                 return (is_dig, parts)
             folders.sort(key=sort_key)
             for p in folders:
-                display = f"{self.nickname_map.get(p, p)} ({p})"
+                num = re.search(r'\d+', p)
+                num_str = num.group() if num else p
+                nick = self.nickname_map.get(p, num_str)
+                display = f"{nick}({num_str})"
+                self.profile_dir_map[display] = p
                 self.all_profile_names.append(display); self.profile_cards[display] = ProfileCard(display, self)
             self.refresh_grid(self.all_profile_names)
 
@@ -271,7 +285,7 @@ class ChromeLauncher(QMainWindow):
         sinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW; sinfo.wShowWindow = subprocess.SW_HIDE
 
         for i, name in enumerate(items):
-            p_dir = name.split('(')[-1].replace(')', '').strip()
+            p_dir = self.profile_dir_map.get(name, name.split('(')[-1].replace(')', '').strip())
             row = (i // cols) % 2; col = i % cols
             tx, ty = scr_x + (col * win_w), scr_y + (row * win_h)
             before_hwnds = get_chrome_window_handles()

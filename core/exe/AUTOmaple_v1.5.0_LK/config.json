@@ -1,0 +1,613 @@
+{
+    "기본설정": {
+        "reg": {
+            "t": 121,
+            "l": 13,
+            "w": 165,
+            "h": 117
+        },
+        "minimap_x": 13,
+        "minimap_y": 121,
+        "minimap_width": 165,
+        "minimap_height": 117,
+        "use_saved_minimap": true,
+        "range": {
+            "min": 40,
+            "max": 54,
+            "stat": 15
+        },
+        "keys": {
+            "att": "end",
+            "jump": "alt",
+            "teleport": "space",
+            "pet": "del"
+        },
+        "params": {
+            "margin": 0,
+            "precision": 0.0,
+            "ad": 50,
+            "dd": 1000,
+            "mode": 0,
+            "per_int": 5,
+            "sell_int": 15,
+            "sound": true,
+            "shape_anti": false,
+            "input_mode": 0,
+            "top": true
+        },
+        "coord": {
+            "use_bottom": false,
+            "bottom_y": 80,
+            "bottom_time": 10,
+            "use_fall": false,
+            "fall_y": 110,
+            "use_escape": false,
+            "lost_time": 5,
+            "use_watch": false,
+            "use_anti_town": false,
+            "use_fishing": false,
+            "fish_x": -1,
+            "fish_y": -1,
+            "use_multifloor": false,
+            "multifloor_up_count": 1,
+            "waypoints": [
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                }
+            ],
+            "waypoint_record_idx": 0,
+            "teleport_threshold": 20
+        },
+        "pingpong_recovery": {
+            "use": true,
+            "interval": 20,
+            "duration": 3,
+            "hunt_y": 74,
+            "recovery_y": 82,
+            "hunt_layer_idx": 1,
+            "recovery_layer_idx": 1,
+            "return_x_min": 78,
+            "return_x_max": 79,
+            "rope_climb_time": 1.5,
+            "return_seq": "end+TELE_UP, end",
+            "recovery_seq": "end+TELE_LEFT,TELE_LEFT,TELE_LEFT,end+TELE_UP",
+            "teleport_x": 79,
+            "teleport_y": 83,
+            "fixed_mode": true
+        },
+        "inventory_sell": {
+            "sell_pos1": "267, 114",
+            "sell_pos2": "889, 189",
+            "sell_pos3": "863, 301",
+            "sell_pos4": "742, 345",
+            "sell_pos5": "605, 187",
+            "sell_rows": 20,
+            "sell_start_row": 2,
+            "sell_delay": 1.0
+        },
+        "buffs": {
+            "buff1_use": true,
+            "buff1_key": "a",
+            "buff1_int": 10,
+            "buff1_hold": 1.0,
+            "buff2_use": false,
+            "buff2_key": "alt",
+            "buff2_int": 200,
+            "buff2_hold": 0.5
+        },
+        "update_url": "https://raw.githubusercontent.com/CASHCOW95/world-project/master/update.json"
+    },
+    "_last_selected": "빨코3",
+    "빨코3": {
+        "reg": {
+            "t": 121,
+            "l": 13,
+            "w": 165,
+            "h": 117
+        },
+        "minimap_x": 13,
+        "minimap_y": 121,
+        "minimap_width": 165,
+        "minimap_height": 117,
+        "use_saved_minimap": true,
+        "range": {
+            "min": 40,
+            "max": 54,
+            "stat": 15
+        },
+        "keys": {
+            "att": "end",
+            "jump": "alt",
+            "teleport": "space",
+            "pet": "del"
+        },
+        "params": {
+            "margin": 0,
+            "precision": 0.0,
+            "ad": 50,
+            "dd": 1000,
+            "mode": 0,
+            "per_int": 5,
+            "sell_int": 15,
+            "sound": true,
+            "shape_anti": false,
+            "input_mode": 0,
+            "top": true
+        },
+        "coord": {
+            "use_bottom": false,
+            "bottom_y": 80,
+            "bottom_time": 10,
+            "use_fall": false,
+            "fall_y": 110,
+            "use_escape": false,
+            "lost_time": 5,
+            "use_watch": false,
+            "use_anti_town": false,
+            "use_fishing": false,
+            "fish_x": -1,
+            "fish_y": -1,
+            "use_multifloor": false,
+            "multifloor_up_count": 1,
+            "waypoints": [
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                },
+                {
+                    "x_min": -1,
+                    "x_max": -1,
+                    "y": -1,
+                    "move_type": "TELE_LEFT",
+                    "stay_time": 2.0
+                }
+            ],
+            "waypoint_record_idx": 0,
+            "teleport_threshold": 20
+        },
+        "pingpong_recovery": {
+            "use": true,
+            "interval": 20,
+            "duration": 3,
+            "hunt_y": 74,
+            "recovery_y": 82,
+            "hunt_layer_idx": 1,
+            "recovery_layer_idx": 1,
+            "return_x_min": 78,
+            "return_x_max": 79,
+            "rope_climb_time": 1.5,
+            "return_seq": "end+TELE_UP, end",
+            "recovery_seq": "end+TELE_LEFT,TELE_LEFT,TELE_LEFT,end+TELE_UP",
+            "teleport_x": 79,
+            "teleport_y": 83,
+            "fixed_mode": true
+        },
+        "inventory_sell": {
+            "sell_pos1": "267, 114",
+            "sell_pos2": "889, 189",
+            "sell_pos3": "863, 301",
+            "sell_pos4": "742, 345",
+            "sell_pos5": "605, 187",
+            "sell_rows": 20,
+            "sell_start_row": 2,
+            "sell_delay": 1.0
+        },
+        "buffs": {
+            "buff1_use": true,
+            "buff1_key": "a",
+            "buff1_int": 10,
+            "buff1_hold": 1.0,
+            "buff2_use": false,
+            "buff2_key": "alt",
+            "buff2_int": 200,
+            "buff2_hold": 0.5
+        },
+        "update_url": "https://raw.githubusercontent.com/CASHCOW95/world-project/master/update.json"
+    }
+}
