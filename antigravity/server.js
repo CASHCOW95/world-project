@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { spawn } from 'child_process';
+import fs from 'fs';
 
 dotenv.config();
 
@@ -18,6 +20,7 @@ app.use(express.json());
 
 // 포털 메인 및 빌드된 리액트 워크스페이스 정적 웹 호스팅 서비스 추가
 app.use('/workspace', express.static(path.join(__dirname, '../web_dashboard/workspace')));
+app.use('/output', express.static(path.join(__dirname, '../web_dashboard/output')));
 app.use(express.static(path.join(__dirname, '../web_dashboard')));
 
 // Model 1: Simulated SaaS Credit Database in memory
@@ -402,6 +405,474 @@ app.post('/api/generate', async (req, res) => {
   }
 });
 
+// 0. GET /api/categories
+app.get('/api/categories', (req, res) => {
+  const categoriesPath = path.join(__dirname, 'core/styler_pro_engine/categories.json');
+  try {
+    const data = fs.readFileSync(categoriesPath, 'utf8');
+    res.json(JSON.parse(data));
+  } catch (err) {
+    console.error("Failed to read categories.json:", err);
+    res.status(500).json({ error: "카테고리 정보를 로드할 수 없습니다." });
+  }
+});
+
+// 1. GET /api/keywords
+app.get('/api/keywords', (req, res) => {
+  const { category } = req.query;
+  const pythonPath = process.platform === 'win32' ? 'python' : 'python3';
+  const scriptPath = path.join(__dirname, 'core/styler_pro_engine/keyword_finder.py');
+  
+  const py = spawn(pythonPath, [scriptPath, category || '생활']);
+  let stdoutData = '';
+  let stderrData = '';
+  
+  py.stdout.on('data', (data) => {
+    stdoutData += data.toString();
+  });
+  
+  py.stderr.on('data', (data) => {
+    stderrData += data.toString();
+  });
+  
+  py.on('close', (code) => {
+    if (code !== 0) {
+      console.error(`Keyword analyzer crashed: ${stderrData}`);
+      return res.status(500).json({ error: '키워드 분석기 실행 실패', details: stderrData });
+    }
+    try {
+      const parsed = JSON.parse(stdoutData);
+      res.json(parsed);
+    } catch (err) {
+      res.status(500).json({ error: 'JSON 파싱 실패', details: err.message, raw: stdoutData });
+    }
+  });
+});
+
+// 1.5 POST /api/generate-titles
+app.post('/api/generate-titles', (req, res) => {
+  const { keyword, category } = req.body;
+  if (!keyword) {
+    return res.status(400).json({ error: "키워드는 필수 입력값입니다." });
+  }
+  
+  const pythonPath = process.platform === 'win32' ? 'python' : 'python3';
+  const scriptPath = path.join(__dirname, 'core/styler_pro_engine/title_generator.py');
+  
+  const py = spawn(pythonPath, [scriptPath, '--keyword', keyword, '--category', category || '정부지원금']);
+  let stdoutData = '';
+  let stderrData = '';
+  
+  py.stdout.on('data', (data) => {
+    stdoutData += data.toString();
+  });
+  
+  py.stderr.on('data', (data) => {
+    stderrData += data.toString();
+  });
+  
+  py.on('close', (code) => {
+    if (code !== 0) {
+      console.error(`Title generator crashed with code ${code}: ${stderrData}`);
+      return res.status(500).json({ error: '제목 생성기 작동 중 에러 발생', details: stderrData });
+    }
+    
+    const jsonMatch = stdoutData.match(/---JSON_START---([\s\S]*?)---JSON_END---/);
+    if (jsonMatch && jsonMatch[1]) {
+      try {
+        const parsed = JSON.parse(jsonMatch[1].trim());
+        res.json(parsed);
+      } catch (err) {
+        res.status(500).json({ error: 'JSON 파싱 오류', details: err.message, raw: stdoutData });
+      }
+    } else {
+      res.status(500).json({ error: '결과 데이터 마커 누락' });
+    }
+  });
+});
+
+// 2. GET /api/history
+app.get('/api/history', (req, res) => {
+  const pythonPath = process.platform === 'win32' ? 'python' : 'python3';
+  const scriptPath = path.join(__dirname, 'core/styler_pro_engine/db.py');
+  
+  const py = spawn(pythonPath, [scriptPath, '--history']);
+  let stdoutData = '';
+  let stderrData = '';
+  
+  py.stdout.on('data', (data) => {
+    stdoutData += data.toString();
+  });
+  
+  py.stderr.on('data', (data) => {
+    stderrData += data.toString();
+  });
+  
+  py.on('close', (code) => {
+    if (code !== 0) {
+      console.error(`DB history crashed: ${stderrData}`);
+      return res.status(500).json({ error: '발행 이력 로드 실패', details: stderrData });
+    }
+    try {
+      const parsed = JSON.parse(stdoutData);
+      res.json(parsed);
+    } catch (err) {
+      res.status(500).json({ error: 'JSON 파싱 실패', details: err.message });
+    }
+  });
+});
+
+// 3. POST /api/publish-pipeline (Streaming log via chunked SSE)
+app.post('/api/publish-pipeline', (req, res) => {
+  const { keyword, platform, style, search_volume, competition, cpc, category, cta_style, golden_score, length, faq_count, img_prompt, title, seo_strength, publish } = req.body;
+  
+  if (!keyword) {
+    return res.status(400).json({ error: '키워드는 필수 입력값입니다.' });
+  }
+
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive'
+  });
+
+  const pythonPath = process.platform === 'win32' ? 'python' : 'python3';
+  const scriptPath = path.join(__dirname, 'core/styler_pro_engine/main.py');
+  
+  const args = [
+    scriptPath,
+    '--keyword', keyword,
+    '--platform', platform || 'tistory',
+    '--style', style || 'friendly',
+    '--search_volume', String(search_volume || 10000),
+    '--competition', String(competition || 5000),
+    '--cpc', cpc || '보통',
+    '--category', category || '생활',
+    '--cta_style', cta_style || 'card',
+    '--golden_score', String(golden_score || 80),
+    '--length', String(length || '5000'),
+    '--faq_count', String(faq_count || '10'),
+    '--img_prompt', String(img_prompt || 'OFF'),
+    '--title', title || '',
+    '--seo_strength', seo_strength || 'strong',
+    '--publish', publish ? 'ON' : 'OFF'
+  ];
+
+
+
+  const py = spawn(pythonPath, args);
+  let stdoutData = '';
+  
+  py.stdout.on('data', (data) => {
+    const chunk = data.toString();
+    stdoutData += chunk;
+    
+    const lines = chunk.split('\n');
+    lines.forEach(line => {
+      if (line.trim()) {
+        res.write(`data: ${JSON.stringify({ log: line.trim() })}\n\n`);
+      }
+    });
+  });
+
+  py.stderr.on('data', (data) => {
+    const errLine = data.toString().trim();
+    console.error(`[Python Engine Error] ${errLine}`);
+    res.write(`data: ${JSON.stringify({ log: `⚠️ [에러] ${errLine}` })}\n\n`);
+  });
+
+  py.on('close', (code) => {
+    if (code !== 0) {
+      res.write(`data: ${JSON.stringify({ error: '파이프라인 프로세스 비정상 종료' })}\n\n`);
+      res.end();
+      return;
+    }
+    
+    const jsonMatch = stdoutData.match(/---JSON_START---([\s\S]*?)---JSON_END---/);
+    if (jsonMatch && jsonMatch[1]) {
+      try {
+        const finalJson = JSON.parse(jsonMatch[1].trim());
+        res.write(`data: ${JSON.stringify({ success: true, result: finalJson })}\n\n`);
+      } catch (err) {
+        res.write(`data: ${JSON.stringify({ error: '최종 결과 데이터 파싱 오류', raw: jsonMatch[1] })}\n\n`);
+      }
+    } else {
+      res.write(`data: ${JSON.stringify({ error: '최종 결과 데이터 마커 누락' })}\n\n`);
+    }
+    res.end();
+  });
+});
+
+// 4. GET /api/export-download (ZIP compression and download of exported assets)
+app.get('/api/export-download', (req, res) => {
+  const pythonPath = process.platform === 'win32' ? 'python' : 'python3';
+  const outputDir = path.join(__dirname, 'web_dashboard/output');
+  const zipPath = path.join(__dirname, 'web_dashboard/styler_pro_export.zip');
+
+  // Python code block to zip the output directory recursively
+  const zipCmd = `
+import zipfile, os
+zip_path = r"${zipPath.replace(/\\/g, '\\\\')}"
+output_dir = r"${outputDir.replace(/\\/g, '\\\\')}"
+with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+    for root, dirs, files in os.walk(output_dir):
+        for file in files:
+            file_path = os.path.join(root, file)
+            arcname = os.path.relpath(file_path, output_dir)
+            zipf.write(file_path, arcname)
+`.trim().replace(/\r?\n/g, '; ');
+
+  const py = spawn(pythonPath, ['-c', zipCmd]);
+
+  py.on('close', (code) => {
+    if (code !== 0) {
+      console.error(`Zip creation failed with exit code ${code}`);
+      return res.status(500).json({ error: 'Zip 압축 파일 생성 중 에러가 발생했습니다.' });
+    }
+    
+    res.download(zipPath, 'styler_pro_export.zip', (err) => {
+      if (err) {
+        console.error('Download error:', err);
+      }
+      // Clean up the temporary zip file
+      try {
+        fs.unlinkSync(zipPath);
+      } catch (e) {
+        console.error('Failed to delete zip file:', e);
+      }
+    });
+  });
+});
+
+// ═══════════════════════════════════════════════════════
+// V2 API: AI 블로그 운영 에이전트 신규 엔드포인트
+// ═══════════════════════════════════════════════════════
+
+// 5. POST /api/cluster-generate — 클러스터 구조 미리보기 생성
+app.post('/api/cluster-generate', (req, res) => {
+  const { keyword, category, min_subs, max_subs } = req.body;
+  if (!keyword) {
+    return res.status(400).json({ error: '키워드는 필수 입력값입니다.' });
+  }
+
+  const pythonPath = process.platform === 'win32' ? 'python' : 'python3';
+  const scriptPath = path.join(__dirname, 'core/styler_pro_engine/cluster_engine.py');
+
+  const args = [scriptPath, '--keyword', keyword, '--category', category || '정보형'];
+  if (min_subs) args.push('--min-subs', String(min_subs));
+  if (max_subs) args.push('--max-subs', String(max_subs));
+
+  const py = spawn(pythonPath, args);
+  let stdoutData = '';
+  let stderrData = '';
+
+  py.stdout.on('data', (data) => { stdoutData += data.toString(); });
+  py.stderr.on('data', (data) => { stderrData += data.toString(); });
+
+  py.on('close', (code) => {
+    if (code !== 0) {
+      return res.status(500).json({ error: '클러스터 생성 실패', details: stderrData });
+    }
+    const jsonMatch = stdoutData.match(/---JSON_START---([\s\S]*?)---JSON_END---/);
+    if (jsonMatch && jsonMatch[1]) {
+      try {
+        res.json(JSON.parse(jsonMatch[1].trim()));
+      } catch (err) {
+        res.status(500).json({ error: 'JSON 파싱 오류', details: err.message });
+      }
+    } else {
+      res.status(500).json({ error: '결과 데이터 마커 누락' });
+    }
+  });
+});
+
+// 6. POST /api/cluster-publish — 클러스터 전체 순차 발행 (SSE 스트리밍)
+app.post('/api/cluster-publish', (req, res) => {
+  const { keyword, category, platform, style, length, faq_count, img_prompt,
+          seo_strength, publish, min_subs, max_subs, search_volume, competition, cpc } = req.body;
+
+  if (!keyword) {
+    return res.status(400).json({ error: '키워드는 필수 입력값입니다.' });
+  }
+
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive'
+  });
+
+  const pythonPath = process.platform === 'win32' ? 'python' : 'python3';
+  const scriptPath = path.join(__dirname, 'core/styler_pro_engine/main.py');
+
+  const args = [
+    scriptPath,
+    '--mode', 'cluster',
+    '--keyword', keyword,
+    '--category', category || '정보형',
+    '--platform', platform || 'tistory',
+    '--style', style || 'friendly',
+    '--length', String(length || '5000'),
+    '--faq_count', String(faq_count || '10'),
+    '--img_prompt', String(img_prompt || 'OFF'),
+    '--seo_strength', seo_strength || 'strong',
+    '--publish', publish ? 'ON' : 'OFF',
+    '--search_volume', String(search_volume || 10000),
+    '--competition', String(competition || 5000),
+    '--cpc', cpc || '보통',
+    '--min_subs', String(min_subs || 3),
+    '--max_subs', String(max_subs || 10),
+  ];
+
+  const py = spawn(pythonPath, args);
+  let stdoutData = '';
+
+  py.stdout.on('data', (data) => {
+    const chunk = data.toString();
+    stdoutData += chunk;
+    const lines = chunk.split('\n');
+    lines.forEach(line => {
+      if (line.trim()) {
+        res.write(`data: ${JSON.stringify({ log: line.trim() })}\n\n`);
+      }
+    });
+  });
+
+  py.stderr.on('data', (data) => {
+    const errLine = data.toString().trim();
+    console.error(`[Cluster Engine Error] ${errLine}`);
+    res.write(`data: ${JSON.stringify({ log: `⚠️ [에러] ${errLine}` })}\n\n`);
+  });
+
+  py.on('close', (code) => {
+    if (code !== 0) {
+      res.write(`data: ${JSON.stringify({ error: '클러스터 파이프라인 비정상 종료' })}\n\n`);
+      res.end();
+      return;
+    }
+    const jsonMatch = stdoutData.match(/---JSON_START---([\s\S]*?)---JSON_END---/);
+    if (jsonMatch && jsonMatch[1]) {
+      try {
+        const finalJson = JSON.parse(jsonMatch[1].trim());
+        res.write(`data: ${JSON.stringify({ success: true, result: finalJson })}\n\n`);
+      } catch (err) {
+        res.write(`data: ${JSON.stringify({ error: '결과 파싱 오류' })}\n\n`);
+      }
+    } else {
+      res.write(`data: ${JSON.stringify({ error: '결과 데이터 마커 누락' })}\n\n`);
+    }
+    res.end();
+  });
+});
+
+// 7. GET /api/published-posts — 발행 이력 + URL 조회
+app.get('/api/published-posts', (req, res) => {
+  const pythonPath = process.platform === 'win32' ? 'python' : 'python3';
+  const scriptPath = path.join(__dirname, 'core/styler_pro_engine/internal_link_engine.py');
+
+  const py = spawn(pythonPath, [scriptPath, '--posts']);
+  let stdoutData = '';
+
+  py.stdout.on('data', (data) => { stdoutData += data.toString(); });
+  py.on('close', (code) => {
+    try {
+      res.json(JSON.parse(stdoutData));
+    } catch {
+      res.json([]);
+    }
+  });
+});
+
+// 8. GET /api/internal-links — 내부링크 그래프 데이터
+app.get('/api/internal-links', (req, res) => {
+  const pythonPath = process.platform === 'win32' ? 'python' : 'python3';
+  const scriptPath = path.join(__dirname, 'core/styler_pro_engine/internal_link_engine.py');
+
+  const py = spawn(pythonPath, [scriptPath, '--graph']);
+  let stdoutData = '';
+
+  py.stdout.on('data', (data) => { stdoutData += data.toString(); });
+  py.on('close', (code) => {
+    try {
+      res.json(JSON.parse(stdoutData));
+    } catch {
+      res.json([]);
+    }
+  });
+});
+
+// 8.5 GET /api/dashboard-stats — 운영 대시보드 통계
+app.get('/api/dashboard-stats', (req, res) => {
+  const pythonPath = process.platform === 'win32' ? 'python' : 'python3';
+  const scriptPath = path.join(__dirname, 'core/styler_pro_engine/internal_link_engine.py');
+
+  const py = spawn(pythonPath, [scriptPath, '--stats']);
+  let stdoutData = '';
+
+  py.stdout.on('data', (data) => { stdoutData += data.toString(); });
+  py.on('close', () => {
+    try {
+      res.json(JSON.parse(stdoutData));
+    } catch {
+      res.json({ total_published: 0, total_pending: 0, total_failed: 0, total_clusters: 0, total_links: 0, today_published: 0 });
+    }
+  });
+});
+
+// 9. POST /api/telegram-test — 텔레그램 봇 연결 테스트
+app.post('/api/telegram-test', (req, res) => {
+  const { token, chat_id } = req.body;
+  const pythonPath = process.platform === 'win32' ? 'python' : 'python3';
+  const scriptPath = path.join(__dirname, 'core/styler_pro_engine/telegram_bot.py');
+
+  // 환경변수를 임시로 설정하여 테스트
+  const env = { ...process.env };
+  if (token) env.TELEGRAM_BOT_TOKEN = token;
+  if (chat_id) env.TELEGRAM_CHAT_ID = chat_id;
+
+  const py = spawn(pythonPath, [scriptPath, '--test'], { env });
+  let stdoutData = '';
+
+  py.stdout.on('data', (data) => { stdoutData += data.toString(); });
+  py.on('close', () => {
+    try {
+      res.json(JSON.parse(stdoutData));
+    } catch {
+      res.json({ ok: false, error: '응답 파싱 실패' });
+    }
+  });
+});
+
+// 10. POST /api/research — 자료 수집
+app.post('/api/research', (req, res) => {
+  const { keyword, max_news } = req.body;
+  if (!keyword) {
+    return res.status(400).json({ error: '키워드는 필수 입력값입니다.' });
+  }
+
+  const pythonPath = process.platform === 'win32' ? 'python' : 'python3';
+  const scriptPath = path.join(__dirname, 'core/styler_pro_engine/research_engine.py');
+
+  const args = [scriptPath, '--keyword', keyword];
+  if (max_news) args.push('--max-news', String(max_news));
+
+  const py = spawn(pythonPath, args);
+  let stdoutData = '';
+
+  py.stdout.on('data', (data) => { stdoutData += data.toString(); });
+  py.on('close', (code) => {
+    const jsonMatch = stdoutData.match(/---JSON_START---([\s\S]*?)---JSON_END---/);
+    if (jsonMatch && jsonMatch[1]) {
+      try {
+        res.json(JSON.parse(jsonMatch[1].trim()));
+      } catch (err) {
+        res.status(500).json({ error: 'JSON 파싱 오류' });
+      }
+    } else {
+      res.json({ keyword, news: [], official_links: [], total_sources: 0, citations: [] });
+    }
+  });
+});
+
 app.listen(PORT, () => {
-  console.log(`Styler Pro SaaS Backend running on http://localhost:${PORT}`);
+  console.log(`AI Blog Agent Backend running on http://localhost:${PORT}`);
 });

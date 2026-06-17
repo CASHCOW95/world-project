@@ -1,0 +1,41 @@
+{
+  "score": 100,
+  "grade": "S",
+  "estimated_rpm": "상 (High)",
+  "cpc_rating": "높음",
+  "breakdown": {
+    "cpc": {
+      "score": 30,
+      "max": 30
+    },
+    "volume": {
+      "score": 25,
+      "max": 25
+    },
+    "intent": {
+      "score": 15,
+      "max": 15
+    },
+    "ad_suitability": {
+      "score": 15,
+      "max": 15
+    },
+    "cta_suitability": {
+      "score": 15,
+      "max": 15
+    }
+  },
+  "cpc_dollar": 3.0,
+  "estimated_visitors": 3766,
+  "ctr": 5.2,
+  "estimated_revenue": 822494,
+  "affiliate_product": "소상공인 정책자금 신청서 자동 작성 가이드북",
+  "ai_badge": "🔴 경쟁 과열",
+  "blue_ocean_score": 7,
+  "blue_ocean_recommend": "낮음",
+  "image_prompts": {
+    "midjourney": "소상공인 지원금 신청 신청 자격 요건를 상징하는 현실적인 블로그 썸네일 이미지, 전문적인 비즈니스 인테리어 배경, 고급스러운 블루톤, 초고화질, 16:9 --ar 16:9",
+    "chatgpt": "Create a modern and stylish SEO blog thumbnail image representation of '소상공인 지원금 신청 신청 자격 요건' using vibrant gradients, minimal corporate elements, highly realistic concept, digital art, ratio 16:9.",
+    "flux": "Realistic premium Korean blogger work desk, displaying details related to '소상공인 지원금 신청 신청 자격 요건', highly detailed, cinematic lighting, SEO thumbnail template look, aspect ratio 16:9"
+  }
+}

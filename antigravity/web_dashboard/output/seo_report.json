@@ -1,0 +1,47 @@
+{
+  "score": 83,
+  "pass": false,
+  "details": {
+    "length": {
+      "score": 15,
+      "max": 15,
+      "comment": "글자 수: 6696자 (목표: 5,000자 이상)"
+    },
+    "headings": {
+      "score": 15,
+      "max": 15,
+      "comment": "H2: 5개 (목표: 5~8개), H3: 10개 (목표: 10~20개)"
+    },
+    "img_alt": {
+      "score": 0,
+      "max": 10,
+      "comment": "이미지: 0개 (목표: 5개), alt 등록: 0개"
+    },
+    "tables": {
+      "score": 10,
+      "max": 10,
+      "comment": "표(table): 3개 (목표: 3개 이상)"
+    },
+    "faq": {
+      "score": 10,
+      "max": 10,
+      "comment": "FAQ 질문 개수: 10개 (목표: 10개)"
+    },
+    "linking": {
+      "score": 10,
+      "max": 10,
+      "comment": "목차 내부링크: 9개 (목표: 5개 이상)"
+    },
+    "coverage": {
+      "score": 8,
+      "max": 15,
+      "comment": "핵심 키워드 빈도: 1회"
+    },
+    "readability": {
+      "score": 15,
+      "max": 15,
+      "comment": "긴 모바일 단락 비율: 2.9%"
+    }
+  },
+  "feedback": "본문에 배치된 5장의 모든 이미지 태그(img)에 alt='설명'과 title='제목' 속성을 누락 없이 입력해 주십시오.\n핵심 키워드 '소상공인 지원금 신청 신청 자격 요건'가 너무 적게 노출되었습니다. 본문 맥락에 자연스럽게 8회 이상 녹여내십시오."
+}
