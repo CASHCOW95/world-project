@@ -8,3 +8,11 @@ build/
 dist/
 *.spec
 *.bin
+
+# Project specific ignores
+03_월드개발페이지/frontend/dist/
+03_월드개발페이지/backend/dist/
+03_월드개발페이지/backend/node_modules/
+antigravity/node_modules/
+antigravity/dev-server.*.log
+antigravity/temp_test*.log

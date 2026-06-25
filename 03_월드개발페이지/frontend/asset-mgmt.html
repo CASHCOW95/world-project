@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>기프티콘 및 프로필 관리 - WORLD</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .tab-btn.active { background: #6366f1; color: white; box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); }
+        .editable-cell:focus { background: rgba(99, 102, 241, 0.1); outline: none; box-shadow: inset 0 0 0 2px #6366f1; }
+    </style>
+</head>
+<body class="antialiased overflow-x-hidden bg-bg-light dark:bg-bg-dark text-slate-900 dark:text-slate-100 transition-colors duration-300">
+    <div class="full-bg">
+        <div class="content-container min-h-screen flex flex-col">
+            <!-- Header -->
+            <header class="w-full bg-[#030509]/80 backdrop-blur-md border-b border-white/5 px-8 py-4 flex justify-between items-center transition-all duration-300 sticky top-0 z-50">
+                <!-- Left Logo -->
+                <div class="flex items-center space-x-3">
+                    <a href="index.html" class="text-xl font-black tracking-tighter flex items-center gap-2 group">
+                        <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-cyan-400 via-indigo-500 to-purple-500 relative flex items-center justify-center shadow-lg group-hover:scale-110 transition duration-300">
+                            <div class="absolute w-7.5 h-3 border border-white/60 rounded-full rotate-[-30deg]"></div>
+                        </div>
+                        <span class="text-white font-extrabold text-lg tracking-widest uppercase">WORLD</span>
+                    </a>
+                </div>
+
+                <!-- Center GNB Tabs -->
+                <nav class="hidden md:flex items-center space-x-8 text-sm font-bold text-slate-400">
+                    <a href="index.html" class="hover:text-white transition duration-200">홈</a>
+                    <a href="meetup-calendar.html" class="hover:text-white transition duration-200">밋업</a>
+                    <a href="workspace/index.html?view=styler" class="hover:text-white transition duration-200">블로그/티스토리</a>
+                    <a href="autohunter-download.html" class="hover:text-white transition duration-200">오토메이플</a>
+                    <a href="#" id="nav-feedback" class="hover:text-white transition duration-200">피드백</a>
+                </nav>
+
+                <!-- Right Buttons -->
+                <div class="flex items-center space-x-3 text-[11px] font-semibold">
+                    <button onclick="saveAll()" class="px-4 py-1.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white transition flex items-center gap-1.5 shadow-md active:scale-95">
+                        <span>💾</span> 전체 저장
+                    </button>
+                    <button class="open-auth px-4 py-1.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-gray-200 hover:text-white transition flex items-center gap-1.5">
+                        <span>🔑</span> 로그인 / 가입
+                    </button>
+                </div>
+            </header>
+
+        <main class="flex-grow p-8 max-w-7xl mx-auto w-full">
+            <div class="mb-10 text-center">
+                <h1 class="text-4xl font-black mb-2 tracking-tighter uppercase">🎁 기프티콘 및 프로필</h1>
+                <p class="text-slate-500 text-sm">통합 자산 관리 센터</p>
+            </div>
+
+            <!-- Tab Switcher -->
+            <div class="flex justify-center mb-10">
+                <div class="flex p-1.5 bg-black/5 dark:bg-white/5 rounded-2xl border border-black/5 dark:border-white/10">
+                    <button onclick="switchTab('profile')" id="tab-profile" class="tab-btn active px-8 py-2.5 rounded-xl text-xs font-black transition-all">📊 밋업 프로필 (1순위)</button>
+                    <button onclick="switchTab('gifticon')" id="tab-gifticon" class="tab-btn px-8 py-2.5 rounded-xl text-xs font-black transition-all">🖼️ 기프티콘 (2순위)</button>
+                </div>
+            </div>
+
+            <!-- Profile Section (First) -->
+            <div id="section-profile" class="tab-content space-y-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-black">프로필 데이터 (Excel)</h2>
+                    <div class="flex gap-2">
+                        <button onclick="document.getElementById('excel-upload').click()" class="px-4 py-2 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-xs font-bold hover:bg-white/10 transition">📂 파일 불러오기</button>
+                        <button onclick="exportExcel()" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 transition">💾 엑셀 저장</button>
+                        <input type="file" id="excel-upload" class="hidden" accept=".xlsx, .xls">
+                    </div>
+                </div>
+                <div class="glass-card rounded-3xl border border-black/5 dark:border-white/10 overflow-hidden min-h-[400px]">
+                    <div id="excel-placeholder" class="py-20 text-center">
+                        <p class="text-slate-500">파일을 업로드하거나 기존 데이터를 확인하세요.</p>
+                    </div>
+                    <div id="excel-table-container" class="hidden overflow-auto max-h-[60vh]">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead id="profile-thead" class="sticky top-0 bg-slate-900/90 backdrop-blur-md z-10"></thead>
+                            <tbody id="profile-tbody" class="divide-y divide-white/5"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gifticon Section (Second) -->
+            <div id="section-gifticon" class="tab-content hidden space-y-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-black">기프티콘 갤러리</h2>
+                    <button onclick="document.getElementById('gift-upload').click()" class="px-6 py-2.5 rounded-xl bg-amber-600 text-white text-xs font-bold hover:bg-amber-500 transition shadow-lg">+ 이미지 일괄 업로드</button>
+                    <input type="file" id="gift-upload" class="hidden" accept="image/*" multiple>
+                </div>
+                <div class="glass-card rounded-[2.5rem] border border-black/5 dark:border-white/10 p-8 min-h-[500px]">
+                    <div id="gifticon-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        <!-- Gifticons here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="p-12 text-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
+            © 2026 World. Unified Assets.
+        </footer>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        let profileData = AppStorage.load('profile_data') || [];
+        let gifticons = AppStorage.load('gifticons') || [];
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`section-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).classList.add('active');
+        }
+
+        document.getElementById('excel-upload').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                profileData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
+                renderProfile();
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        function renderProfile() {
+            if(!profileData || profileData.length === 0) return;
+            document.getElementById('excel-placeholder').classList.add('hidden');
+            document.getElementById('excel-table-container').classList.remove('hidden');
+            
+            const thead = document.getElementById('profile-thead');
+            const tbody = document.getElementById('profile-tbody');
+            
+            const headers = profileData[0];
+            thead.innerHTML = `<tr>${headers.map(h => `<th class="px-6 py-4 font-black text-slate-400 uppercase tracking-widest border-b border-white/10">${h || ''}</th>`).join('')}</tr>`;
+            tbody.innerHTML = profileData.slice(1).map((row, ri) => `
+                <tr class="hover:bg-white/5 transition-colors">
+                    ${headers.map((_, ci) => `
+                        <td class="px-6 py-4 border-b border-white/5">
+                            <div class="editable-cell px-2 py-1 rounded" contenteditable="true" onblur="profileData[${ri+1}][${ci}] = this.innerText">${row[ci] || ''}</div>
+                        </td>
+                    `).join('')}
+                </tr>
+            `).join('');
+        }
+
+        document.getElementById('gift-upload').addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    gifticons.push({ id: Date.now() + Math.random(), src: ev.target.result, name: file.name });
+                    renderGifticons();
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+
+        function renderGifticons() {
+            const grid = document.getElementById('gifticon-grid');
+            grid.innerHTML = gifticons.map(g => `
+                <div class="relative group aspect-[3/4] rounded-2xl overflow-hidden border border-white/10 bg-white/5 shadow-md">
+                    <img src="${g.src}" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-4">
+                        <button onclick="deleteGift(${g.id})" class="p-2 rounded-lg bg-red-500 text-white text-[10px] font-black uppercase tracking-widest">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function deleteGift(id) {
+            gifticons = gifticons.filter(g => g.id !== id);
+            renderGifticons();
+        }
+
+        function exportExcel() {
+            const ws = XLSX.utils.aoa_to_sheet(profileData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Profiles");
+            XLSX.writeFile(wb, "Profiles_Updated.xlsx");
+        }
+
+        function saveAll() {
+            AppStorage.save('profile_data', profileData);
+            AppStorage.save('gifticons', gifticons);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderProfile();
+            renderGifticons();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 로그인 - WORLD</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        @theme {
+            --color-bg-dark: #02031b;
+            --color-bg-light: #f8fafc;
+        }
+    </style>
+</head>
+<body class="antialiased text-slate-900 dark:text-slate-100 transition-colors duration-300">
+    <div class="full-bg flex items-center justify-center min-h-screen w-full p-6">
+        <div class="w-full max-w-md animate-in">
+            <div class="text-center mb-10">
+                <a href="index.html" class="inline-flex items-center gap-2 mb-6">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-400 via-indigo-500 to-purple-500 relative flex items-center justify-center shadow-lg">
+                        <div class="absolute w-10 h-3.5 border border-white/50 rounded-full rotate-[-30deg]"></div>
+                    </div>
+                    <span class="text-2xl font-black tracking-tight text-slate-900 dark:text-white transition-colors">WORLD</span>
+                </a>
+                <h1 class="text-3xl font-black mb-2 text-slate-900 dark:text-white transition-colors">ADMIN LOGIN</h1>
+                <p class="text-slate-600 dark:text-slate-400 text-sm transition-colors">관리자 계정으로 로그인이 필요합니다.</p>
+            </div>
+
+            <div class="glass-card p-10 rounded-[2.5rem] shadow-2xl">
+                <form id="login-form" class="space-y-6">
+                    <div>
+                        <label class="block text-[11px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest mb-2">Administrator ID</label>
+                        <input type="text" id="admin-id" class="w-full px-5 py-4 rounded-2xl bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:border-indigo-500 focus:outline-none transition text-sm font-bold text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="ID를 입력하세요" required>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest mb-2">Password</label>
+                        <input type="password" id="admin-pw" class="w-full px-5 py-4 rounded-2xl bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:border-indigo-500 focus:outline-none transition text-sm font-bold text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="w-full py-4 mt-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm transition-all shadow-lg hover:shadow-indigo-500/30 dark:shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.5)] active:scale-95">
+                        로그인 하기
+                    </button>
+                </form>
+                <div id="login-error" class="mt-6 text-center text-red-500 text-xs font-bold hidden">
+                    ID 또는 비밀번호가 일치하지 않습니다.
+                </div>
+            </div>
+
+            <div class="mt-8 text-center text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                © 2026 World. Security Protocols Active.
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        // Check if already logged in
+        if (sessionStorage.getItem('isAdminLoggedIn')) {
+            window.location.href = 'index.html';
+        }
+
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = document.getElementById('admin-id').value;
+            const pw = document.getElementById('admin-pw').value;
+            const errorMsg = document.getElementById('login-error');
+
+            // Admin Credentials
+            const admins = [
+                { id: '4108', pw: '9494', nickname: '류동' },
+                { id: '4101', pw: '1919', nickname: '기농' }
+            ];
+
+            const user = admins.find(a => a.id === id && a.pw === pw);
+
+            if (user) {
+                sessionStorage.setItem('isAdminLoggedIn', 'true');
+                sessionStorage.setItem('adminNickname', user.nickname);
+                
+                // Redirect back to original page or home
+                const redirect = new URLSearchParams(window.location.search).get('redirect') || 'index.html';
+                window.location.href = redirect;
+            } else {
+                errorMsg.classList.remove('hidden');
+                errorMsg.classList.add('animate-pulse');
+                setTimeout(() => errorMsg.classList.remove('animate-pulse'), 1000);
+            }
+        });
+    </script>
+</body>
+</html>
