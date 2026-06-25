@@ -9,6 +9,15 @@ import urllib.request
 import urllib.parse
 from pathlib import Path
 
+HAS_GEMINI = False
+try:
+    from google.generativeai import GenerativeModel
+    import google.generativeai as genai
+    HAS_GEMINI = True
+except Exception:
+    HAS_GEMINI = False
+
+
 # Auto-install Pillow if not present
 try:
     from PIL import Image, ImageDraw, ImageFont

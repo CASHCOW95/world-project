@@ -3,11 +3,12 @@ import sys
 import json
 import random
 from pathlib import Path
+HAS_GEMINI = False
 try:
     from google.generativeai import GenerativeModel
     import google.generativeai as genai
     HAS_GEMINI = True
-except ImportError:
+except Exception:
     HAS_GEMINI = False
 
 def generate_mock_competitor_data(keyword):

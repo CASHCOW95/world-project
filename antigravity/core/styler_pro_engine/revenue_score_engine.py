@@ -91,7 +91,7 @@ def evaluate_revenue(keyword, search_volume, cpc_level, html_content):
     def get_keyword_hash_float(k, min_val, max_val):
         h = hashlib.md5(k.encode('utf-8')).hexdigest()
         val = int(h[:6], 16) / 0xffffff
-        return round(min_val + val * (max_val - min_val), 1)
+        return round(min_val + val * (max_val - min_val), 3)
 
     if cpc_level == "높음":
         cpc_dollar = get_keyword_hash_float(keyword, 2.5, 4.5)
@@ -100,22 +100,23 @@ def evaluate_revenue(keyword, search_volume, cpc_level, html_content):
     else:
         cpc_dollar = get_keyword_hash_float(keyword, 1.0, 2.4)
 
-    visitor_factor = get_keyword_hash_float(keyword, 0.10, 0.25)
+    visitor_factor = get_keyword_hash_float(keyword, 0.01, 0.05)
     estimated_visitors = int(search_volume * visitor_factor)
 
-    # Boost CTR based on post-processing quality
-    base_ctr = get_keyword_hash_float(keyword, 2.5, 5.5)
+    # Boost CTR based on post-processing quality (scaled down to realistic Adsense CTR)
+    base_ctr = get_keyword_hash_float(keyword, 0.8, 2.2)
     ctr_boost = 0.0
     if cta_count >= 4:
-        ctr_boost += 1.0
+        ctr_boost += 0.3
     elif cta_count >= 2:
-        ctr_boost += 0.5
+        ctr_boost += 0.15
     if table_count >= 3:
-        ctr_boost += 0.5
+        ctr_boost += 0.1
     if faq_count >= 10:
-        ctr_boost += 0.5
-    ctr = round(base_ctr + ctr_boost, 1)
+        ctr_boost += 0.1
+    ctr = round(base_ctr + ctr_boost, 2)
 
+    # Calculate estimated revenue based on standard CTR/CPC
     estimated_revenue = int(estimated_visitors * (ctr / 100.0) * cpc_dollar * 1400)
 
     # Category matching logic based on keyword terms

@@ -15,6 +15,13 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+app.get('/api/', (req, res) => {
+  res.json({
+    ok: true,
+    message: 'API server is running. Open /workspace/index.html?view=styler for the dashboard.'
+  });
+});
+
 app.use(cors());
 app.use(express.json());
 
@@ -22,6 +29,96 @@ app.use(express.json());
 app.use('/workspace', express.static(path.join(__dirname, '../web_dashboard/workspace')));
 app.use('/output', express.static(path.join(__dirname, '../web_dashboard/output')));
 app.use(express.static(path.join(__dirname, '../web_dashboard')));
+
+const PROFILE_CONFIG_PATH = path.join(__dirname, 'core/styler_pro_engine/publisher_profiles.json');
+
+const defaultPublisherConfig = {
+  global: {
+    gemini_api_key: process.env.GEMINI_API_KEY || ''
+  },
+  profiles: [
+    {
+      id: 'tistory-default',
+      platform: 'tistory',
+      label: '기본 티스토리',
+      blog_name: process.env.TISTORY_BLOG_NAME || '',
+      access_token: process.env.TISTORY_ACCESS_TOKEN || '',
+      enabled: true
+    },
+    {
+      id: 'wordpress-default',
+      platform: 'wordpress',
+      label: '기본 워드프레스',
+      api_url: process.env.WORDPRESS_API_URL || '',
+      username: process.env.WORDPRESS_USER || '',
+      password: process.env.WORDPRESS_PASSWORD || '',
+      enabled: true
+    }
+  ]
+};
+
+function readPublisherConfig() {
+  try {
+    if (!fs.existsSync(PROFILE_CONFIG_PATH)) {
+      fs.writeFileSync(PROFILE_CONFIG_PATH, JSON.stringify(defaultPublisherConfig, null, 2), 'utf-8');
+      return defaultPublisherConfig;
+    }
+    const parsed = JSON.parse(fs.readFileSync(PROFILE_CONFIG_PATH, 'utf-8'));
+    return {
+      global: { ...defaultPublisherConfig.global, ...(parsed.global || {}) },
+      profiles: Array.isArray(parsed.profiles) ? parsed.profiles : defaultPublisherConfig.profiles
+    };
+  } catch (err) {
+    console.error('Publisher config load failed:', err);
+    return defaultPublisherConfig;
+  }
+}
+
+function writePublisherConfig(config) {
+  const normalized = {
+    global: {
+      gemini_api_key: String(config?.global?.gemini_api_key || '')
+    },
+    profiles: (Array.isArray(config?.profiles) ? config.profiles : []).map((profile, index) => ({
+      id: String(profile.id || `${profile.platform || 'profile'}-${Date.now()}-${index}`),
+      platform: String(profile.platform || 'tistory'),
+      label: String(profile.label || '새 발행 프로필'),
+      blog_name: String(profile.blog_name || ''),
+      access_token: String(profile.access_token || ''),
+      api_url: String(profile.api_url || ''),
+      username: String(profile.username || ''),
+      password: String(profile.password || ''),
+      enabled: profile.enabled !== false
+    }))
+  };
+  fs.writeFileSync(PROFILE_CONFIG_PATH, JSON.stringify(normalized, null, 2), 'utf-8');
+  return normalized;
+}
+
+function getPublisherProfile(platform, profileId) {
+  const config = readPublisherConfig();
+  const samePlatform = config.profiles.filter(p => p.platform === platform && p.enabled !== false);
+  return samePlatform.find(p => p.id === profileId) || samePlatform[0] || null;
+}
+
+function buildPublisherEnv(platform, profileId) {
+  const config = readPublisherConfig();
+  const profile = getPublisherProfile(platform, profileId);
+  const env = { ...process.env };
+
+  if (config.global?.gemini_api_key) env.GEMINI_API_KEY = config.global.gemini_api_key;
+
+  if (profile?.platform === 'tistory') {
+    env.TISTORY_ACCESS_TOKEN = profile.access_token || '';
+    env.TISTORY_BLOG_NAME = profile.blog_name || '';
+  }
+  if (profile?.platform === 'wordpress') {
+    env.WORDPRESS_API_URL = profile.api_url || '';
+    env.WORDPRESS_USER = profile.username || '';
+    env.WORDPRESS_PASSWORD = profile.password || '';
+  }
+  return { env, profile };
+}
 
 // Model 1: Simulated SaaS Credit Database in memory
 let userCredits = 5;
@@ -58,6 +155,115 @@ app.get('/api/credits', (req, res) => {
 app.post('/api/credits/reset', (req, res) => {
   userCredits = 5;
   res.json({ credits: userCredits });
+});
+
+app.get('/api/publisher-profiles', (req, res) => {
+  res.json(readPublisherConfig());
+});
+
+app.put('/api/publisher-profiles', (req, res) => {
+  try {
+    res.json(writePublisherConfig(req.body));
+  } catch (err) {
+    res.status(500).json({ error: '발행 프로필 저장 실패', details: err.message });
+  }
+});
+
+app.post('/api/publisher-profiles/test', (req, res) => {
+  const { platform, profile_id } = req.body;
+  const profile = getPublisherProfile(platform, profile_id);
+  if (!profile) {
+    return res.status(404).json({ ok: false, error: '선택한 플랫폼 프로필을 찾을 수 없습니다.' });
+  }
+  if (platform === 'tistory') {
+    return res.json({
+      ok: Boolean(profile.blog_name && profile.access_token),
+      profile,
+      message: profile.blog_name && profile.access_token ? '티스토리 프로필 필수값이 준비되었습니다.' : '블로그 이름과 액세스 토큰을 입력해 주십시오.'
+    });
+  }
+  if (platform === 'wordpress') {
+    return res.json({
+      ok: Boolean(profile.api_url && profile.username && profile.password),
+      profile,
+      message: profile.api_url && profile.username && profile.password ? '워드프레스 프로필 필수값이 준비되었습니다.' : '사이트 API 주소, 사용자명, 앱 비밀번호를 입력해 주십시오.'
+    });
+  }
+  return res.json({ ok: true, profile, message: '프로필이 선택되었습니다.' });
+});
+
+app.get('/api/post-preview/:postId', (req, res) => {
+  const postId = Number(req.params.postId);
+  if (!Number.isInteger(postId) || postId <= 0) {
+    return res.status(400).send('잘못된 글 번호입니다.');
+  }
+
+  const pythonPath = process.platform === 'win32' ? 'python' : 'python3';
+  const script = `
+import json, re, sys
+from pathlib import Path
+base = Path(r"${path.join(__dirname, 'core/styler_pro_engine').replace(/\\/g, '\\\\')}")
+sys.path.append(str(base))
+import db, internal_link_engine
+posts = internal_link_engine.get_published_posts(500)
+post = next((p for p in posts if int(p.get("id", 0)) == ${postId}), None)
+if not post:
+    print(json.dumps({"error": "글 이력을 찾을 수 없습니다."}, ensure_ascii=False))
+    raise SystemExit
+content_id = None
+url = post.get("url") or ""
+m = re.search(r"local://content/(\\d+)", url)
+if m:
+    content_id = int(m.group(1))
+history = db.get_history()
+content = None
+if content_id:
+    content = next((h for h in history if int(h.get("id", 0)) == content_id), None)
+if not content:
+    content = next((h for h in history if h.get("title") == post.get("title")), None)
+print(json.dumps({"post": post, "content": content}, ensure_ascii=False))
+`.trim();
+
+  const py = spawn(pythonPath, ['-c', script]);
+  let stdoutData = '';
+  let stderrData = '';
+  py.stdout.on('data', (data) => { stdoutData += data.toString(); });
+  py.stderr.on('data', (data) => { stderrData += data.toString(); });
+  py.on('close', () => {
+    try {
+      const payload = JSON.parse(stdoutData);
+      if (payload.error || !payload.content) {
+        return res.status(404).send(payload.error || '검수할 로컬 원고를 찾을 수 없습니다.');
+      }
+      const title = payload.content.title || payload.post.title || '작성글 검수';
+      const html = payload.content.html_content || '';
+      res.send(`<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${title}</title>
+  <style>
+    body { margin: 0; background: #0f172a; color: #0f172a; font-family: Arial, sans-serif; }
+    header { position: sticky; top: 0; z-index: 10; background: #111827; color: white; padding: 14px 24px; border-bottom: 1px solid #334155; }
+    header strong { display: block; font-size: 14px; }
+    header span { color: #94a3b8; font-size: 12px; }
+    main { max-width: 920px; margin: 24px auto; background: white; border-radius: 12px; padding: 24px; box-shadow: 0 20px 70px rgba(0,0,0,.28); }
+    @media (max-width: 760px) { main { margin: 0; border-radius: 0; padding: 16px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>내부 원고 검수</strong>
+    <span>${title}</span>
+  </header>
+  <main>${html}</main>
+</body>
+</html>`);
+    } catch (err) {
+      res.status(500).send(`미리보기 생성 실패: ${stderrData || err.message}`);
+    }
+  });
 });
 
 // Endpoint for Styler Pro text generation
@@ -524,7 +730,7 @@ app.get('/api/history', (req, res) => {
 
 // 3. POST /api/publish-pipeline (Streaming log via chunked SSE)
 app.post('/api/publish-pipeline', (req, res) => {
-  const { keyword, platform, style, search_volume, competition, cpc, category, cta_style, golden_score, length, faq_count, img_prompt, title, seo_strength, publish } = req.body;
+  const { keyword, platform, profile_id, style, search_volume, competition, cpc, category, cta_style, golden_score, length, faq_count, img_prompt, title, seo_strength, publish } = req.body;
   
   if (!keyword) {
     return res.status(400).json({ error: '키워드는 필수 입력값입니다.' });
@@ -560,7 +766,11 @@ app.post('/api/publish-pipeline', (req, res) => {
 
 
 
-  const py = spawn(pythonPath, args);
+  const { env, profile } = buildPublisherEnv(platform || 'tistory', profile_id);
+  if (profile) {
+    res.write(`data: ${JSON.stringify({ log: `[PROFILE] ${profile.label} 프로필로 발행 환경을 준비했습니다.` })}\n\n`);
+  }
+  const py = spawn(pythonPath, args, { env });
   let stdoutData = '';
   
   py.stdout.on('data', (data) => {
@@ -688,8 +898,9 @@ app.post('/api/cluster-generate', (req, res) => {
 
 // 6. POST /api/cluster-publish — 클러스터 전체 순차 발행 (SSE 스트리밍)
 app.post('/api/cluster-publish', (req, res) => {
-  const { keyword, category, platform, style, length, faq_count, img_prompt,
-          seo_strength, publish, min_subs, max_subs, search_volume, competition, cpc } = req.body;
+  const { keyword, category, platform, profile_id, style, length, faq_count, img_prompt,
+          seo_strength, publish, min_subs, max_subs, search_volume, competition, cpc,
+          scheduled_at, contextual_links } = req.body;
 
   if (!keyword) {
     return res.status(400).json({ error: '키워드는 필수 입력값입니다.' });
@@ -723,7 +934,18 @@ app.post('/api/cluster-publish', (req, res) => {
     '--max_subs', String(max_subs || 10),
   ];
 
-  const py = spawn(pythonPath, args);
+  if (scheduled_at) {
+    args.push('--scheduled_at', String(scheduled_at));
+  }
+  if (contextual_links) {
+    args.push('--contextual_links', String(contextual_links));
+  }
+
+  const { env, profile } = buildPublisherEnv(platform || 'tistory', profile_id);
+  if (profile) {
+    res.write(`data: ${JSON.stringify({ log: `[PROFILE] ${profile.label} 프로필로 발행 환경을 준비했습니다.` })}\n\n`);
+  }
+  const py = spawn(pythonPath, args, { env });
   let stdoutData = '';
 
   py.stdout.on('data', (data) => {

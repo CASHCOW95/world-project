@@ -23,9 +23,20 @@ import randomizer_engine
 import research_engine
 import internal_link_engine
 import telegram_bot
+import content_qa
+
+def normalize_keyword(keyword):
+    if not keyword:
+        return ""
+    words = keyword.split()
+    normalized = []
+    for w in words:
+        if not normalized or normalized[-1] != w:
+            normalized.append(w)
+    return " ".join(normalized)
 
 def run_v2_pipeline(args):
-    keyword = args.keyword
+    keyword = normalize_keyword(args.keyword)
     category = args.category
     style = args.style
     cta_style = args.cta_style
@@ -59,7 +70,8 @@ def run_v2_pipeline(args):
         img_prompt=args.img_prompt,
         title=args.title if hasattr(args, 'title') else "",
         research_data=research_data,
-        randomization_profile=rand_profile
+        randomization_profile=rand_profile,
+        category=category
     )
     title = draft_data["title"]
     blocks = draft_data["blocks"]
@@ -94,30 +106,42 @@ def run_v2_pipeline(args):
     pass_flag = False
     
     for iteration in range(1, max_seo_loops + 1):
-        print(f"[STEP-5] HTML Block Engine 조립 및 SEO 점수 진단 (루프 {iteration}회차)...")
+        print(f"[STEP-5] HTML Block Engine 조립 및 SEO/품질 진단 (루프 {iteration}회차)...")
         time.sleep(1)
         
-        # Assemble blocks into final styled HTML
-        current_html = html_block_engine.compile_blocks_to_html(keyword, blocks, ctas, images_list)
+        # Assemble blocks into final styled HTML if not already refined
+        if not current_html:
+            current_html = html_block_engine.compile_blocks_to_html(keyword, blocks, ctas, images_list)
         
         # SEO Audit
         seo_report = seo_engine.evaluate_seo(keyword, current_html)
-        
-        # Overwrite standard 'pass' with strength score criteria
         seo_report["pass"] = seo_report["score"] >= pass_seo_score
         
-        print(f"-> 현재 SEO 종합 점수: {seo_report['score']}점 / 100점 (목표: {pass_seo_score}점)")
+        # Content QA Engine Audit
+        print(f"[STEP-5.1] Content QA Engine 품질 정밀 검사 진행 중...")
+        qa_report = content_qa.evaluate_qa(keyword, category, title, blocks, current_html, research_data.get("citations", []))
         
-        if seo_report["pass"]:
-            print(f"-> [합격] SEO 기준점수({pass_seo_score}점) 이상을 달성하여 루프를 중단합니다.")
-            pass_flag = True
+        print(f"-> 현재 SEO 종합 점수: {seo_report['score']}점 / 100점 (목표: {pass_seo_score}점)")
+        print(f"-> Content QA 품질 검사 결과: {'합격' if qa_report['pass'] else '불합격'}")
+        
+        pass_flag = seo_report["pass"] and qa_report["pass"]
+        
+        if pass_flag:
+            print(f"-> [합격] SEO 기준점수 및 Content QA 기준을 모두 만족하여 루프를 중단합니다.")
             break
         else:
-            print(f"-> [불합격] SEO 점수가 기준({pass_seo_score}점)에 미치지 못합니다.")
-            print(f"-> [자가개선 피드백]:\n{seo_report['feedback']}")
+            combined_feedback = []
+            if not seo_report["pass"]:
+                combined_feedback.append("[SEO 개선 사항 피드백]:\n" + seo_report["feedback"])
+            if not qa_report["pass"]:
+                combined_feedback.append("[품질 QA 개선 사항 피드백]:\n" + qa_report["feedback"])
+                
+            feedback_str = "\n\n".join(combined_feedback)
+            print(f"-> [불합격] 검사 기준을 만족하지 못해 피드백을 반영하여 자가개선(Refine)을 지시합니다.")
+            print(f"-> [자가개선 피드백 내용]:\n{feedback_str}")
+            
             if iteration < max_seo_loops:
-                print("-> 피드백을 반영하여 블록 콘텐츠 자동 재생성 및 보강 수행 중...")
-                refined = content_builder.refine_content(keyword, current_html, seo_report["feedback"], style)
+                refined = content_builder.refine_content(keyword, current_html, feedback_str, style)
                 current_html = refined["html_content"]
                 title = refined["title"]
                 time.sleep(1.5)
@@ -253,7 +277,7 @@ def run_v2_pipeline(args):
 
 def run_cluster_pipeline(args):
     """클러스터 파이프라인: 키워드 1개 → 메인글+서브글 순차 생성/발행 → 내부링크 삽입 → 텔레그램 알림."""
-    keyword = args.keyword
+    keyword = normalize_keyword(args.keyword)
     category = args.category
     platform = args.platform
 
@@ -295,17 +319,18 @@ def run_cluster_pipeline(args):
         print(f"\n[CLUSTER-3-{post_num}] {role_label} 생성 시작: {post_info['title']}")
 
         try:
+            post_keyword = normalize_keyword(post_info["keyword"])
             # 양산형 회피 프로필 생성
             rand_profile = randomizer_engine.generate_randomization_profile()
             style = rand_profile["style"]["id"]
             print(f"-> 랜덤화 프로필 적용: 문체={rand_profile['style']['label']}, CTA={rand_profile['cta']['style']['label']}")
 
             # SERP 분석
-            serp_data = serp_analyzer.analyze_serp(post_info["keyword"])
+            serp_data = serp_analyzer.analyze_serp(post_keyword)
 
             # 콘텐츠 빌드
             draft_data = content_builder.build_content_blocks(
-                keyword=post_info["keyword"],
+                keyword=post_keyword,
                 serp_analysis=serp_data,
                 style=style,
                 length=args.length,
@@ -313,23 +338,24 @@ def run_cluster_pipeline(args):
                 img_prompt=args.img_prompt,
                 title=post_info["title"],
                 research_data=research_data,
-                randomization_profile=rand_profile
+                randomization_profile=rand_profile,
+                category=category
             )
             title = draft_data["title"]
             blocks = draft_data["blocks"]
 
             # CTA 생성
-            ctas = cta_engine.generate_ctas(post_info["keyword"], rand_profile["cta"]["style"]["id"])
+            ctas = cta_engine.generate_ctas(post_keyword, rand_profile["cta"]["style"]["id"])
 
             # HTML 조립
-            current_html = html_block_engine.compile_blocks_to_html(post_info["keyword"], blocks, ctas, [])
+            current_html = html_block_engine.compile_blocks_to_html(post_keyword, blocks, ctas, [])
 
             # 이미지 생성 및 본문 삽입
             images_list = []
             if getattr(args, 'img_prompt', 'OFF') == "ON":
                 print(f"-> 이미지 생성 및 본문 삽입 중...")
                 current_html, img_filenames = image_generator.embed_images_in_html(
-                    keyword=post_info["keyword"],
+                    keyword=post_keyword,
                     html_content=current_html,
                     output_dir_relative="output/images"
                 )
@@ -337,17 +363,17 @@ def run_cluster_pipeline(args):
                     images_list.append({
                         "filename": img_fn,
                         "local_path": f"/output/images/{img_fn}",
-                        "alt": f"{post_info['keyword']} 관련 이미지",
+                        "alt": f"{post_keyword} 관련 이미지",
                         "title": post_info["title"]
                     })
 
             # SEO 진단
-            seo_report = seo_engine.evaluate_seo(post_info["keyword"], current_html)
+            seo_report = seo_engine.evaluate_seo(post_keyword, current_html)
             print(f"-> SEO 점수: {seo_report['score']}점")
 
             # 수익성 분석
             profit_report = revenue_score_engine.evaluate_revenue(
-                post_info["keyword"],
+                post_keyword,
                 getattr(args, 'search_volume', 10000),
                 getattr(args, 'cpc', '보통'),
                 current_html
@@ -355,7 +381,7 @@ def run_cluster_pipeline(args):
 
             # Export
             export_engine.export_assets(
-                keyword=post_info["keyword"],
+                keyword=post_keyword,
                 title=title,
                 blocks=blocks,
                 html_content=current_html,
@@ -366,7 +392,7 @@ def run_cluster_pipeline(args):
 
             # DB 저장
             keyword_info = {
-                "keyword": post_info["keyword"],
+                "keyword": post_keyword,
                 "category": category,
                 "search_volume": getattr(args, 'search_volume', 10000),
                 "competition": getattr(args, 'competition', 5000),
@@ -396,7 +422,7 @@ def run_cluster_pipeline(args):
                     else:
                         pub_inst = publisher.BloggerPublisher()
 
-                    tags_list = draft_data.get("tags", [post_info["keyword"], category])
+                    tags_list = draft_data.get("tags", [post_keyword, category])
                     local_image_paths = [f"output/images/{img['filename']}" for img in images_list]
                     pub_url, updated_html = publisher.publish_post_pipeline(
                         publisher=pub_inst, title=title,
@@ -407,16 +433,16 @@ def run_cluster_pipeline(args):
                     publish_url = pub_url
                     current_html = updated_html
                     print(f"-> 발행 완료: {publish_url}")
-                    telegram_bot.notify_publish_success(title, publish_url, post_info["keyword"], platform)
+                    telegram_bot.notify_publish_success(title, publish_url, post_keyword, platform)
                 except Exception as pe:
                     print(f"-> 발행 실패: {str(pe)}")
-                    telegram_bot.notify_error("발행", post_info["keyword"], str(pe))
+                    telegram_bot.notify_error("발행", post_keyword, str(pe))
 
             # 발행 URL DB 기록
             post_id = internal_link_engine.save_published_post(
                 cluster_id=cluster_id,
                 role=post_info["role"],
-                keyword=post_info["keyword"],
+                keyword=post_keyword,
                 title=title,
                 url=publish_url or f"local://content/{content_id}",
                 platform=platform
@@ -426,7 +452,7 @@ def run_cluster_pipeline(args):
                 "post_id": post_id,
                 "role": post_info["role"],
                 "title": title,
-                "keyword": post_info["keyword"],
+                "keyword": post_keyword,
                 "seo_score": seo_report["score"],
                 "profit_score": profit_report["score"],
                 "publish_url": publish_url,
@@ -447,80 +473,87 @@ def run_cluster_pipeline(args):
             })
 
     # [CLUSTER-4] 내부링크 삽입 및 재발행
-    print(f"\n[CLUSTER-4] 내부링크 그래프 생성, 삽입 및 재발행 중...")
-    link_map = internal_link_engine.build_link_map(cluster_id)
-    internal_link_engine.save_link_records(link_map)
-    print(f"-> 링크 {len(link_map.get('links', []))}개 생성 및 기록 완료")
+    link_map = {}
+    if getattr(args, 'contextual_links', 'ON') == 'ON':
+        if success_count == 0:
+            print(f"\n[CLUSTER-4] ❌ 내부링크 구성 실패 (발행 성공 글이 0개이므로 스킵)")
+        else:
+            print(f"\n[CLUSTER-4] 내부링크 그래프 생성, 삽입 및 재발행 중...")
+            link_map = internal_link_engine.build_link_map(cluster_id)
+            internal_link_engine.save_link_records(link_map)
+            print(f"-> 링크 {len(link_map.get('links', []))}개 생성 및 기록 완료")
 
-    # Initialize publisher for modification if publish is ON
-    pub_inst = None
-    if getattr(args, 'publish', 'OFF') == 'ON':
-        try:
-            if platform == "tistory":
-                pub_inst = publisher.TistoryPublisher()
-            elif platform == "wordpress":
-                pub_inst = publisher.WordpressPublisher()
-            else:
-                pub_inst = publisher.BloggerPublisher()
-        except Exception as e:
-            sys.stderr.write(f"Failed to initialize publisher for modify: {str(e)}\n")
-
-    # Inject internal links to each successfully generated post
-    import sqlite3
-    db_path = internal_link_engine.DB_PATH
-    
-    for item in results:
-        # Check if it was generated successfully
-        if "error" in item or "html_content" not in item:
-            continue
-            
-        post_id = item["post_id"]
-        title = item["title"]
-        publish_url = item["publish_url"]
-        html_content = item["html_content"]
-        
-        # Inject links
-        updated_html = internal_link_engine.inject_internal_links(html_content, post_id, link_map)
-        item["html_content"] = updated_html # Update in memory results
-        
-        # Update SQLite DB (contents table)
-        try:
-            conn = sqlite3.connect(str(db_path))
-            c = conn.cursor()
-            c.execute("""
-                UPDATE contents 
-                SET assembled_html = ? 
-                WHERE keyword = ? AND id = (SELECT max(id) FROM contents WHERE keyword = ?)
-            """, (updated_html, item["keyword"], item["keyword"]))
-            conn.commit()
-            conn.close()
-            print(f"-> DB 업데이트 완료: {title}")
-        except Exception as dbe:
-            sys.stderr.write(f"SQLite DB HTML update error: {str(dbe)}\n")
-            
-        # Call modify API to update the post on the platform
-        if pub_inst and publish_url and not publish_url.startswith("local://"):
-            print(f"-> 플랫폼 재발행(PUT/Modify) 실행 중: {title} ({publish_url})")
+        # Initialize publisher for modification if publish is ON
+        pub_inst = None
+        if getattr(args, 'publish', 'OFF') == 'ON':
             try:
-                tags_list = [item["keyword"], category]
-                success = pub_inst.modify(
-                    post_id_or_url=publish_url,
-                    title=title,
-                    html_content=updated_html,
-                    tags=tags_list
-                )
-                if success:
-                    print(f"-> 재발행 성공: {title}")
+                if platform == "tistory":
+                    pub_inst = publisher.TistoryPublisher()
+                elif platform == "wordpress":
+                    pub_inst = publisher.WordpressPublisher()
                 else:
-                    print(f"-> ⚠️ 재발행 실패: {title}")
-            except Exception as me:
-                sys.stderr.write(f"Modify API call error for {title}: {str(me)}\n")
+                    pub_inst = publisher.BloggerPublisher()
+            except Exception as e:
+                sys.stderr.write(f"Failed to initialize publisher for modify: {str(e)}\n")
+
+        # Inject internal links to each successfully generated post
+        import sqlite3
+        db_path = internal_link_engine.DB_PATH
+        
+        for item in results:
+            # Check if it was generated successfully
+            if "error" in item or "html_content" not in item:
+                continue
+                
+            post_id = item["post_id"]
+            title = item["title"]
+            publish_url = item["publish_url"]
+            html_content = item["html_content"]
+            
+            # Inject links
+            updated_html = internal_link_engine.inject_internal_links(html_content, post_id, link_map)
+            item["html_content"] = updated_html # Update in memory results
+            
+            # Update SQLite DB (contents table)
+            try:
+                conn = sqlite3.connect(str(db_path))
+                c = conn.cursor()
+                c.execute("""
+                    UPDATE contents 
+                    SET assembled_html = ? 
+                    WHERE keyword = ? AND id = (SELECT max(id) FROM contents WHERE keyword = ?)
+                """, (updated_html, item["keyword"], item["keyword"]))
+                conn.commit()
+                conn.close()
+                print(f"-> DB 업데이트 완료: {title}")
+            except Exception as dbe:
+                sys.stderr.write(f"SQLite DB HTML update error: {str(dbe)}\n")
+                
+            # Call modify API to update the post on the platform
+            if pub_inst and publish_url and not publish_url.startswith("local://"):
+                print(f"-> 플랫폼 재발행(PUT/Modify) 실행 중: {title} ({publish_url})")
+                try:
+                    tags_list = [item["keyword"], category]
+                    success = pub_inst.modify(
+                        post_id_or_url=publish_url,
+                        title=title,
+                        html_content=updated_html,
+                        tags=tags_list
+                    )
+                    if success:
+                        print(f"-> 재발행 성공: {title}")
+                    else:
+                        print(f"-> ⚠️ 재발행 실패: {title}")
+                except Exception as me:
+                    sys.stderr.write(f"Modify API call error for {title}: {str(me)}\n")
+    else:
+        print(f"\n[CLUSTER-4] 문맥형 내부링크 자동 구성 기능 비활성화 (OFF) -> 삽입 생략")
 
     # [CLUSTER-5] 텔레그램 최종 알림
     telegram_bot.notify_cluster_complete(keyword, len(all_posts), success_count, failed_count)
 
     final_output = {
-        "status": "success",
+        "status": "success" if success_count > 0 else "failed",
         "mode": "cluster",
         "keyword": keyword,
         "cluster_id": cluster_id,
@@ -565,6 +598,7 @@ if __name__ == "__main__":
                         help="single: 단건 생성, cluster: 클러스터 일괄 생성")
     parser.add_argument("--min_subs", type=int, default=3)
     parser.add_argument("--max_subs", type=int, default=10)
+    parser.add_argument("--contextual_links", type=str, default="ON", choices=["ON", "OFF"])
 
     args = parser.parse_args()
 

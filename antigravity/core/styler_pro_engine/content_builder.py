@@ -3,11 +3,12 @@ import sys
 import json
 import random
 import re
+HAS_GEMINI = False
 try:
     from google.generativeai import GenerativeModel
     import google.generativeai as genai
     HAS_GEMINI = True
-except ImportError:
+except Exception:
     HAS_GEMINI = False
 
 try:
@@ -82,7 +83,117 @@ FAQ_ITEMS_FALLBACK = [
     {"question": "Q10. 만기 수령 이후에 추가로 가입을 연장할 방법이 있나요?", "answer": "A10. 만기 수령이 완료된 후에는 해당 기금의 연계 사업인 내일채움공제 등으로 추가 가입 전환이 가능하며, 이를 통해 자산 형성을 지속적으로 연장해 나가실 수 있는 경로가 열려 있습니다."}
 ]
 
-def build_content_blocks(keyword, serp_analysis, style="friendly", length="5000", faq_count="10", img_prompt="OFF", title="", research_data=None, randomization_profile=None):
+GENERAL_TABLE_1 = {
+    "headers": ["유형 구분", "주요 특징 및 설명", "권장 대상"],
+    "rows": [
+        ["기본형", "가장 일반적이고 표준화된 구성 방식", "처음 접하는 입문자 및 일반 사용자"],
+        ["고급형", "추가적인 기능과 상세 최적화 옵션 포함", "보다 세밀하고 분석적인 효과를 원하는 사람"],
+        ["맞춤형", "개별 상황과 선호도에 맞춘 유연한 설계", "특수 목적 및 조건별 활용형 옵션 선호자"]
+    ]
+}
+
+GENERAL_TABLE_2 = {
+    "headers": ["실행 단계", "주요 준비 및 확인 사항", "소요 시간 및 난이도"],
+    "rows": [
+        ["1단계: 준비 단계", "필요한 정보 수집 및 기초적인 환경 설정", "즉시 진행 가능 (난이도 하)"],
+        ["2단계: 세부 실행", "계획에 맞춰 작업을 수행하고 피드백 적용", "1~2일 소요 (난이도 중)"],
+        ["3단계: 최종 점검", "누락이나 오류 검토 후 최종 완성본 확정", "당일 처리 완료 (난이도 하)"]
+    ]
+}
+
+GENERAL_TABLE_3 = {
+    "headers": ["비교 항목", "일반적인 수동 방식", "최적화 자동 방식"],
+    "rows": [
+        ["처리 효율성", "반복적인 수동 작업으로 많은 시간이 소요됨", "체계적 분석과 자동화로 리스크 최소화"],
+        ["비용 대비 효과", "단기적인 접근으로 다소 비효율적인 리스크 존재", "장기적인 관점에서 최적의 안정성 보장"],
+        ["위험 관리", "문제가 발생한 후 사후 대처 중심", "사전 체크리스트와 예방 전략 적용"]
+    ]
+}
+
+GENERAL_FAQ_ITEMS = [
+    {"question": "Q1. 처음 시작할 때 특별한 조건이나 준비물이 필요한가요?", "answer": "A1. 사전 지식이 없더라도 제공되는 기본 가이드라인과 핵심 체크사항을 차근차근 따라 하시면 누구나 쉽고 편리하게 시작할 수 있습니다."},
+    {"question": "Q2. 이용하면서 발생할 수 있는 주요 부작용이나 실수는 무엇인가요?", "answer": "A2. 사전에 약속된 가이드를 따르지 않거나 기본 정보를 누락하여 기입하는 경우 진행이 지연될 수 있습니다. 꼼꼼한 확인이 필수입니다."},
+    {"question": "Q3. 진행 도중 일정이 맞지 않을 때는 어떻게 해야 하나요?", "answer": "A3. 각 단계별로 제공되는 유예 기간이나 보완 기능을 활용하여 유연하게 대처하실 수 있으므로 염려하지 않으셔도 됩니다."},
+    {"question": "Q4. 더 효율적이고 높은 성과를 얻을 수 있는 비결이 있나요?", "answer": "A4. 단발성 진행에 그치지 않고, 수집된 피드백을 반영하여 주기적으로 설정을 갱신하고 최적화 경로를 보강해 나가는 것이 핵심입니다."},
+    {"question": "Q5. 일반적인 방식에 비해 이 방식이 가지는 확실한 이점은 무엇인가요?", "answer": "A5. 복잡한 절차를 대폭 단축하여 빠른 피드백을 제공하므로, 불필요한 리소스 낭비를 줄이고 본연의 가치 창출에 전념할 수 있습니다."},
+    {"question": "Q6. 문제 상황이 감지되었을 때 가장 먼저 체크할 부분은?", "answer": "A6. 먼저 제공된 오류 해결 대처 가이드를 바탕으로, 잘못 입력되었거나 누락된 설정값이 있는지 유심히 비교 대조하는 것부터 시작하십시오."},
+    {"question": "Q7. 다른 유관 분석 모델과 병행하여 활용할 수 있나요?", "answer": "A7. 네, 개방적인 구조로 연동이 유연하게 허용되므로 다양한 시너지 효과를 창출할 수 있는 설계가 충분히 가능합니다."},
+    {"question": "Q8. 최종 승인이나 결과물이 확정되기까지 보통 며칠이나 소요되나요?", "answer": "A8. 보통 접수가 정상적으로 완료되면 영업일 기준으로 대략 3일에서 7일 이내에 검토 결과나 최종 통보를 확인하실 수 있습니다."},
+    {"question": "Q9. 상황에 맞춰 중간에 세부 설정을 변경할 수도 있나요?", "answer": "A9. 이미 완료된 단계를 제외하고는 다음 단계로 넘어가기 전 유동적으로 설정을 조율할 수 있는 제어가 마련되어 있습니다."},
+    {"question": "Q10. 만기 또는 완료가 된 후에 연계하여 확장할 수 있는 옵션이 있나요?", "answer": "A10. 네, 기초 단계가 성황리에 완료되면 더 고도화된 타 서비스 및 분석 모델로 쉽게 승계하여 연장 설계해 나갈 수 있습니다."}
+]
+
+def make_generic_policy_mock(keyword):
+    return {
+        "title": f"{keyword} 신청 자격요건, 지원내용 및 온라인 신청방법 총정리",
+        "intro": f"안녕하세요! 오늘 자세하게 다뤄볼 포커스 정보는 많은 분들이 혜택 및 상세 내용에 대해 큰 관심을 가지고 정보를 찾고 계시는 {keyword}의 자격 요건과 실질적인 혜택 내용, 그리고 가장 안전하고 빠른 신청 절차를 알기 쉽게 총정리해 드리고자 합니다.",
+        "disclaimer": f"💡 면책 조항 (Disclaimer): 본 정보는 인터넷상의 실시간 트렌드 지표와 공시 가이드를 종합하여 구성된 {keyword} 참고용 요약 정보입니다. 개별 조건에 따른 혜택은 주관 기관의 지침에 따라 유동적일 수 있으므로 공고를 재확인하시기 바랍니다.",
+        "sections": [
+            {
+                "h2": f"{keyword} 지원 사업의 정의와 목적",
+                "h3s": [
+                    {
+                        "h3": f"{keyword}란 무엇인가요?",
+                        "paragraphs": [
+                            f"{keyword}는 관련 대상자들의 복지 및 가치 증진을 보장하고 재정적/행정적 편의를 돕기 위해 시행 중인 공익적 지원 사업입니다.",
+                            f"어려운 진입 장벽을 개선하여 더 많은 조건에 부합하는 수혜 대상자들에게 골고루 실효성 있는 혜택이 돌아갈 수 있도록 기틀을 잡았습니다."
+                        ]
+                    },
+                    {
+                        "h3": "제도 도입의 세부적인 효과와 혜택",
+                        "paragraphs": [
+                            f"가계 및 개별 재정의 불확실성을 완화하고 자산 형성과 생활 안전을 기하는 긍정적인 파급 효과를 불러오고 있습니다."
+                        ]
+                    }
+                ]
+            },
+            {
+                "h2": f"{keyword} 신청 대상 및 세부 자격 요건",
+                "h3s": [
+                    {
+                        "h3": "기본 대상자 자격 및 나이/소득 요건",
+                        "paragraphs": [
+                            f"신청자가 {keyword} 기본 공고 사양에 따른 적합한 상태(소득 규모, 거주지, 가구 구성 조건)를 구비했는지를 선제 평가합니다.",
+                            f"상황별로 유연한 예외 조항이 명시되어 있는 만큼, 요건 충족 여부를 가늠하기 어렵다면 사전에 담당자 유선 문의나 자가진단 창구를 이용하십시오."
+                        ]
+                    }
+                ]
+            }
+        ],
+        "tables": [
+            {
+                "headers": ["구분 항목", f"{keyword} 기준 요건", "상세 설명"],
+                "rows": [
+                    ["자격 기준", f"{keyword} 관련 수혜 범위 적격자", "기본적인 신분 및 행정 서류 증빙을 통과한 자"],
+                    ["소득 요건", "가구별 기준 중위 소득 한도 이하", "가용 복지 재원에 부합하는 소득/자산 요건 충족"],
+                    ["유지 조건", "정해진 이수 조건 및 의무 사항 성실 이행", "가입 기간 중 해약이나 제외 기준에 도달하지 아니할 것"]
+                ]
+            },
+            {
+                "headers": ["진행 단계", "주요 준비 및 제출 문서", "처리 기한 및 특이사항"],
+                "rows": [
+                    ["1단계: 신청 접수", "온라인 전용 포털 내 필수 서류 제출", "서류 누락 방지를 위해 실시간 체크리스트 확인"],
+                    ["2단계: 적격 심사", "행정 전산 조회를 통한 다중 자격 대조", "접수 완료 시점으로부터 영업일 기준 일정 기간 소요"],
+                    ["3단계: 최종 수혜", "공식 지정 수령처 및 등록 계좌 확인", "적격 결정 즉시 혜택 개시 및 자동 지급 통보"]
+                ]
+            },
+            {
+                "headers": ["부적격 원인", "세부 조치 및 해결 요령", "재도전 가능 여부"],
+                "rows": [
+                    ["체납/의무 위반", "체납액 완납 및 미이행 상태 신속 보완", "보완 및 의무 해소 완료 즉시 재심사 허용"],
+                    ["신청 기한 도과", "공식 신청 가능 일정 미준수", "차기 추가 접수 일정 조회를 통해 재도전 가능"],
+                    ["기재 오류 누락", "잘못 입력된 필수 데이터 복구 수정", "마이페이지 수정 메뉴를 통해 간편 수정 완료"]
+                ]
+            }
+        ],
+        "faqs": [
+            {"question": f"Q1. {keyword} 신청은 모바일로도 가능한가요?", "answer": f"A1. 예, 가능합니다. 공동인증서 또는 간편인증이 등록된 개인 스마트폰을 통해 공식 모바일 앱이나 웹사이트에 접속하시면 편리하게 접수할 수 있습니다."},
+            {"question": f"Q2. 타 지원 혜택과 중복 신청해서 받을 수도 있나요?", "answer": f"A2. 일부 복지 사업의 경우 동일한 성격을 지닌 타 지원금과 중복 수급을 전면 금지하고 있습니다. 이전 수령 내역과 지침서의 중복 조항을 검토해 보셔야 합니다."},
+            {"question": f"Q3. 심사 결과 반려가 되었는데 이의 제기를 하려면 어찌하나요?", "answer": f"A3. 반려 안내 문자를 받은 날로부터 정해진 기한 이내에 공식 창구의 '이의신청 및 서류 제출' 탭을 통해 소명 서류를 구비해 재신청하실 수 있습니다."}
+        ]
+    }
+
+def build_content_blocks(keyword, serp_analysis, style="friendly", length="5000", faq_count="10", img_prompt="OFF", title="", research_data=None, randomization_profile=None, category="생활"):
     api_key = os.environ.get("GEMINI_API_KEY", "")
     
     if randomization_profile and "style" in randomization_profile:
@@ -157,7 +268,14 @@ def build_content_blocks(keyword, serp_analysis, style="friendly", length="5000"
             당신은 구글 및 네이버 상위 노출에 특화된 디지털 콘텐츠 집필 마스터(Styler Pro X)입니다.
             제공된 분석 지표들을 참고하여, 하나의 완성된 원고를 구성할 수 있도록 정밀하게 구조화된 'HTML 블록 데이터'를 작성해 주십시오.
             
-            [핵심 키워드]: {keyword}
+            [글 생성 추론 단계 (Reasoning Chain) - 필수 준수]:
+            원고 작성 시 다음 순서로 엄격하게 추론 단계를 거쳐 글을 조립하십시오.
+            1단계. Keyword (핵심 키워드 분석): {keyword}
+            2단계. Intent (독자의 상세한 검색 의도 도출)
+            3단계. Program Detection (대상이 되는 특정 정책/프로그램명 식별. 핵심 키워드인 '{keyword}'에 해당하지 않는 전혀 다른 복지 정책이나 이종 키워드(예: 청년 일자리 공제 사업 등)의 내용이 절대 섞이거나 도배되어서는 안 됩니다.)
+            4단계. Fact Collection (제공된 [사실 기반 참고 자료 및 출처 데이터]에서 사실 및 수치만 수집)
+            5단계. Content Generation (수집된 사실만을 활용해 본문 생성 및 이중 교차 검증)
+            
             [작성 스타일]: {style_instruction}
             
             [상위 노출 분석 참고 데이터]:
@@ -175,7 +293,8 @@ def build_content_blocks(keyword, serp_analysis, style="friendly", length="5000"
             4. 분량 부족 시 확장 규칙: 실제 정보가 부족하여 글자수가 모자랄 경우, 무의미한 문장 반복을 하지 마십시오. 대신 "구체적 사례", "세부 주의사항", "상황별 체크리스트", "정밀한 신청/구비 서류 절차", "대상 제외 기준" 등의 독립적인 대주제(H2)와 소주제(H3)를 새로 추가하여 글을 확장하십시오.
             5. 근거 없는 수치 및 가짜 데이터 생성 금지: 표(TABLE)나 본문 내에 신뢰할 수 없는 가짜 수치(예: "가독성 55점", "체류시간 180초", "스타일러 프로 98점") 등을 절대 임의로 표기하지 마십시오. 표를 생성할 때는 실제 {keyword}와 매칭되는 객관적이고 사실적인 속성 정보(예: 지원 조건, 지급 대상, 신청 서류 구분 등)만 채워 넣으십시오.
             6. SEO 설명 및 메타 문구 본문 노출 금지: 본문 글 내에 "가독성 향상", "체류시간 유도", "포스팅 작성 가이드", "SEO 노출 기준" 등 본 글의 노출 및 작성 과정을 메타적으로 설명하는 문구를 절대 삽입하지 마십시오. 독자는 오직 {keyword}에 대한 풍부하고 순수한 핵심 지식 정보만을 얻을 수 있어야 합니다.
-            7. FAQ 고유화: FAQ 목록 안의 질문과 답변(총 {faq_num}개)은 절대 중복되어서는 안 되며, Q1~Q10까지 각각 완전히 서로 다른 상세한 실질적 의문점들과 실용적인 답변으로 다양하게 채우십시오.
+            7. FAQ 고유화 및 컨텍스트 요약 강제: 
+               FAQ를 생성할 때, 본문의 내용 및 참고 자료를 기반으로 내부적인 `<CONTEXT_SUMMARY>`를 정의한 후, 오직 이 요약된 맥락 내에서 사실에 입각하여 FAQ의 질문과 답변(총 {faq_num}개)을 풍부하게 작성하십시오. 본문 내용이나 참고 자료에 명시되지 않은 이종 정책(예: 소상공인 주제인데 청년 일자리 사업 관련 질문)이 FAQ에 유입되어서는 절대 안 됩니다.
             8. REFERENCES 및 CHECKLIST 블록 활용:
                - REFERENCES 블록: 제공된 사실 기반 참고 자료 및 출처 데이터를 기반으로 글 맨 마지막(DISCLAIMER 직전)에 `REFERENCES` 블록을 생성해 주십시오.
                - CHECKLIST 블록: 독자의 가이드 역할을 할 수 있도록 본문 중간(H2 블록 아래 등)에 최소 1개 이상의 `CHECKLIST` 블록을 삽입해 주십시오.
@@ -254,9 +373,25 @@ def build_content_blocks(keyword, serp_analysis, style="friendly", length="5000"
                 if "rows" in block:
                     block["rows"] = [[clean_jargon(val) for val in row] for row in block["rows"]]
                 if "items" in block:
-                    for item in block["items"]:
-                        item["question"] = clean_jargon(item["question"])
-                        item["answer"] = clean_jargon(item["answer"])
+                    if block.get("type") == "FAQ":
+                        for item in block["items"]:
+                            if isinstance(item, dict):
+                                item["question"] = clean_jargon(item.get("question", ""))
+                                item["answer"] = clean_jargon(item.get("answer", ""))
+                    elif block.get("type") == "REFERENCES":
+                        for item in block["items"]:
+                            if isinstance(item, dict):
+                                item["title"] = clean_jargon(item.get("title", ""))
+                                item["url"] = clean_jargon(item.get("url", ""))
+                                item["source"] = clean_jargon(item.get("source", ""))
+                    elif block.get("type") == "CHECKLIST":
+                        cleaned_items = []
+                        for item in block["items"]:
+                            if isinstance(item, str):
+                                cleaned_items.append(clean_jargon(item))
+                            else:
+                                cleaned_items.append(item)
+                        block["items"] = cleaned_items
             
             if "image_prompts" in parsed and parsed["image_prompts"]:
                 for k, v in parsed["image_prompts"].items():
@@ -422,6 +557,88 @@ def build_content_blocks(keyword, serp_analysis, style="friendly", length="5000"
             {"question": "Q8. 2년 만기를 달성한 후에 실제로 목돈을 받는 지급 신청 절차는 어떻게 되나요?", "answer": "A8. 24회차 납입 및 마지막 매칭금이 공단 계좌에 수납된 것을 확인한 후, 공제 홈페이지에서 최종 만기금 지급 신청을 완료해 주시면 심사 후 약 10일 이내에 본인 계좌로 이체됩니다."},
             {"question": "Q9. 소득 기준 상한선이 구체적으로 어느 정도 수준으로 정해져 있나요?", "answer": "A9. 가입 당시 청년의 월 임금 총액이 고용노동부가 고시한 임금 상한선(통상 세전 월 300만 원 전후 등 매년 지침 적용) 이하여야 정상 가입 승인 단계로 넘어갑니다."},
             {"question": "Q10. 만기금을 정상적으로 다 수령하고 난 후 다음 단계 연계 저축 제도가 있나요?", "answer": "A10. 예, 만기 수령 이후 중소벤처기업진흥공단에서 운영하는 내일채움공제 연계 사업으로 재적립을 이어갈 수 있어 자산을 연속적으로 확대해 나가는 기회를 살릴 수 있습니다."}
+        ]
+    }
+
+    # 2. 소상공인 지원금 Mock DB
+    SO_SANG_GONG_IN_MOCK = {
+        "title": "소상공인 지원금 신청 자격요건, 지원금액 및 온라인 신청방법 완벽 정리",
+        "intro": "안녕하세요! 오늘은 고물가와 경기 침체로 어려움을 겪고 계시는 영세 자영업자 및 소상공인분들을 위해 국가와 지자체가 마련한 소상공인 지원금의 자격 요건, 지원 규모, 그리고 실제 신청 절차를 자세하고 명확하게 알려드리고자 합니다. 경영 애로 사항을 겪고 계신 소상공인분들은 본 공고 혜택을 꼭 확인하시기 바랍니다.",
+        "disclaimer": "💡 면책 조항 (Disclaimer): 본 정보는 실시간 고시 정보와 세부 집행 계획을 근간으로 작성된 소상공인 지원금 참고용 문서입니다. 상세 자격 및 모집 시기는 공고에 따라 변경될 수 있으므로 주관 부처 공고를 재확인하시기 바랍니다.",
+        "sections": [
+            {
+                "h2": "소상공인 지원 사업의 취지 및 개요",
+                "h3s": [
+                    {
+                        "h3": "소상공인 지원금이란 무엇인가요?",
+                        "paragraphs": [
+                            "소상공인 지원금은 경영 안정을 돕고 고정비 부담을 줄이기 위해 무상 혹은 매칭 저금리로 자금을 지원하는 국책 지원 사업입니다.",
+                            "매출 감소가 증빙되는 영세 업체나 특수 재난/위기 업종을 우선적으로 선정하여 맞춤형 긴급 수혈 자금을 공급합니다.",
+                            "어려움에 처한 골목 상권의 붕괴를 예방하고 내수 소비 진작을 촉진하여 서민 경제의 근간을 지탱하고자 도입되었습니다."
+                        ]
+                    },
+                    {
+                        "h3": "제도 도입의 세부적 배경과 경제적 효과",
+                        "paragraphs": [
+                            "금리 인상과 원자재 가격 상승으로 인해 한계 상황에 직면한 자영업자들의 금융 비용을 경감하고 연쇄 폐업을 방지하고자 합니다.",
+                            "지역사랑상품권 및 경영 개선 컨설팅과 병행 지원함으로써, 소상공인들의 장기적인 자생력을 확보하는 기틀이 됩니다."
+                        ]
+                    }
+                ]
+            },
+            {
+                "h2": "지원 대상 소상공인 요건 및 심사 기준",
+                "h3s": [
+                    {
+                        "h3": "상시 근로자 수 및 업종별 매출 규모",
+                        "paragraphs": [
+                            "제조업, 건설업, 운수업 등은 상시 근로자 10인 미만, 서비스업 및 기타 업종은 5인 미만 요건을 충족해야 소상공인 지위를 인정받습니다.",
+                            "연매출액 기준은 중소기업기본법 시행령에 따른 소기업 규모 기준(업종별 연매출 10억 원에서 120억 원 이하)을 준수해야 합니다.",
+                            "세무서에 정상 개업 등록이 완료되어 있어야 하며, 공고일 기준 현재 정상적으로 영업 중인 소상공인이 기본 참여 대상이 됩니다."
+                        ]
+                    },
+                    {
+                        "h3": "신청 제한 및 중복 제외 대상",
+                        "paragraphs": [
+                            "대기업 계열 프랜차이즈 직영점이거나 사행성 업종, 투기 조장 업종 등의 제외 대상 업종은 지원을 신청할 수 없습니다.",
+                            "최근 국세나 지방세를 체납 중이거나 금융기관 채무불이행자로 등록된 경우 승인 단계에서 반려 처리가 될 수 있습니다."
+                        ]
+                    }
+                ]
+            }
+        ],
+        "tables": [
+            {
+                "headers": ["요건 구분", "소상공인 기본 요건", "세부 인정 범위"],
+                "rows": [
+                    ["매출 규모", "업종별 소기업 기준 충족", "소매업 기준 연간 매출 50억 이하 등 규모 대조"],
+                    ["근로자 수", "상시 고용 인원 기준 준수", "광업·제조업 10인 미만, 서비스 업종 5인 미만 유지"],
+                    ["영업 상태", "정식 국세청 개업 등록 상태", "휴폐업 상태가 아닌 정상적인 가동 사업체에 한함"]
+                ]
+            },
+            {
+                "headers": ["행정 진행 단계", "주요 준비 서류", "처리 기한 및 특이사항"],
+                "rows": [
+                    ["1단계: 온라인 신청", "사업자등록증명 및 매출 증빙", "소상공인진흥공단 웹페이지를 통해 신청 즉시 확인"],
+                    ["2단계: 적격 심사", "중소기업 확인서 및 부가세 내역", "전산 대조 완료 후 승인 여부를 문자로 신속 발송"],
+                    ["3단계: 계좌 입금", "대표자 본인 명의 통장 사본", "최종 승인 완료일로부터 순차적으로 현금 지급 개시"]
+                ]
+            },
+            {
+                "headers": ["반려 사유 구분", "원인 및 대처 요령", "재가입/재신청 가능 여부"],
+                "rows": [
+                    ["매출 요건 미달", "매출 감소 및 소기업 증빙 오류", "자료 보완 후 다음 분기 모집 시 재접수 가능"],
+                    ["세금 체납 상태", "지방세 및 국세 미납액 존재", "체납 세액을 완납하고 증명원 제출 시 심사 재개"],
+                    ["서류 오인 기입", "대표자 생년월일 및 계좌 불일치", "온라인 보완하기 메뉴를 통해 실시간 수정 접수"]
+                ]
+            }
+        ],
+        "faqs": [
+            {"question": "Q1. 과거에 재난지원금을 받았어도 이번 지원금 신청이 가능한가요?", "answer": "A1. 예, 가능합니다. 중복 배제 조건에 해당하지 않는 한, 신규 지원 사업은 매출 및 가동 상태 기준을 충족하면 이전 수령 이력과 관계없이 개별 접수하여 지급받으실 수 있습니다."},
+            {"question": "Q2. 현재 공동대표 체제인데 모든 대표가 각각 지원금을 청구할 수 있나요?", "answer": "A2. 아닙니다. 1인 사업체당 1회 지급이 원칙이므로 공동대표 중 대표 수령권자 1인을 지정하여 신청서 및 동의 서류를 완비해 접수해야 합니다."},
+            {"question": "Q3. 매출 감소 증빙은 어떤 서류를 준비해야 신속하게 승인되나요?", "answer": "A3. 국세청 홈택스에서 발급받은 부가가치세과세표준증명원 또는 면세사업자수입금액증명원을 표준 증빙으로 제출하시면 가장 빠르고 정확하게 적격 판정을 받게 됩니다."},
+            {"question": "Q4. 상시 근로자 수 산정 시 주말 알바나 파트타임 직원도 포함되나요?", "answer": "A4. 고용보험 가입 명부상의 상시 근로자 수를 기준으로 산출하므로, 고용보험 미가입 파트타임이나 가족 종사자 등은 고용보험 인원수 산정 시 제외되어 유리합니다."},
+            {"question": "Q5. 사업자등록을 한 지 1개월밖에 안 된 신생 업체도 참여 대상이 되나요?", "answer": "A5. 신규 개업 소상공인의 경우 별도의 신규 개업 특별 전산 기준(매출 추정액 또는 일할 계산)을 적용하여 심사하므로, 해당 사업 공고의 신규 창업 기업 신청 기한을 확인해 지원하십시오."}
         ]
     }
 
@@ -627,12 +844,184 @@ def build_content_blocks(keyword, serp_analysis, style="friendly", length="5000"
         }
     ]
 
+    GENERAL_TEMPLATE_POOL = [
+        # H2-1: 정의와 개념
+        {
+            "h2": f"🎯 1. {keyword} 정의 및 핵심 개념 이해",
+            "h3s": [
+                {
+                    "h3": f"{keyword}란 정확히 무엇인가요?",
+                    "paragraphs": [
+                        f"{keyword}에 관한 실질적인 개념을 명확하게 파악하는 것은 장기적으로 안정적인 결과를 도출하기 위해 가장 중요한 첫걸음입니다.",
+                        f"이 주제는 단순한 용어의 범위를 넘어서 실제 일상이나 다양한 상황에서 핵심적인 가치와 만족을 창출하는 주된 토대로 작용합니다.",
+                        f"많은 입문자분들이 어렵게 생각하는 부분이지만, 기본적인 작동 원리를 파악하고 나면 일상 속에 자연스럽게 접목하여 활용할 가치가 높습니다."
+                    ]
+                },
+                {
+                    "h3": "주요 활용 배경 및 트렌드 분석",
+                    "paragraphs": [
+                        f"최근 실용성을 중시하는 현대 사회의 구조적 흐름과 맞물려 관련 활용 수요와 관심이 꾸준하게 확대되는 추세를 지닙니다.",
+                        f"전통적인 방식의 한계에서 탈피하여 더 쉽고 사용자 친화적인 방향으로 세부 활용법 및 적용 사례가 넓어지고 있습니다.",
+                        f"장기적인 만족과 효율성 극대화를 목표로 설계된 만큼, 향후 변화하는 상황을 적극 고려하여 동참하는 참여자들이 늘어나는 형국입니다."
+                    ]
+                }
+            ]
+        },
+        # H2-2: 효과적인 활용 요령
+        {
+            "h2": f"🎯 2. {keyword} 효과적인 활용 요령 및 권장 기준",
+            "h3s": [
+                {
+                    "h3": "개별 상황에 맞춘 최적의 활용법",
+                    "paragraphs": [
+                        f"기본적으로 대상자가 처한 구체적인 목적과 활용 범위에 의거하여 실행 우선순위를 명확히 구분하여 설계하는 것이 현명합니다.",
+                        f"최선의 적용 기준은 매 시즌의 선호도와 상황에 따라 유동적으로 조율될 수 있으므로 사전에 세부 사양을 체크하셔야 합니다.",
+                        f"본인에게 가장 적합한 모델이 무엇인지 헷갈리신다면 제공되는 비교 데이터와 가이드를 참조하여 모의 분석을 해두는 것이 이롭습니다."
+                    ]
+                },
+                {
+                    "h3": "이용에 제한이 따르는 예외적 사례",
+                    "paragraphs": [
+                        f"다만 다른 연관 서비스나 부적합한 목적을 임의로 혼용하여 적용하려는 분들은 원칙적으로 원하는 기대효과를 거두기 어려울 수 있습니다.",
+                        f"자료 검토 시 필수적인 핵심 수치를 누락하거나 부정확한 데이터를 기반으로 삼으면 즉각적인 오류나 손실을 마주할 수 있습니다.",
+                        f"따라서 사전에 본인의 조건과 환경을 면밀히 대조하고 올바른 사용법을 완수하여 불필요한 시행착오를 선제적으로 차단해야 합니다."
+                    ]
+                }
+            ]
+        },
+        # H2-3: 주요 이점 및 실질 가치
+        {
+            "h2": f"🎯 3. {keyword} 제공하는 주요 이점 및 실질 가치 분석",
+            "h3s": [
+                {
+                    "h3": "체감할 수 있는 3가지 핵심 혜택",
+                    "paragraphs": [
+                        f"무엇보다 가장 와닿는 이점은 안정적인 최적화 및 체계적 분석을 통해 단기간에 높은 만족도와 성과를 낼 수 있다는 점입니다.",
+                        f"이를 꾸준하게 유지하는 것 자체만으로도 불필요한 리소스 소모를 방지하고 미래의 경쟁력을 탄탄하게 다지는 밑거름이 됩니다.",
+                        f"단순하고 일회성에 그치는 일시적 대책의 한계를 보강하여, 지속적으로 혜택을 누릴 수 있는 유용한 구조적 설계로 각광받습니다."
+                    ]
+                },
+                {
+                    "h3": "기존의 타 대안 수단들과의 비교 우위",
+                    "paragraphs": [
+                        f"일반적이고 획일화된 기존 방식들과 효율을 대조해 보았을 때, 비교할 수 없을 만큼 직관적이고 확실한 성과를 보장합니다.",
+                        f"또한 복잡하게 꼬여 있던 처리 절차를 획기적으로 축소하여, 누구나 단 몇 분 만에 직관적으로 진행을 끝마칠 수 있습니다.",
+                        f"여러 돌발적인 변수 상황에 대비하여, 임시 유예 및 보완 대책까지 든든하게 받쳐주는 실용적인 차이를 보여줍니다."
+                    ]
+                }
+            ]
+        },
+        # H2-4: 상세 실행 단계
+        {
+            "h2": f"🎯 4. {keyword} 단계별 실전 실행 가이드 및 절차",
+            "h3s": [
+                {
+                    "h3": "공식 표준 경로를 통한 접수 및 등록",
+                    "paragraphs": [
+                        f"가장 간편한 방법은 공인된 시스템의 전용 인터페이스에 접속하여 로그인한 후 필요한 필수 양식을 등록하는 것입니다.",
+                        f"복잡한 설치 과정 없이 간단한 정보 입력만으로 등록할 수 있어 바쁜 직장인이나 입문자 누구나 수월히 완료할 수 있습니다.",
+                        f"입력된 계획이 시스템에 정상 수납되면 영업일 기준 빠른 시일 내에 반영 통보와 함께 세부 진행 단계를 밟게 됩니다."
+                    ]
+                },
+                {
+                    "h3": "성공 확률을 비약적으로 높이는 실전 팁",
+                    "paragraphs": [
+                        f"기초 정보를 누락하거나 오탈자로 적어 넣어 진행이 막히는 사례가 많으니 전송 전 세부 입력을 재차 확인하십시오.",
+                        f"한정된 기한이나 정해진 쿼터가 존재하는 경우 신청자가 일시에 몰릴 수 있으므로 미루지 말고 준비 즉시 실행하는 것이 안전합니다.",
+                        f"일정 조율 중 의문사항이나 대처가 어려운 상황이 오면 안내 센터 콜백 및 표준 매뉴얼을 활용해 조언을 구하시길 바랍니다."
+                    ]
+                }
+            ]
+        },
+        # H2-5: 중요 주의사항 및 관리 비결
+        {
+            "h2": f"🎯 5. {keyword} 이용 시 주의사항 및 장기적 유지 비결",
+            "h3s": [
+                {
+                    "h3": "제출 정보 검증 및 데이터 체크리스트",
+                    "paragraphs": [
+                        f"사용자의 신분을 나타내는 정식 기본 서류와 함께 실질 요건을 객관적으로 입증할 비교 증빙 데이터가 요구됩니다.",
+                        f"최근 수집되어 유효 기간이 도과하지 않은 깨끗한 원본 자료여야 정상 승인되며 반려를 선제 차단할 수 있습니다.",
+                        f"개인의 특수한 처지에 따라 자격을 별도로 증명해야 하는 추가 소명 요청이 할당될 수 있으니 미리 준비해 두는 것이 좋습니다."
+                    ]
+                },
+                {
+                    "h3": "갑작스러운 계획 해지 시 리스크와 대비책",
+                    "paragraphs": [
+                        f"만기를 완료하지 못하고 중도에 계약을 해약하게 되면 기대했던 핵심 혜택의 일부가 소멸하는 불이익을 입게 됩니다.",
+                        f"이사를 하거나 이직 등 자격 요건의 변화가 예정되어 있다면 반드시 먼저 센터에 조회하여 혜택 승계가 가능한지 보셔야 합니다.",
+                        f"규정에 상세히 명시된 구제 및 유예 예외 조항을 정밀 검토하여 직권 중단 등의 리스크를 미연에 방지하시기 권장합니다."
+                    ]
+                }
+            ]
+        }
+    ]
+
+    GENERAL_EXTRA_SECTIONS = [
+        {
+            "h2": f"🎯 6. {keyword} 실전 적용 사례 및 상세 성공 시나리오",
+            "h3s": [
+                {
+                    "h3": "가장 많은 만족도를 보인 실제 참여자 사례",
+                    "paragraphs": [
+                        f"실제 이 가이드를 적극 적용하여 가시적인 만족을 거둔 가입자들의 생생한 소감을 들어보면, 초기 설계가 큰 밑바탕이 되었습니다.",
+                        f"처음에는 과정이 복잡해 보였으나 단계별 요령을 그대로 밟아 나간 결과, 만족스러운 목표치를 완수하여 혜택을 누리게 되었습니다.",
+                        f"그들이 강조하는 팁은 실행 초기에 핵심 조건과 유효 일정을 누락 없이 점검한 것이 빠른 승인의 일등공신이었다는 사실입니다."
+                    ]
+                },
+                {
+                    "h3": "나의 유형에 맞는 적용 모델 구축 방법",
+                    "paragraphs": [
+                        f"본인의 주된 목적과 고유한 환경 조건에 발맞춘 맞춤형 모델이 여러 갈래로 세분화되어 있어 최적의 효율을 제공합니다.",
+                        f"무분별하게 획일적인 모델을 따르기보다는, 개인 상황에 적합한 옵션 위주로 재조립하여 실질 가치를 높이는 영리함이 필요합니다.",
+                        f"분석 데이터의 축적과 유기적인 시스템 활용을 병행함으로써, 기존 일반 모델 대비 수 배 이상의 실익을 거두는 성과가 증명되었습니다."
+                    ]
+                }
+            ]
+        },
+        {
+            "h2": f"🎯 7. {keyword} 실행 전 필수 자가 진단 및 해결 가이드",
+            "h3s": [
+                {
+                    "h3": "최종 결정 전 체크리스트 점검",
+                    "paragraphs": [
+                        f"본인의 활용 목적, 사용 가능 예산, 적용 환경 등이 모집 및 참여 기준 규정에 알맞게 설계되었는지 재차 확인하십시오.",
+                        f"신청서 입력값의 오탈자 여부와 증명 자료의 업로드 상태를 세심하게 검토하여 사소한 실수로 인한 누락을 예방하십시오.",
+                        f"작은 누락 하나가 전체 진행을 대폭 지연시키는 결과를 낳을 수 있으므로 이 셀프 자가 진단은 거르는 일이 없어야 합니다."
+                    ]
+                },
+                {
+                    "h3": "서류 및 조건 반려 시 긴급 복구 요령",
+                    "paragraphs": [
+                        f"만일 제출 서류 미흡으로 반려 통지를 받으셨다면 당황하지 마시고 보완 요구 문서 명칭을 즉시 조회하여 파악하십시오.",
+                        f"통상 영업일 며칠 이내에 보완하여 다시 업로드하면 처음부터 심사를 받지 않고 기존 접수 상태에서 신속하게 진행을 이어가 줍니다.",
+                        f"보완이 까다로운 회사 서류는 사내 행정 담당자에게 정중히 양해를 구하고 공단 표준 서식에 맞춰 재발급받는 노하우가 필요합니다."
+                    ]
+                }
+            ]
+        }
+    ]
+
     # Clean keyword to detect domains regardless of spacing
     clean_keyword = keyword.replace(" ", "")
-    is_gov = "청년내일채움공제" in clean_keyword or "청내공" in clean_keyword or "지원금" in clean_keyword or "정부지원" in clean_keyword
+    clean_category = category.replace(" ", "")
+    policy_keywords = ["청년내일채움공제", "청내공", "지원금", "정부지원", "복지", "수급자", "장려금", "국민연금", "기초연금", "퇴직연금", "주택연금", "소상공인지원", "청년공제", "내일채움", "취업지원", "수급", "바우처"]
+    policy_categories = ["정부정책", "정부지원금", "복지", "연금", "세금", "환급금"]
     
-    db_source = GOVERNMENT_MOCK if is_gov else None
-    
+    is_policy_kw = any(pw in clean_keyword for pw in policy_keywords)
+    is_policy_cat = any(pc in clean_category for pc in policy_categories)
+    is_policy = is_policy_kw or is_policy_cat
+
+    # Determine the specific program source
+    if "청년내일채움공제" in clean_keyword or "청내공" in clean_keyword:
+        db_source = GOVERNMENT_MOCK
+    elif "소상공인" in clean_keyword:
+        db_source = SO_SANG_GONG_IN_MOCK
+    elif is_policy:
+        db_source = make_generic_policy_mock(keyword)
+    else:
+        db_source = None
+        
     if db_source:
         title_val = forced_title if forced_title else db_source["title"]
         intro_text = db_source["intro"]
@@ -641,13 +1030,12 @@ def build_content_blocks(keyword, serp_analysis, style="friendly", length="5000"
         mock_tables = db_source["tables"]
         mock_faqs = db_source["faqs"]
     else:
-        # Generate non-repetitive general outline
-        title_val = forced_title if forced_title else f"{keyword} 핵심 요건 및 혜택 신청 방법 총정리"
-        intro_text = f"안녕하세요! 오늘 자세하게 다뤄볼 포커스 정보는 많은 분들이 혜택 및 상세 내용에 대해 관심을 기울이고 계신 {keyword}에 대한 상세한 안내와 가이드라인입니다. 복잡한 용어 설명 대신 실제 실생활에서 유용하게 적용하고 곧바로 혜택을 접수하실 수 있는 실전 신청 경로와 주의사항을 알기 쉽게 알려드릴 테니 꼼꼼히 확인해 보시길 바라겠습니다 ✨"
-        disclaimer_text = f"💡 면책 조항 (Disclaimer): 본 자료는 실시간 온라인 트렌드 분석 지표를 근간으로 작성된 정보성 요약 문서입니다. 개별 조건 및 진행 기관의 사정에 따라 실질적인 혜택 규정은 달라질 수 있으므로, 최종 신청 전 공식 기관의 모집 공고문을 필히 검토하시길 바랍니다."
-        raw_sections = GENERIC_TEMPLATE_POOL
-        mock_tables = [TABLE_1, TABLE_2, TABLE_3]
-        mock_faqs = FAQ_ITEMS_FALLBACK
+        title_val = forced_title if forced_title else f"{keyword} 핵심 정보 및 실전 활용 가이드"
+        intro_text = f"안녕하세요! 오늘 상세하게 다뤄볼 주제는 최근 많은 분들이 관심을 가지고 활용 방안을 찾고 계시는 {keyword}에 대한 핵심 요약 및 활용 팁입니다. 복잡하고 어려운 내용 대신, 실생활에서 바로 적용하고 도움을 얻으실 수 있는 구체적인 가이드와 주의사항을 알기 쉽게 정리해 드릴 테니 끝까지 유심히 검토해 보시길 바라겠습니다 ✨"
+        disclaimer_text = f"💡 면책 조항 (Disclaimer): 본 자료는 온라인상의 주요 트렌드 지표와 가용 정보를 종합하여 작성된 참고용 문서입니다. 상황이나 조건에 따라 세부적인 적용 결과 및 혜택은 달라질 수 있으므로 본인의 상황에 맞춰 활용하시길 권장합니다."
+        raw_sections = GENERAL_TEMPLATE_POOL
+        mock_tables = [GENERAL_TABLE_1, GENERAL_TABLE_2, GENERAL_TABLE_3]
+        mock_faqs = GENERAL_FAQ_ITEMS
 
     # Set up active blocks list
     blocks = [
@@ -672,10 +1060,11 @@ def build_content_blocks(keyword, serp_analysis, style="friendly", length="5000"
     # Add base sections
     for sec in raw_sections[:min(len(raw_sections), active_section_count)]:
         active_sections.append(sec)
-    # If more sections are requested, push from EXTRA_SECTIONS to avoid duplicate contents
+    # If more sections are requested, push from EXTRA_SECTIONS/GENERAL_EXTRA_SECTIONS to avoid duplicate contents
+    extra_pool = EXTRA_SECTIONS if is_policy else GENERAL_EXTRA_SECTIONS
     if active_section_count > len(raw_sections):
         needed = active_section_count - len(raw_sections)
-        for extra in EXTRA_SECTIONS[:needed]:
+        for extra in extra_pool[:needed]:
             active_sections.append(extra)
 
     # Apply randomization (Section Shuffling)
@@ -691,12 +1080,20 @@ def build_content_blocks(keyword, serp_analysis, style="friendly", length="5000"
         
         # Inject CHECKLIST at the second H2 section (s_idx == 1)
         if s_idx == 1:
-            checklist_items = [
-                f"{keyword} 자격 기준 및 지원 대상 여부 사전 확인",
-                f"{keyword} 중복 수혜 방지를 위한 기존 정부 혜택 수령 내역 확인",
-                "필수 구비 서류(근로계약서, 주민등록등본 등) 스캔 파일 준비",
-                "공식 접수처 홈페이지 가입 및 신청 절차 숙지"
-            ]
+            if is_policy:
+                checklist_items = [
+                    f"{keyword} 자격 기준 및 지원 대상 여부 사전 확인",
+                    f"{keyword} 중복 수혜 방지를 위한 기존 정부 혜택 수령 내역 확인",
+                    "필수 구비 서류(근로계약서, 주민등록등본 등) 스캔 파일 준비",
+                    "공식 접수처 홈페이지 가입 및 신청 절차 숙지"
+                ]
+            else:
+                checklist_items = [
+                    f"{keyword} 핵심 특징 및 기본적인 사용 요령 사전 파악",
+                    f"{keyword} 성공적인 결과를 내기 위한 계획서 확인",
+                    "추가로 준비하거나 챙겨야 할 세부 항목 체크리스트",
+                    "원하는 최적의 효과를 극대화하기 위한 가이드 숙지"
+                ]
             blocks.append({ "type": "CHECKLIST", "items": checklist_items })
 
         for h3_item in sec["h3s"]:
@@ -787,9 +1184,25 @@ def build_content_blocks(keyword, serp_analysis, style="friendly", length="5000"
         if "rows" in block:
             block["rows"] = [[clean_jargon(val) for val in row] for row in block["rows"]]
         if "items" in block:
-            for item in block["items"]:
-                item["question"] = clean_jargon(item["question"])
-                item["answer"] = clean_jargon(item["answer"])
+            if block.get("type") == "FAQ":
+                for item in block["items"]:
+                    if isinstance(item, dict):
+                        item["question"] = clean_jargon(item.get("question", ""))
+                        item["answer"] = clean_jargon(item.get("answer", ""))
+            elif block.get("type") == "REFERENCES":
+                for item in block["items"]:
+                    if isinstance(item, dict):
+                        item["title"] = clean_jargon(item.get("title", ""))
+                        item["url"] = clean_jargon(item.get("url", ""))
+                        item["source"] = clean_jargon(item.get("source", ""))
+            elif block.get("type") == "CHECKLIST":
+                cleaned_items = []
+                for item in block["items"]:
+                    if isinstance(item, str):
+                        cleaned_items.append(clean_jargon(item))
+                    else:
+                        cleaned_items.append(item)
+                block["items"] = cleaned_items
 
     return result_data
 

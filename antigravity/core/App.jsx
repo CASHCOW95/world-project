@@ -19,19 +19,11 @@ export default function App() {
     }
   }, []);
 
-  // Dynamic Kodari Assistant configuration
-  const kodari = {
-    avatar: "https://raw.githubusercontent.com/wonseokjung/solopreneur-ai-agents/main/agents/kodari/assets/kodari_typing.png",
-    message: "대표님, 키워드만 입력해 주십시오! 복잡한 블로그 원고 작성과 가독성 편집은 코다리가 한 번에 해내겠습니다! 🫡✍️",
-    statusClass: "border-indigo-500/25 bg-indigo-950/20 text-indigo-300"
-  };
-
   return (
-    <div className="min-h-screen relative flex flex-col items-center justify-center p-4 bg-slate-950 overflow-hidden">
+    <div className="min-h-screen relative flex flex-col items-center justify-start p-4 bg-slate-950 overflow-y-auto">
       
-      {/* Background Decorative Glowing Blobs */}
-      <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-violet-600/10 blur-[100px] pointer-events-none transition-all duration-1000" />
-      <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-[400px] h-[400px] rounded-full bg-emerald-600/10 blur-[100px] pointer-events-none transition-all duration-1000" />
+      {/* Background Decorative Glow */}
+      <div className="absolute top-1/4 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-indigo-500/5 blur-[120px] pointer-events-none" />
 
       {/* Main Container */}
       <main className="w-full z-10 flex flex-col gap-4 transition-all duration-500 max-w-7xl">
@@ -45,19 +37,6 @@ export default function App() {
             <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full border border-slate-700/50">v1.0.0</span>
           </div>
         </header>
-
-        {/* Kodari Assistant Status Block */}
-        <section className={`flex items-center gap-3.5 p-3 rounded-2xl border transition-all duration-700 ${kodari.statusClass}`}>
-          <img 
-            src={kodari.avatar} 
-            alt="Kodari AI Avatar" 
-            className="w-11 h-11 object-contain rounded-xl bg-slate-950/60 p-0.5 border border-slate-800/80 shadow-md"
-          />
-          <div className="flex-1 min-w-0">
-            <div className="text-[10px] text-slate-500 font-bold tracking-wider uppercase">Kodari AI Assistant</div>
-            <p className="text-xs font-medium leading-relaxed truncate-2-lines">{kodari.message}</p>
-          </div>
-        </section>
 
         {/* Styler Dashboard View */}
         <StylerDashboard />

@@ -2,11 +2,12 @@ import os
 import sys
 import json
 import argparse
+HAS_GEMINI = False
 try:
     from google.generativeai import GenerativeModel
     import google.generativeai as genai
     HAS_GEMINI = True
-except ImportError:
+except Exception:
     HAS_GEMINI = False
 
 # 10 Request title categories
