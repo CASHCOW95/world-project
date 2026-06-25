@@ -45,28 +45,10 @@ document.addEventListener('DOMContentLoaded', () => {
         mainContent.style.visibility = 'visible';
     }
 
-    const themeLightBtn = document.getElementById('theme-light');
-    const themeDarkBtn = document.getElementById('theme-dark');
+    // Force Dark Mode only
     const html = document.documentElement;
-    
-    const applyTheme = (theme) => {
-        if (theme === 'light') {
-            html.classList.remove('dark');
-            if(themeLightBtn) themeLightBtn.classList.add('bg-white', 'shadow-sm');
-            if(themeDarkBtn) themeDarkBtn.classList.remove('bg-white', 'dark:bg-white/20', 'shadow-sm');
-        } else {
-            html.classList.add('dark');
-            if(themeDarkBtn) themeDarkBtn.classList.add('bg-white', 'dark:bg-white/20', 'shadow-sm');
-            if(themeLightBtn) themeLightBtn.classList.remove('bg-white', 'shadow-sm');
-        }
-        localStorage.setItem('theme', theme);
-    };
-
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    applyTheme(savedTheme);
-
-    if (themeLightBtn) themeLightBtn.addEventListener('click', () => applyTheme('light'));
-    if (themeDarkBtn) themeDarkBtn.addEventListener('click', () => applyTheme('dark'));
+    html.classList.add('dark');
+    localStorage.setItem('theme', 'dark');
 
     // 2. Auth Guard for Protected Pages
     const protectedPages = [
@@ -142,10 +124,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const moneySaved = Math.round((cost * 12) + (timeSaved * 2.65));
 
                 if (timeSavedDisplay) {
-                    timeSavedDisplay.innerHTML = `<span>${timeSaved.toLocaleString()}</span> <span class="text-sm font-bold text-cyan-500">시간 확보</span>`;
+                    timeSavedDisplay.innerHTML = `<span>${timeSaved.toLocaleString()}</span> <span class="text-base font-bold text-cyan-600 dark:text-cyan-500">시간 확보</span>`;
                 }
                 if (moneySavedDisplay) {
-                    moneySavedDisplay.innerHTML = `<span class="text-sm text-amber-500 font-black">~</span> <span>${moneySaved.toLocaleString()}</span> <span class="text-sm font-bold text-amber-500">만원 세이브</span>`;
+                    moneySavedDisplay.innerHTML = `<span class="text-base text-amber-600 dark:text-amber-500 font-black">~</span> <span>${moneySaved.toLocaleString()}</span> <span class="text-base font-bold text-amber-600 dark:text-amber-500">만원 세이브</span>`;
                 }
             };
 
@@ -160,14 +142,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // 7. Feedback Modal Logic
     const feedbackModal = document.getElementById('feedback-modal');
     const openFeedbackBtn = document.getElementById('open-feedback');
+    const navFeedbackBtn = document.getElementById('nav-feedback');
     const closeFeedbackBtn = document.getElementById('close-feedback');
     const submitFeedbackBtn = document.getElementById('submit-feedback');
 
-    if (openFeedbackBtn && feedbackModal) {
-        openFeedbackBtn.addEventListener('click', () => {
-            feedbackModal.classList.add('active');
-        });
-    }
+    const openFeedback = (e) => {
+        if (e) e.preventDefault();
+        if (feedbackModal) feedbackModal.classList.add('active');
+    };
+
+    if (openFeedbackBtn) openFeedbackBtn.addEventListener('click', openFeedback);
+    if (navFeedbackBtn) navFeedbackBtn.addEventListener('click', openFeedback);
 
     if (closeFeedbackBtn && feedbackModal) {
         closeFeedbackBtn.addEventListener('click', () => {
@@ -247,4 +232,161 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
     }
+
+    // ========================================================
+    // 서버 운영센터 (Server Ops Center)
+    // ========================================================
+    (function initServerOps() {
+        // 환경변수 기반 URL (Cloudflare Pages에서는 빌드 시 주입, 로컬에서는 기본값 사용)
+        const MAC_MINI_DASHBOARD_URL = window.PUBLIC_MAC_MINI_DASHBOARD_URL || 'http://macmini:8000';
+        const MAC_MINI_HEALTH_URL = window.PUBLIC_MAC_MINI_HEALTH_URL || 'http://macmini:8000/health';
+
+        // DOM 요소
+        const statusDot = document.getElementById('ops-status-dot');
+        const statusText = document.getElementById('ops-status-text');
+        const lastCheckEl = document.getElementById('ops-last-check');
+        const uptimeEl = document.getElementById('ops-uptime');
+        const checkHealthBtn = document.getElementById('ops-check-health');
+        const openHealthLink = document.getElementById('ops-open-health');
+        const openDashboard = document.getElementById('ops-open-dashboard');
+        const refreshWorkersBtn = document.getElementById('ops-refresh-workers');
+        const openRecoveryBtn = document.getElementById('ops-open-recovery');
+        const recoveryModal = document.getElementById('recovery-modal');
+        const closeRecoveryBtn = document.getElementById('close-recovery');
+        const closeRecoveryBottomBtn = document.getElementById('close-recovery-bottom');
+        const workersRunningEl = document.getElementById('ops-workers-running');
+        const workersErrorEl = document.getElementById('ops-workers-error');
+
+        if (!statusDot) return; // 서버 운영센터가 없는 페이지에서는 종료
+
+        // 링크에 URL 바인딩
+        if (openHealthLink) openHealthLink.href = MAC_MINI_HEALTH_URL;
+        if (openDashboard) openDashboard.href = MAC_MINI_DASHBOARD_URL;
+
+        // 상태 업데이트 함수
+        function setStatus(state, responseTime) {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            statusDot.className = 'ops-status-dot ' + state;
+            if (lastCheckEl) lastCheckEl.textContent = timeStr;
+
+            if (state === 'online') {
+                statusText.textContent = 'ONLINE';
+                statusText.style.color = '#4ade80';
+                if (uptimeEl) uptimeEl.textContent = responseTime ? `${responseTime}ms` : '정상';
+            } else if (state === 'offline') {
+                statusText.textContent = 'OFFLINE';
+                statusText.style.color = '#f87171';
+                if (uptimeEl) uptimeEl.textContent = '응답 없음';
+            } else {
+                statusText.textContent = 'CHECKING';
+                statusText.style.color = '#fbbf24';
+                if (uptimeEl) uptimeEl.textContent = '확인 중...';
+            }
+        }
+
+        // 워커 상태 업데이트 함수
+        function updateWorkers(data) {
+            if (!data || !data.workers) return;
+
+            const workerList = document.getElementById('ops-worker-list');
+            if (!workerList) return;
+
+            let runningCount = 0;
+            let errorCount = 0;
+            const workerNames = ['크롤러', '블로그', '유튜브', 'ADB'];
+            const workerKeys = ['crawler', 'blog', 'youtube', 'adb'];
+
+            const rows = workerList.querySelectorAll('.ops-worker-row');
+            workerKeys.forEach((key, i) => {
+                const workerState = data.workers[key] || 'idle';
+                if (workerState === 'running') runningCount++;
+                if (workerState === 'error') errorCount++;
+
+                if (rows[i]) {
+                    const badge = rows[i].querySelector('.ops-worker-badge');
+                    if (badge) {
+                        badge.className = 'ops-worker-badge ' + workerState;
+                        badge.textContent = workerState.toUpperCase();
+                    }
+                }
+            });
+
+            if (workersRunningEl) workersRunningEl.textContent = runningCount;
+            if (workersErrorEl) workersErrorEl.textContent = errorCount;
+        }
+
+        // 상태 확인 및 워커 새로고침 통합 함수
+        async function fetchHealth() {
+            setStatus('checking');
+            if (checkHealthBtn) {
+                checkHealthBtn.disabled = true;
+                checkHealthBtn.textContent = '⏳ 확인 중...';
+            }
+            if (refreshWorkersBtn) {
+                refreshWorkersBtn.disabled = true;
+                refreshWorkersBtn.textContent = '⏳ 확인 중...';
+            }
+
+            const startTime = performance.now();
+            try {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 8000);
+
+                const res = await fetch(MAC_MINI_HEALTH_URL, {
+                    signal: controller.signal,
+                    mode: 'cors'
+                });
+                clearTimeout(timeout);
+
+                const elapsed = Math.round(performance.now() - startTime);
+
+                if (res.ok) {
+                    setStatus('online', elapsed);
+                    try {
+                        const data = await res.json();
+                        updateWorkers(data);
+                    } catch (_) {
+                        // JSON 파싱 실패해도 ONLINE은 유지
+                    }
+                } else {
+                    setStatus('offline');
+                }
+            } catch (err) {
+                setStatus('offline');
+            }
+
+            if (checkHealthBtn) {
+                checkHealthBtn.disabled = false;
+                checkHealthBtn.textContent = '🔍 상태 확인';
+            }
+            if (refreshWorkersBtn) {
+                refreshWorkersBtn.disabled = false;
+                refreshWorkersBtn.textContent = '🔄 워커 상태 새로고침';
+            }
+        }
+
+        if (checkHealthBtn) {
+            checkHealthBtn.addEventListener('click', fetchHealth);
+        }
+        if (refreshWorkersBtn) {
+            refreshWorkersBtn.addEventListener('click', fetchHealth);
+        }
+
+        // 복구 안내 모달
+        const openRecovery = () => { if (recoveryModal) recoveryModal.classList.add('active'); };
+        const closeRecovery = () => { if (recoveryModal) recoveryModal.classList.remove('active'); };
+
+        if (openRecoveryBtn) openRecoveryBtn.addEventListener('click', openRecovery);
+        if (closeRecoveryBtn) closeRecoveryBtn.addEventListener('click', closeRecovery);
+        if (closeRecoveryBottomBtn) closeRecoveryBottomBtn.addEventListener('click', closeRecovery);
+
+        // 모달 배경 클릭 시 닫기
+        if (recoveryModal) {
+            recoveryModal.addEventListener('click', (e) => {
+                if (e.target === recoveryModal) closeRecovery();
+            });
+        }
+    })();
 });

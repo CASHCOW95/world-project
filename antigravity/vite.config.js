@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   base: './',
   build: {
-    outDir: '../03_월드개발페이지/frontend/workspace',
+    outDir: '../web_dashboard/workspace',
     emptyOutDir: true
   }
 })
