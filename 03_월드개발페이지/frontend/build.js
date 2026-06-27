@@ -9,6 +9,7 @@ const __dirname = path.dirname(__filename);
 const frontendDir = __dirname;
 const backendDir = path.join(frontendDir, '../backend');
 const distDir = path.join(frontendDir, 'dist');
+const DEPLOY_ASSET_EXCLUDES = new Set(['OpenForm.zip']);
 
 console.log('=== Starting Build Process ===');
 
@@ -47,7 +48,10 @@ for (const item of itemsToCopy) {
   const src = path.join(frontendDir, item);
   const dest = path.join(distDir, item);
   if (fs.existsSync(src)) {
-    fs.cpSync(src, dest, { recursive: true });
+    fs.cpSync(src, dest, {
+      recursive: true,
+      filter: (source) => !DEPLOY_ASSET_EXCLUDES.has(path.basename(source)),
+    });
   }
 }
 

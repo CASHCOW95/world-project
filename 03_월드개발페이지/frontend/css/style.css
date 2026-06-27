@@ -134,6 +134,115 @@ a[aria-disabled="true"],
     width: 100%;
 }
 
+/* Android Automation Banner */
+.android-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    overflow: hidden;
+    position: relative;
+    padding: 1.5rem;
+    border: 1px solid rgba(34, 197, 94, 0.28);
+    border-radius: 1rem;
+    background:
+        linear-gradient(135deg, rgba(20, 83, 45, 0.82) 0%, rgba(9, 14, 26, 0.9) 52%, rgba(30, 64, 175, 0.62) 100%);
+    box-shadow: 0 18px 60px rgba(0, 0, 0, 0.24), 0 0 36px rgba(34, 197, 94, 0.08);
+    backdrop-filter: blur(24px);
+}
+
+.android-banner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.08), transparent 38%, rgba(34, 211, 238, 0.08));
+    pointer-events: none;
+}
+
+.android-banner-copy,
+.android-banner-actions {
+    position: relative;
+    z-index: 1;
+}
+
+.android-banner-copy {
+    max-width: 760px;
+}
+
+.android-banner-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 0.6rem;
+    color: #86efac;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.android-live-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: #22c55e;
+    box-shadow: 0 0 14px rgba(34, 197, 94, 0.8);
+}
+
+.android-banner h2 {
+    margin: 0;
+    color: #ffffff !important;
+    font-size: clamp(1.35rem, 2.3vw, 2.25rem);
+    font-weight: 900;
+    line-height: 1.15;
+}
+
+.android-banner p {
+    max-width: 720px;
+    margin: 0.75rem 0 0;
+    color: #dbeafe !important;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.65;
+}
+
+.android-banner-actions {
+    display: flex;
+    flex-shrink: 0;
+    flex-direction: column;
+    gap: 0.65rem;
+    min-width: 170px;
+}
+
+.android-banner-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 0.7rem 1rem;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 900;
+    text-decoration: none;
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.android-banner-btn:hover {
+    transform: translateY(-1px);
+}
+
+.android-banner-btn.primary {
+    border: 1px solid rgba(34, 197, 94, 0.45);
+    background: #22c55e;
+    color: #02130a;
+}
+
+.android-banner-btn.secondary {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.08);
+    color: #e2e8f0;
+}
+
 /* ========================================================
    SERVER OPS CENTER (서버 운영센터)
    ======================================================== */
@@ -897,6 +1006,17 @@ header nav a.active-tab::after {
 
     .ops-card {
         min-height: auto;
+    }
+
+    .android-banner {
+        align-items: stretch;
+        flex-direction: column;
+        padding: 1.2rem;
+    }
+
+    .android-banner-actions {
+        width: 100%;
+        min-width: 0;
     }
 
     .ops-btn {

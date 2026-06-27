@@ -317,6 +317,8 @@
     };
 
     const alertEl = ensureOpsAlert(nodes.panel);
+    const androidDashboardLink = $('#android-open-dashboard');
+    if (androidDashboardLink) androidDashboardLink.href = OPS_DEFAULTS.dashboardUrl;
     if (nodes.openHealthLink) nodes.openHealthLink.href = OPS_DEFAULTS.healthUrl;
     if (nodes.openDashboard) nodes.openDashboard.href = OPS_DEFAULTS.dashboardUrl;
 
