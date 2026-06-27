@@ -1,0 +1,32 @@
+# Dependencies
+backend/node_modules/
+frontend/node_modules/
+
+# Build outputs
+backend/dist/
+frontend/dist/
+frontend/workspace/
+backend/deploy/
+
+# Runtime/generated exports
+backend/web_dashboard/output/
+backend/web_dashboard/*.zip
+backend/scratch/output/
+backend/scratch/input/
+backend/*analysis_report.json
+backend/refined_test.*
+backend/*.vtt
+backend/*.webp
+backend/deno.exe
+backend/core/styler_pro_engine/*.db
+
+# Local secrets and machine-specific files
+.env
+.env.*
+!.env.example
+backend/cookies.txt
+
+# Logs and caches
+*.log
+**/__pycache__/
+*.pyc

@@ -2,6 +2,7 @@
 __pycache__/
 *.pyc
 .DS_Store
+.pnpm-store/
 *.zip
 *.exe
 build/
@@ -10,9 +11,13 @@ dist/
 *.bin
 
 # Project specific ignores
+000_월드개발페이지/frontend/dist/
+000_월드개발페이지/backend/dist/
+000_월드개발페이지/backend/node_modules/
+# Legacy locked copy; keep ignored until it can be removed.
 03_월드개발페이지/frontend/dist/
 03_월드개발페이지/backend/dist/
 03_월드개발페이지/backend/node_modules/
-antigravity/node_modules/
-antigravity/dev-server.*.log
-antigravity/temp_test*.log
+101_블로그글쓰기/node_modules/
+101_블로그글쓰기/dev-server.*.log
+101_블로그글쓰기/temp_test*.log
