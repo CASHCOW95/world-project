@@ -37,3 +37,5 @@ Cloudflare Pages에 프로젝트를 배포할 때 아래와 같이 빌드 설정
 | **Build Output Directory** | `dist` |
 
 이 구성을 통해 GitHub 커밋 및 푸시가 발생할 때마다 자동으로 `npm ci` ➔ `npm run build` ➔ `dist` 배포 파이프라인이 작동하며, 지구 배경화면(`space-bg.png`) 등 모든 자산이 유실 없이 정상 배포됩니다.
+
+> 참고: Cloudflare Pages 프로젝트가 아직 이전 Root Directory인 `03_월드개발페이지/frontend`를 보고 있는 경우를 위해, 해당 경로에는 최신 `000_월드개발페이지` 빌드를 위임하는 호환 shim만 남겨 둡니다. 장기적으로는 Cloudflare 설정을 위 표의 `000_월드개발페이지/frontend`로 맞추는 것이 기준입니다.

@@ -23,6 +23,7 @@
 
 `CLAUDE.md`와 `GEMINI.md`는 호환용 부트스트랩이다. 실제 공통 지침의 원본은 이 `AGENTS.md`다.
 `000_월드개발페이지`가 현재 월드 개발 페이지의 활성 경로다. `03_월드개발페이지`는 Windows 잠금 때문에 남아 있는 레거시 복사본이므로, 별도 정리 요청이 없으면 읽기/수정 대상에서 제외한다.
+예외적으로 `03_월드개발페이지/frontend`는 Cloudflare Pages가 아직 예전 Root Directory를 볼 때 최신 `000_월드개발페이지`를 빌드하게 하는 호환 shim이며, 실제 소스 기준은 아니다.
 
 ## 프로젝트 라우팅
 
@@ -122,6 +123,7 @@
 - `**/_internal/**`
 - `**/dist/**`
 - `03_월드개발페이지/**`
+- 단, `03_월드개발페이지/frontend/{README.md,package.json,build.js}`는 Cloudflare 호환 shim 유지 목적에 한해 수정 가능
 - `legacy/deploy/**`
 - `pdf_pages/**`
 - `pdf_jpg/**`
