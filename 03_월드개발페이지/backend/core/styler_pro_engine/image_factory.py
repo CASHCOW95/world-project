@@ -4,16 +4,13 @@ import random
 import re
 from pathlib import Path
 
-# Ensure PIL is imported or auto-installed
+HAS_PIL = False
 try:
     from PIL import Image, ImageDraw, ImageFont
+    HAS_PIL = True
 except ImportError:
-    import subprocess
-    try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "Pillow"])
-        from PIL import Image, ImageDraw, ImageFont
-    except Exception as e:
-        sys.stderr.write(f"Failed to load Pillow: {str(e)}\n")
+    Image = ImageDraw = ImageFont = None
+    sys.stderr.write("Pillow is not installed. Install requirements.txt to enable image factory output.\n")
 
 # English translating helper for slug filenames
 TRANSLATION_MAP = {
@@ -57,6 +54,9 @@ def make_seo_slug(keyword):
 
 def create_factory_image(width, height, text, output_path):
     """Draws a high-quality visual text card with gradient backgrounds."""
+    if not HAS_PIL:
+        sys.stderr.write("[ImageFactory] Pillow unavailable. Skipping image creation.\n")
+        return False
     try:
         image = Image.new("RGB", (width, height))
         draw = ImageDraw.Draw(image)
@@ -89,7 +89,7 @@ def create_factory_image(width, height, text, output_path):
                 try:
                     font = ImageFont.truetype(fp, font_size)
                     break
-                except:
+                except Exception:
                     pass
         if not font:
             font = ImageFont.load_default()
@@ -138,10 +138,12 @@ def make_5_images(keyword, output_dir_relative="output/images"):
     image_metadata_list = []
     for t in targets:
         file_path = output_dir / t["file"]
-        create_factory_image(t["width"], t["height"], t["text"], file_path)
+        created = create_factory_image(t["width"], t["height"], t["text"], file_path)
+        if not created:
+            continue
         
         # Web-accessible URL path
-        web_path = f"/{output_dir_relative}/{t["file"]}"
+        web_path = f"/{output_dir_relative}/{t['file']}"
         image_metadata_list.append({
             "filename": t["file"],
             "alt": t["alt"],

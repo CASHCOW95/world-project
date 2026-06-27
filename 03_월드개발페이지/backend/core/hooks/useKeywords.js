@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { fetchJson } from '../utils/apiClient';
 
 /**
  * 키워드 fetch, 정렬, 필터링, 선택 상태 관리 hook.
@@ -15,8 +16,7 @@ export default function useKeywords({ onKeywordSelected } = {}) {
   const fetchKeywords = useCallback(async (catName) => {
     setKeywordLoading(true);
     try {
-      const res = await fetch(`/api/keywords?category=${encodeURIComponent(catName)}`);
-      const data = await res.json();
+      const data = await fetchJson(`/api/keywords?category=${encodeURIComponent(catName)}`);
       setKeywords(data);
       if (data.length > 0) {
         setSelectedKeyword(data[0]);
@@ -24,6 +24,8 @@ export default function useKeywords({ onKeywordSelected } = {}) {
       }
     } catch (err) {
       console.error("Failed to fetch keywords:", err);
+      setKeywords([]);
+      setSelectedKeyword(null);
     } finally {
       setKeywordLoading(false);
     }

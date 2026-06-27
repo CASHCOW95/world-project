@@ -26,9 +26,9 @@ app.use(cors());
 app.use(express.json());
 
 // 포털 메인 및 빌드된 리액트 워크스페이스 정적 웹 호스팅 서비스 추가
-app.use('/workspace', express.static(path.join(__dirname, '../web_dashboard/workspace')));
-app.use('/output', express.static(path.join(__dirname, '../web_dashboard/output')));
-app.use(express.static(path.join(__dirname, '../web_dashboard')));
+app.use('/workspace', express.static(path.join(__dirname, '../frontend/dist/workspace')));
+app.use('/output', express.static(path.join(__dirname, 'web_dashboard/output')));
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
 const PROFILE_CONFIG_PATH = path.join(__dirname, 'core/styler_pro_engine/publisher_profiles.json');
 

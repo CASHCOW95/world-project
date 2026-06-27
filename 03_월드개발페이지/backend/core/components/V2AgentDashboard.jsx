@@ -15,6 +15,7 @@ import useApi from '../hooks/useApi';
 import CategoryHeader from './shared/CategoryHeader';
 import KeywordList from './shared/KeywordList';
 import TerminalLog from './shared/TerminalLog';
+import ErrorBanner from './shared/ErrorBanner';
 
 export default function V2AgentDashboard() {
   const [activeTab, setActiveTab] = useState('cluster'); // cluster, publish, links, performance, settings
@@ -243,6 +244,7 @@ export default function V2AgentDashboard() {
         sortedSubCategories={categories.sortedSubCategories}
         disabled={pipeline.pipelineRunning}
       />
+      <ErrorBanner message={pipeline.error} />
 
       {/* Tabs navigation */}
       <nav className="flex bg-slate-900/60 p-1.5 rounded-2xl border border-slate-850 gap-2 shadow-inner z-10">

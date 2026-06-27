@@ -18,19 +18,13 @@ except Exception:
     HAS_GEMINI = False
 
 
-# Auto-install Pillow if not present
+HAS_PIL = False
 try:
     from PIL import Image, ImageDraw, ImageFont
+    HAS_PIL = True
 except ImportError:
-    import subprocess
-    sys.stderr.write("Pillow not found. Auto-installing Pillow...\n")
-    try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "Pillow"])
-        from PIL import Image, ImageDraw, ImageFont
-    except Exception as e:
-        sys.stderr.write(f"Failed to auto-install Pillow: {str(e)}\n")
-        # Fail gracefully by mocking Image operations
-        pass
+    Image = ImageDraw = ImageFont = None
+    sys.stderr.write("Pillow is not installed. Install requirements.txt to enable fallback image generation.\n")
 
 # English slug translator helper for SEO filenames
 SEO_TRANSLATION_MAP = {
@@ -68,6 +62,9 @@ def make_seo_filename(keyword, img_index):
 
 def create_gradient_image(width, height, text, output_path):
     """Generates a premium gradient background image with centered Korean text."""
+    if not HAS_PIL:
+        sys.stderr.write("[ImageGenerator] Pillow unavailable. Skipping gradient fallback image.\n")
+        return False
     try:
         # Create gradient array
         image = Image.new("RGB", (width, height))
@@ -153,6 +150,9 @@ def create_gradient_image(width, height, text, output_path):
 
 def save_and_optimize_image(img_data, output_path, max_size_kb=200):
     """Saves a PIL Image or raw bytes as optimized WebP under max_size_kb."""
+    if not HAS_PIL:
+        sys.stderr.write("[ImageGenerator] Pillow unavailable. Cannot save optimized image.\n")
+        return False
     try:
         if isinstance(img_data, bytes):
             img = Image.open(io.BytesIO(img_data))

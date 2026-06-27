@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
+import { fetchJson } from '../utils/apiClient';
 
 /**
  * 제목 생성, 필터링, 선택, 즐겨찾기 상태 관리 hook.
@@ -19,7 +20,7 @@ export default function useTitles() {
     setSelectedTitle(null);
     setCustomTitle('');
     try {
-      const res = await fetch('/api/generate-titles', {
+      const data = await fetchJson('/api/generate-titles', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -27,7 +28,6 @@ export default function useTitles() {
           category: catName,
         }),
       });
-      const data = await res.json();
       if (data && Array.isArray(data)) {
         const scored = data
           .map((t) => {
@@ -46,6 +46,7 @@ export default function useTitles() {
       }
     } catch (err) {
       console.error("Failed to generate titles:", err);
+      setTitles([]);
     } finally {
       setTitlesLoading(false);
     }

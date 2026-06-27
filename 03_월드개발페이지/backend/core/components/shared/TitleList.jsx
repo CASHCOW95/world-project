@@ -39,6 +39,13 @@ const TitleList = memo(function TitleList({
       <div className="flex-1 overflow-y-auto max-h-[480px] border border-slate-900 rounded-2xl bg-slate-950/60 p-3 scrollbar-thin scrollbar-thumb-slate-800">
         {titlesLoading ? (
           <div className="text-xs text-slate-500 italic text-center py-4">추천 제목 분석 설계 중...</div>
+        ) : filteredTitles.length === 0 ? (
+          <div className="flex h-full min-h-48 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-800 bg-slate-950/50 px-4 text-center">
+            <strong className="text-xs font-black text-slate-300">추천 제목이 없습니다.</strong>
+            <span className="text-[11px] font-semibold leading-relaxed text-slate-500">
+              키워드를 선택하거나 제목 유형 필터를 전체로 변경해 주세요.
+            </span>
+          </div>
         ) : (
           <div className="flex flex-col gap-2.5">
             {filteredTitles.map((t, idx) => {
@@ -72,6 +79,7 @@ const TitleList = memo(function TitleList({
 
       <button
         type="button"
+        disabled={titlesLoading || filteredTitles.length === 0}
         className="w-full py-2.5 rounded-xl border border-slate-800 bg-slate-900/40 hover:bg-slate-900/80 text-slate-400 hover:text-slate-200 text-xs font-bold transition-all text-center block cursor-pointer"
       >
         ▼ 전체 100개 제목 보기

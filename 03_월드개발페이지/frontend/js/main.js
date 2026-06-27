@@ -1,392 +1,458 @@
-// Global Persistence Layer (Available immediately)
-window.AppStorage = {
-    save: (key, data) => {
-        localStorage.setItem(`world_ai_${key}`, JSON.stringify(data));
-        showToast('💾 데이터가 안전하게 저장되었습니다.');
-    },
-    load: (key) => {
-        const data = localStorage.getItem(`world_ai_${key}`);
-        return data ? JSON.parse(data) : null;
-    }
-};
+(function () {
+  const STORAGE_PREFIX = 'world_ai_';
+  const PROTECTED_PAGES = new Set([
+    'meetup-calendar.html',
+    'asset-mgmt.html',
+    'profit-mgmt.html',
+    'diary.html',
+    'tiktok-mgmt.html',
+    'timer.html',
+    'online-meetup.html',
+    'profile-mgmt.html',
+    'offline-meetup.html',
+    'gifticon-mgmt.html',
+  ]);
+  const PUBLIC_FEATURES = new Set(['download', 'feedback']);
+  const OPS_DEFAULTS = {
+    dashboardUrl: window.PUBLIC_MAC_MINI_DASHBOARD_URL || 'http://macmini:8000',
+    healthUrl: window.PUBLIC_MAC_MINI_HEALTH_URL || 'http://macmini:8000/health',
+    timeoutMs: 8000,
+  };
 
-function showToast(msg) {
-    const existing = document.getElementById('app-toast');
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+
+  window.AppStorage = {
+    save(key, data) {
+      localStorage.setItem(`${STORAGE_PREFIX}${key}`, JSON.stringify(data));
+      showToast('데이터가 저장되었습니다.');
+    },
+    load(key, fallback = null) {
+      try {
+        const raw = localStorage.getItem(`${STORAGE_PREFIX}${key}`);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch (error) {
+        console.warn(`Failed to load ${key} from localStorage`, error);
+        return fallback;
+      }
+    },
+  };
+
+  function getCurrentPage() {
+    const pathParts = window.location.pathname.split('/');
+    return pathParts[pathParts.length - 1] || 'index.html';
+  }
+
+  function getAuthState() {
+    return {
+      isLoggedIn: sessionStorage.getItem('isAdminLoggedIn') === 'true',
+      nickname: sessionStorage.getItem('adminNickname') || 'Admin',
+    };
+  }
+
+  function showToast(message, type = 'info') {
+    const existing = $('#app-toast');
     if (existing) existing.remove();
 
     const toast = document.createElement('div');
     toast.id = 'app-toast';
-    toast.className = 'fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full bg-indigo-600 text-white font-black text-xs shadow-2xl z-[3000] transition-opacity duration-500';
-    toast.style.opacity = '0';
-    toast.innerText = msg;
+    toast.className = `app-toast app-toast-${type}`;
+    toast.textContent = message;
     document.body.appendChild(toast);
-    
-    requestAnimationFrame(() => {
-        toast.style.opacity = '1';
-    });
 
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 500);
-    }, 2500);
-}
+    requestAnimationFrame(() => toast.classList.add('is-visible'));
+    window.setTimeout(() => {
+      toast.classList.remove('is-visible');
+      window.setTimeout(() => toast.remove(), 250);
+    }, 2600);
+  }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const isLoggedIn = sessionStorage.getItem('isAdminLoggedIn') === 'true';
-    const adminNickname = sessionStorage.getItem('adminNickname');
-    const pathParts = window.location.pathname.split('/');
-    const currentPage = pathParts[pathParts.length - 1] || 'index.html';
-
-    // 1. Core Visibility & Theme
+  function forceVisibleDarkTheme() {
     document.body.style.opacity = '1';
-    const mainContent = document.querySelector('main');
-    if (mainContent) {
-        mainContent.style.opacity = '1';
-        mainContent.style.visibility = 'visible';
-    }
-
-    // Force Dark Mode only
-    const html = document.documentElement;
-    html.classList.add('dark');
+    document.documentElement.classList.add('dark');
     localStorage.setItem('theme', 'dark');
 
-    // 2. Auth Guard for Protected Pages
-    const protectedPages = [
-        'meetup-calendar.html', 'asset-mgmt.html', 'profit-mgmt.html', 
-        'diary.html', 'tiktok-mgmt.html', 'timer.html',
-        'online-meetup.html', 'profile-mgmt.html', 'offline-meetup.html', 'gifticon-mgmt.html'
-    ];
+    const main = $('main');
+    if (main) {
+      main.style.opacity = '1';
+      main.style.visibility = 'visible';
+    }
+  }
 
-    if (protectedPages.includes(currentPage) && !isLoggedIn) {
-        window.location.href = `login.html?redirect=${currentPage}`;
-        return;
+  function guardProtectedPage(currentPage, auth) {
+    if (!PROTECTED_PAGES.has(currentPage) || auth.isLoggedIn) return false;
+    window.location.href = `login.html?redirect=${encodeURIComponent(currentPage)}`;
+    return true;
+  }
+
+  function initAuthUi(auth) {
+    const authBtn = $('.open-auth');
+    if (!authBtn) return;
+
+    if (!auth.isLoggedIn) {
+      authBtn.addEventListener('click', () => {
+        window.location.href = 'login.html';
+      });
+      return;
     }
 
-    // 3. Header Auth UI
-    const authBtn = document.querySelector('.open-auth');
-    if (authBtn) {
-        if (isLoggedIn) {
-            authBtn.innerHTML = `<span class="text-indigo-500 font-black mr-2">●</span> ${adminNickname} 관리자`;
-            authBtn.classList.replace('open-auth', 'admin-profile');
-            const logoutBtn = document.createElement('button');
-            logoutBtn.className = 'px-4 py-1.5 rounded-full border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition text-[11px] font-bold ml-2';
-            logoutBtn.innerText = 'LOGOUT';
-            logoutBtn.onclick = () => {
-                sessionStorage.clear();
-                window.location.href = 'index.html';
-            };
-            authBtn.parentNode.appendChild(logoutBtn);
-        } else {
-            authBtn.onclick = () => { window.location.href = 'login.html'; };
-        }
-    }
+    authBtn.innerHTML = `<span class="text-indigo-500 font-black mr-2">●</span> ${auth.nickname} 관리자`;
+    authBtn.classList.remove('open-auth');
+    authBtn.classList.add('admin-profile');
 
-    // 4. Feature Locking (on index.html)
-    if (currentPage === 'index.html' || currentPage === '') {
-        document.querySelectorAll('.feature-card').forEach(card => {
-            const featureType = card.getAttribute('data-feature');
-            if (featureType === 'download' || featureType === 'feedback') return; // Allow public download and feedback access
+    if ($('.admin-logout')) return;
+    const logoutBtn = document.createElement('button');
+    logoutBtn.type = 'button';
+    logoutBtn.className = 'admin-logout px-4 py-1.5 rounded-full border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition text-[11px] font-bold ml-2';
+    logoutBtn.textContent = 'LOGOUT';
+    logoutBtn.addEventListener('click', () => {
+      sessionStorage.clear();
+      window.location.href = 'index.html';
+    });
+    authBtn.parentNode.appendChild(logoutBtn);
+  }
 
-            const lockOverlay = card.querySelector('.lock-overlay');
-            const icon = card.querySelector('.feature-icon');
-            if (!isLoggedIn) {
-                if(lockOverlay) lockOverlay.style.opacity = '1';
-                if(lockOverlay) lockOverlay.style.pointerEvents = 'auto';
-                if(icon) icon.style.filter = 'grayscale(1) blur(4px)';
-                card.onclick = (e) => {
-                    e.preventDefault();
-                    if(confirm('관리자 전용 서비스입니다. 로그인하시겠습니까?')) {
-                        window.location.href = 'login.html';
-                    }
-                    return false;
-                };
-            }
-        });
+  function initFeatureLocks(auth, currentPage) {
+    if (currentPage !== 'index.html') return;
 
-        // 9. Value Simulator & ROI Calculator Sliders
-        const hoursSlider = document.getElementById('hours-slider');
-        const costSlider = document.getElementById('cost-slider');
-        const hoursValDisplay = document.getElementById('hours-val-display');
-        const costValDisplay = document.getElementById('cost-val-display');
-        const timeSavedDisplay = document.getElementById('time-saved-display');
-        const moneySavedDisplay = document.getElementById('money-saved-display');
+    $$('.feature-card').forEach((card) => {
+      const featureType = card.getAttribute('data-feature');
+      if (PUBLIC_FEATURES.has(featureType) || auth.isLoggedIn) return;
 
-        if (hoursSlider && costSlider) {
-            const updateROI = () => {
-                const hours = parseInt(hoursSlider.value);
-                const cost = parseInt(costSlider.value);
+      const lockOverlay = $('.lock-overlay', card);
+      const icon = $('.feature-icon', card);
+      card.setAttribute('aria-disabled', 'true');
+      card.classList.add('is-locked');
+      if (lockOverlay) {
+        lockOverlay.style.opacity = '1';
+        lockOverlay.style.pointerEvents = 'auto';
+      }
+      if (icon) icon.style.filter = 'grayscale(1) blur(4px)';
 
-                if (hoursValDisplay) hoursValDisplay.innerText = `${hours}시간`;
-                if (costValDisplay) costValDisplay.innerText = `${cost}만원`;
+      card.addEventListener('click', (event) => {
+        event.preventDefault();
+        const wantsLogin = window.confirm('관리자 전용 서비스입니다. 로그인하시겠습니까?');
+        if (wantsLogin) window.location.href = 'login.html';
+      });
+    });
+  }
 
-                // Calculate savings
-                const timeSaved = Math.round(hours * 338.33);
-                const moneySaved = Math.round((cost * 12) + (timeSaved * 2.65));
+  function initRoiCalculator() {
+    const hoursSlider = $('#hours-slider');
+    const costSlider = $('#cost-slider');
+    if (!hoursSlider || !costSlider) return;
 
-                if (timeSavedDisplay) {
-                    timeSavedDisplay.innerHTML = `<span>${timeSaved.toLocaleString()}</span> <span class="text-base font-bold text-cyan-600 dark:text-cyan-500">시간 확보</span>`;
-                }
-                if (moneySavedDisplay) {
-                    moneySavedDisplay.innerHTML = `<span class="text-base text-amber-600 dark:text-amber-500 font-black">~</span> <span>${moneySaved.toLocaleString()}</span> <span class="text-base font-bold text-amber-600 dark:text-amber-500">만원 세이브</span>`;
-                }
-            };
-
-            hoursSlider.addEventListener('input', updateROI);
-            costSlider.addEventListener('input', updateROI);
-            updateROI(); // Initial run
-        }
-
-        updateDashboardSummary();
-    }
-
-    // 7. Feedback Modal Logic
-    const feedbackModal = document.getElementById('feedback-modal');
-    const openFeedbackBtn = document.getElementById('open-feedback');
-    const navFeedbackBtn = document.getElementById('nav-feedback');
-    const closeFeedbackBtn = document.getElementById('close-feedback');
-    const submitFeedbackBtn = document.getElementById('submit-feedback');
-
-    const openFeedback = (e) => {
-        if (e) e.preventDefault();
-        if (feedbackModal) feedbackModal.classList.add('active');
+    const nodes = {
+      hours: $('#hours-val-display'),
+      cost: $('#cost-val-display'),
+      timeSaved: $('#time-saved-display'),
+      moneySaved: $('#money-saved-display'),
     };
 
-    if (openFeedbackBtn) openFeedbackBtn.addEventListener('click', openFeedback);
-    if (navFeedbackBtn) navFeedbackBtn.addEventListener('click', openFeedback);
+    const update = () => {
+      const hours = Number.parseInt(hoursSlider.value, 10) || 0;
+      const cost = Number.parseInt(costSlider.value, 10) || 0;
+      const timeSaved = Math.round(hours * 338.33);
+      const moneySaved = Math.round((cost * 12) + (timeSaved * 2.65));
 
-    if (closeFeedbackBtn && feedbackModal) {
-        closeFeedbackBtn.addEventListener('click', () => {
-            feedbackModal.classList.remove('active');
-        });
+      if (nodes.hours) nodes.hours.textContent = `${hours}시간`;
+      if (nodes.cost) nodes.cost.textContent = `${cost}만원`;
+      if (nodes.timeSaved) {
+        nodes.timeSaved.innerHTML = `<span>${timeSaved.toLocaleString()}</span> <span class="text-base font-bold text-cyan-600 dark:text-cyan-500">시간 확보</span>`;
+      }
+      if (nodes.moneySaved) {
+        nodes.moneySaved.innerHTML = `<span class="text-base text-amber-600 dark:text-amber-500 font-black">~</span> <span>${moneySaved.toLocaleString()}</span> <span class="text-base font-bold text-amber-600 dark:text-amber-500">만원 세이브</span>`;
+      }
+    };
+
+    hoursSlider.addEventListener('input', update);
+    costSlider.addEventListener('input', update);
+    update();
+  }
+
+  function initDashboardSummary() {
+    const container = $('#dashboard-summary-content');
+    if (!container) return;
+
+    const profitData = window.AppStorage.load('profit_data', []);
+    if (!Array.isArray(profitData) || profitData.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <strong>수익 데이터 없음</strong>
+          <span>아직 저장된 수익 기록이 없습니다. 수익정산 화면에서 첫 기록을 추가하면 요약이 표시됩니다.</span>
+        </div>
+      `;
+      return;
     }
 
-    if (submitFeedbackBtn) {
-        submitFeedbackBtn.addEventListener('click', () => {
-            const title = document.getElementById('feedback-title').value;
-            const content = document.getElementById('feedback-content').value;
+    const totalProfit = profitData.reduce((acc, item) => acc + (Number(item.amount) || 0), 0);
+    const totalEntry = profitData.reduce((acc, item) => acc + (Number(item.entry) || 0), 0);
+    const totalWinners = profitData.reduce((acc, item) => acc + (Number(item.winners) || 0), 0);
+    const rate = totalEntry > 0 ? ((totalWinners / totalEntry) * 100).toFixed(1) : '0.0';
 
-            if (!title || !content) {
-                alert('제목과 내용을 모두 입력해주세요.');
-                return;
-            }
+    container.innerHTML = `
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="summary-card">
+          <p>총 누적 수익</p>
+          <strong>₩${totalProfit.toLocaleString()}</strong>
+        </div>
+        <div class="summary-card summary-card-success">
+          <p>평균 성공률</p>
+          <strong>${rate}%</strong>
+        </div>
+        <div class="summary-card summary-card-muted">
+          <p>최근 활동</p>
+          <strong>${profitData[0]?.item || '기록 없음'}</strong>
+        </div>
+      </div>
+    `;
+  }
 
-            const mailtoLink = `mailto:ydh2455@naver.com?subject=${encodeURIComponent('[문의] ' + title)}&body=${encodeURIComponent(content)}`;
-            window.location.href = mailtoLink;
-            
-            feedbackModal.classList.remove('active');
-            showToast('📧 메일 클라이언트가 열립니다.');
-        });
+  function initFeedbackModal() {
+    const modal = $('#feedback-modal');
+    const openButtons = ['#open-feedback', '#nav-feedback'].map((selector) => $(selector)).filter(Boolean);
+    const closeBtn = $('#close-feedback');
+    const submitBtn = $('#submit-feedback');
+    if (!modal) return;
+
+    const open = (event) => {
+      if (event) event.preventDefault();
+      modal.classList.add('active');
+      $('#feedback-title')?.focus();
+    };
+    const close = () => modal.classList.remove('active');
+
+    openButtons.forEach((button) => button.addEventListener('click', open));
+    closeBtn?.addEventListener('click', close);
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) close();
+    });
+
+    submitBtn?.addEventListener('click', () => {
+      const title = $('#feedback-title')?.value.trim();
+      const content = $('#feedback-content')?.value.trim();
+      if (!title || !content) {
+        showToast('제목과 내용을 모두 입력해 주세요.', 'error');
+        return;
+      }
+
+      window.location.href = `mailto:ydh2455@naver.com?subject=${encodeURIComponent(`[문의] ${title}`)}&body=${encodeURIComponent(content)}`;
+      close();
+      showToast('메일 클라이언트를 여는 중입니다.');
+    });
+  }
+
+  function initScrollReveal() {
+    const revealElements = $$('.scroll-reveal');
+    if (revealElements.length === 0) return;
+
+    if (!('IntersectionObserver' in window)) {
+      revealElements.forEach((element) => element.classList.add('animate-in'));
+      return;
     }
 
-    // 8. Scroll Animations (CRITICAL: Required for .scroll-reveal elements to show)
-    const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
     const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('animate-in');
-                observer.unobserve(entry.target);
-            }
-        });
-    }, observerOptions);
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('animate-in');
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
 
-    const revealElements = document.querySelectorAll('.scroll-reveal');
-    revealElements.forEach(el => observer.observe(el));
+    revealElements.forEach((element) => observer.observe(element));
+    window.setTimeout(() => {
+      revealElements.forEach((element) => element.classList.add('animate-in'));
+    }, 900);
+  }
 
-    // Fallback for animations
-    setTimeout(() => {
-        revealElements.forEach(el => {
-            if (!el.classList.contains('animate-in')) el.classList.add('animate-in');
-        });
-    }, 800);
+  function setButtonBusy(button, busy, label) {
+    if (!button) return;
+    if (!button.dataset.idleLabel) button.dataset.idleLabel = button.textContent.trim();
+    button.disabled = busy;
+    button.classList.toggle('is-busy', busy);
+    button.textContent = busy ? label : button.dataset.idleLabel;
+  }
 
-    // 6. Dashboard Summary Helper
-    function updateDashboardSummary() {
-        const summaryContainer = document.getElementById('dashboard-summary-content');
-        if (!summaryContainer) return;
+  async function fetchJsonWithTimeout(url, { timeoutMs = 8000 } = {}) {
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+    const startedAt = performance.now();
 
-        const profitData = AppStorage.load('profit_data') || [];
-        if (profitData.length === 0) {
-            summaryContainer.innerHTML = '<p class="text-slate-500 text-sm">기록된 수익 데이터가 없습니다. 로그인하여 내역을 추가해 보세요.</p>';
-            return;
-        }
+    try {
+      const response = await fetch(url, { signal: controller.signal, mode: 'cors' });
+      const elapsedMs = Math.round(performance.now() - startedAt);
+      const contentType = response.headers.get('content-type') || '';
+      const data = contentType.includes('application/json') ? await response.json() : null;
 
-        const totalProfit = profitData.reduce((acc, d) => acc + (Number(d.amount) || 0), 0);
-        const totalEntry = profitData.reduce((acc, d) => acc + (Number(d.entry) || 0), 0);
-        const totalWinners = profitData.reduce((acc, d) => acc + (Number(d.winners) || 0), 0);
-        const rate = totalEntry > 0 ? ((totalWinners / totalEntry) * 100).toFixed(1) : 0;
-
-        summaryContainer.innerHTML = `
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="p-6 rounded-3xl bg-indigo-500/5 border border-indigo-500/10">
-                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">총 누적 수익</p>
-                    <p class="text-2xl font-black text-indigo-500">₩${totalProfit.toLocaleString()}</p>
-                </div>
-                <div class="p-6 rounded-3xl bg-emerald-500/5 border border-emerald-500/10">
-                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">평균 성공률</p>
-                    <p class="text-2xl font-black text-emerald-500">${rate}%</p>
-                </div>
-                <div class="p-6 rounded-3xl bg-pink-500/5 border border-pink-500/10">
-                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">최근 활동</p>
-                    <p class="text-sm font-bold text-white truncate">${profitData[0].item}</p>
-                </div>
-            </div>
-        `;
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      return { data, elapsedMs };
+    } finally {
+      window.clearTimeout(timer);
     }
+  }
 
-    // ========================================================
-    // 서버 운영센터 (Server Ops Center)
-    // ========================================================
-    (function initServerOps() {
-        // 환경변수 기반 URL (Cloudflare Pages에서는 빌드 시 주입, 로컬에서는 기본값 사용)
-        const MAC_MINI_DASHBOARD_URL = window.PUBLIC_MAC_MINI_DASHBOARD_URL || 'http://macmini:8000';
-        const MAC_MINI_HEALTH_URL = window.PUBLIC_MAC_MINI_HEALTH_URL || 'http://macmini:8000/health';
+  function initServerOps() {
+    const statusDot = $('#ops-status-dot');
+    if (!statusDot) return;
 
-        // DOM 요소
-        const statusDot = document.getElementById('ops-status-dot');
-        const statusText = document.getElementById('ops-status-text');
-        const lastCheckEl = document.getElementById('ops-last-check');
-        const uptimeEl = document.getElementById('ops-uptime');
-        const checkHealthBtn = document.getElementById('ops-check-health');
-        const openHealthLink = document.getElementById('ops-open-health');
-        const openDashboard = document.getElementById('ops-open-dashboard');
-        const refreshWorkersBtn = document.getElementById('ops-refresh-workers');
-        const openRecoveryBtn = document.getElementById('ops-open-recovery');
-        const recoveryModal = document.getElementById('recovery-modal');
-        const closeRecoveryBtn = document.getElementById('close-recovery');
-        const closeRecoveryBottomBtn = document.getElementById('close-recovery-bottom');
-        const workersRunningEl = document.getElementById('ops-workers-running');
-        const workersErrorEl = document.getElementById('ops-workers-error');
+    const nodes = {
+      statusDot,
+      statusText: $('#ops-status-text'),
+      lastCheck: $('#ops-last-check'),
+      uptime: $('#ops-uptime'),
+      checkHealthBtn: $('#ops-check-health'),
+      openHealthLink: $('#ops-open-health'),
+      openDashboard: $('#ops-open-dashboard'),
+      refreshWorkersBtn: $('#ops-refresh-workers'),
+      openRecoveryBtn: $('#ops-open-recovery'),
+      recoveryModal: $('#recovery-modal'),
+      closeRecoveryBtn: $('#close-recovery'),
+      closeRecoveryBottomBtn: $('#close-recovery-bottom'),
+      workersRunning: $('#ops-workers-running'),
+      workersError: $('#ops-workers-error'),
+      workerList: $('#ops-worker-list'),
+      panel: $('#server-ops .ops-center-panel'),
+    };
 
-        if (!statusDot) return; // 서버 운영센터가 없는 페이지에서는 종료
+    const alertEl = ensureOpsAlert(nodes.panel);
+    if (nodes.openHealthLink) nodes.openHealthLink.href = OPS_DEFAULTS.healthUrl;
+    if (nodes.openDashboard) nodes.openDashboard.href = OPS_DEFAULTS.dashboardUrl;
 
-        // 링크에 URL 바인딩
-        if (openHealthLink) openHealthLink.href = MAC_MINI_HEALTH_URL;
-        if (openDashboard) openDashboard.href = MAC_MINI_DASHBOARD_URL;
+    const setAlert = (message, state = 'info') => {
+      if (!alertEl) return;
+      alertEl.textContent = message;
+      alertEl.dataset.state = state;
+      alertEl.hidden = !message;
+    };
 
-        // 상태 업데이트 함수
-        function setStatus(state, responseTime) {
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const setStatus = (state, responseTime = null) => {
+      const time = new Date().toLocaleTimeString('ko-KR', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
 
-            statusDot.className = 'ops-status-dot ' + state;
-            if (lastCheckEl) lastCheckEl.textContent = timeStr;
+      nodes.statusDot.className = `ops-status-dot ${state}`;
+      if (nodes.lastCheck) nodes.lastCheck.textContent = time;
 
-            if (state === 'online') {
-                statusText.textContent = 'ONLINE';
-                statusText.style.color = '#4ade80';
-                if (uptimeEl) uptimeEl.textContent = responseTime ? `${responseTime}ms` : '정상';
-            } else if (state === 'offline') {
-                statusText.textContent = 'OFFLINE';
-                statusText.style.color = '#f87171';
-                if (uptimeEl) uptimeEl.textContent = '응답 없음';
-            } else {
-                statusText.textContent = 'CHECKING';
-                statusText.style.color = '#fbbf24';
-                if (uptimeEl) uptimeEl.textContent = '확인 중...';
-            }
+      const statusMap = {
+        online: ['ONLINE', '#4ade80', responseTime ? `${responseTime}ms` : '정상'],
+        offline: ['OFFLINE', '#f87171', '응답 없음'],
+        checking: ['CHECKING', '#fbbf24', '확인 중...'],
+      };
+      const [label, color, detail] = statusMap[state] || statusMap.offline;
+
+      if (nodes.statusText) {
+        nodes.statusText.textContent = label;
+        nodes.statusText.style.color = color;
+      }
+      if (nodes.uptime) nodes.uptime.textContent = detail;
+    };
+
+    const updateWorkers = (data) => {
+      const workers = data?.workers || {};
+      const workerKeys = ['crawler', 'blog', 'youtube', 'adb'];
+      const workerNames = ['크롤러', '블로그', '유튜브', 'ADB'];
+      const rows = $$('.ops-worker-row', nodes.workerList || document);
+      let runningCount = 0;
+      let errorCount = 0;
+
+      workerKeys.forEach((key, index) => {
+        const state = workers[key] || 'idle';
+        if (state === 'running') runningCount += 1;
+        if (state === 'error') errorCount += 1;
+
+        const row = rows[index];
+        const badge = row ? $('.ops-worker-badge', row) : null;
+        if (badge) {
+          badge.className = `ops-worker-badge ${state}`;
+          badge.textContent = state.toUpperCase();
+          badge.setAttribute('title', `${workerNames[index]} 상태: ${state}`);
         }
+      });
 
-        // 워커 상태 업데이트 함수
-        function updateWorkers(data) {
-            if (!data || !data.workers) return;
+      if (nodes.workersRunning) nodes.workersRunning.textContent = String(runningCount);
+      if (nodes.workersError) nodes.workersError.textContent = String(errorCount);
+    };
 
-            const workerList = document.getElementById('ops-worker-list');
-            if (!workerList) return;
+    const checkHealth = async () => {
+      setStatus('checking');
+      setAlert('Mac mini 상태를 확인하는 중입니다.');
+      setButtonBusy(nodes.checkHealthBtn, true, '확인 중...');
+      setButtonBusy(nodes.refreshWorkersBtn, true, '확인 중...');
 
-            let runningCount = 0;
-            let errorCount = 0;
-            const workerNames = ['크롤러', '블로그', '유튜브', 'ADB'];
-            const workerKeys = ['crawler', 'blog', 'youtube', 'adb'];
+      try {
+        const { data, elapsedMs } = await fetchJsonWithTimeout(OPS_DEFAULTS.healthUrl, { timeoutMs: OPS_DEFAULTS.timeoutMs });
+        setStatus('online', elapsedMs);
+        updateWorkers(data);
+        setAlert('서버가 정상 응답했습니다.', 'success');
+      } catch (error) {
+        setStatus('offline');
+        setAlert(`서버 상태 확인 실패: ${error.name === 'AbortError' ? '요청 시간이 초과되었습니다.' : error.message}`, 'error');
+      } finally {
+        setButtonBusy(nodes.checkHealthBtn, false);
+        setButtonBusy(nodes.refreshWorkersBtn, false);
+      }
+    };
 
-            const rows = workerList.querySelectorAll('.ops-worker-row');
-            workerKeys.forEach((key, i) => {
-                const workerState = data.workers[key] || 'idle';
-                if (workerState === 'running') runningCount++;
-                if (workerState === 'error') errorCount++;
+    nodes.checkHealthBtn?.addEventListener('click', checkHealth);
+    nodes.refreshWorkersBtn?.addEventListener('click', checkHealth);
+    initRecoveryModal(nodes);
+    setAlert('대기 중입니다. 상태 확인 버튼을 눌러 서버 응답을 확인하세요.');
+  }
 
-                if (rows[i]) {
-                    const badge = rows[i].querySelector('.ops-worker-badge');
-                    if (badge) {
-                        badge.className = 'ops-worker-badge ' + workerState;
-                        badge.textContent = workerState.toUpperCase();
-                    }
-                }
-            });
+  function ensureOpsAlert(panel) {
+    if (!panel) return null;
+    let alertEl = $('#ops-alert', panel);
+    if (alertEl) return alertEl;
 
-            if (workersRunningEl) workersRunningEl.textContent = runningCount;
-            if (workersErrorEl) workersErrorEl.textContent = errorCount;
-        }
+    alertEl = document.createElement('div');
+    alertEl.id = 'ops-alert';
+    alertEl.className = 'ops-alert';
+    alertEl.setAttribute('role', 'status');
+    alertEl.setAttribute('aria-live', 'polite');
+    panel.appendChild(alertEl);
+    return alertEl;
+  }
 
-        // 상태 확인 및 워커 새로고침 통합 함수
-        async function fetchHealth() {
-            setStatus('checking');
-            if (checkHealthBtn) {
-                checkHealthBtn.disabled = true;
-                checkHealthBtn.textContent = '⏳ 확인 중...';
-            }
-            if (refreshWorkersBtn) {
-                refreshWorkersBtn.disabled = true;
-                refreshWorkersBtn.textContent = '⏳ 확인 중...';
-            }
+  function initRecoveryModal(nodes) {
+    const modal = nodes.recoveryModal;
+    if (!modal) return;
 
-            const startTime = performance.now();
-            try {
-                const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), 8000);
+    const open = () => modal.classList.add('active');
+    const close = () => modal.classList.remove('active');
 
-                const res = await fetch(MAC_MINI_HEALTH_URL, {
-                    signal: controller.signal,
-                    mode: 'cors'
-                });
-                clearTimeout(timeout);
+    nodes.openRecoveryBtn?.addEventListener('click', open);
+    nodes.closeRecoveryBtn?.addEventListener('click', close);
+    nodes.closeRecoveryBottomBtn?.addEventListener('click', close);
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) close();
+    });
+  }
 
-                const elapsed = Math.round(performance.now() - startTime);
+  function initGlobalKeyboard() {
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape') return;
+      $$('.modal.active').forEach((modal) => modal.classList.remove('active'));
+    });
+  }
 
-                if (res.ok) {
-                    setStatus('online', elapsed);
-                    try {
-                        const data = await res.json();
-                        updateWorkers(data);
-                    } catch (_) {
-                        // JSON 파싱 실패해도 ONLINE은 유지
-                    }
-                } else {
-                    setStatus('offline');
-                }
-            } catch (err) {
-                setStatus('offline');
-            }
+  document.addEventListener('DOMContentLoaded', () => {
+    const currentPage = getCurrentPage();
+    const auth = getAuthState();
 
-            if (checkHealthBtn) {
-                checkHealthBtn.disabled = false;
-                checkHealthBtn.textContent = '🔍 상태 확인';
-            }
-            if (refreshWorkersBtn) {
-                refreshWorkersBtn.disabled = false;
-                refreshWorkersBtn.textContent = '🔄 워커 상태 새로고침';
-            }
-        }
+    forceVisibleDarkTheme();
+    if (guardProtectedPage(currentPage, auth)) return;
 
-        if (checkHealthBtn) {
-            checkHealthBtn.addEventListener('click', fetchHealth);
-        }
-        if (refreshWorkersBtn) {
-            refreshWorkersBtn.addEventListener('click', fetchHealth);
-        }
-
-        // 복구 안내 모달
-        const openRecovery = () => { if (recoveryModal) recoveryModal.classList.add('active'); };
-        const closeRecovery = () => { if (recoveryModal) recoveryModal.classList.remove('active'); };
-
-        if (openRecoveryBtn) openRecoveryBtn.addEventListener('click', openRecovery);
-        if (closeRecoveryBtn) closeRecoveryBtn.addEventListener('click', closeRecovery);
-        if (closeRecoveryBottomBtn) closeRecoveryBottomBtn.addEventListener('click', closeRecovery);
-
-        // 모달 배경 클릭 시 닫기
-        if (recoveryModal) {
-            recoveryModal.addEventListener('click', (e) => {
-                if (e.target === recoveryModal) closeRecovery();
-            });
-        }
-    })();
-});
+    initAuthUi(auth);
+    initFeatureLocks(auth, currentPage);
+    initRoiCalculator();
+    initDashboardSummary();
+    initFeedbackModal();
+    initScrollReveal();
+    initServerOps();
+    initGlobalKeyboard();
+  });
+})();

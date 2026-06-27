@@ -12,6 +12,7 @@ import TitleList from './shared/TitleList';
 import SettingsPanel from './shared/SettingsPanel';
 import TerminalLog from './shared/TerminalLog';
 import ProfitAnalysis from './shared/ProfitAnalysis';
+import ErrorBanner from './shared/ErrorBanner';
 
 export default function OriginalStylerDashboard() {
   const settings = useSettings();
@@ -142,6 +143,7 @@ export default function OriginalStylerDashboard() {
 
         {/* 수익성 분석 센터 */}
         {(selectedKw || isPostGenerated) && <ProfitAnalysis {...profitData} />}
+        <ErrorBanner message={pipeline.error} />
 
         {/* 키워드 + 제목 2단 구조 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full items-start">

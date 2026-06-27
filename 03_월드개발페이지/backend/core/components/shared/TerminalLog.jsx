@@ -35,7 +35,12 @@ const TerminalLog = memo(function TerminalLog({
 
       <div className="flex-1 bg-black/80 border border-slate-900 rounded-2xl p-4 overflow-y-auto font-mono text-[12px] text-emerald-400 flex flex-col gap-1.5 select-all scrollbar-thin scrollbar-thumb-slate-800">
         {logs.length === 0 ? (
-          <div className="text-slate-600 italic">대기 중: 하단 [글 생성] 버튼을 누르면 실시간 로그가 출력됩니다.</div>
+          <div className="flex h-full min-h-40 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-800 bg-slate-950/40 px-4 text-center font-sans">
+            <strong className="text-xs font-black text-slate-400">대기 중</strong>
+            <span className="text-[11px] font-semibold leading-relaxed text-slate-600">
+              글 생성 또는 자동 발행을 시작하면 단계별 로그가 여기에 표시됩니다.
+            </span>
+          </div>
         ) : (
           logs.map((log, i) => (
             <div key={i} className="leading-relaxed whitespace-pre-wrap">

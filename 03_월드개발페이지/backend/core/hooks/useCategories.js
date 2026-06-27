@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { CATEGORY_MAP, CATEGORY_WEIGHTS, SUBCAT_WEIGHTS } from '../components/constants';
+import { fetchJson } from '../utils/apiClient';
 
 /**
  * 카테고리 로드 및 mainCategory ↔ subCategory 연동 로직을 관리하는 hook.
@@ -14,8 +15,7 @@ export default function useCategories() {
   useEffect(() => {
     const loadCategories = async () => {
       try {
-        const res = await fetch('/api/categories');
-        const data = await res.json();
+        const data = await fetchJson('/api/categories');
         setCategories(data);
       } catch (err) {
         console.error("Failed to load categories.json database:", err);

@@ -66,6 +66,13 @@ const KeywordList = memo(function KeywordList({
           <div className="flex items-center justify-center h-full text-xs text-slate-500 italic">
             실시간 황금키워드 지수 연산 중...
           </div>
+        ) : visibleKeywords.length === 0 ? (
+          <div className="flex h-full min-h-48 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-800 bg-slate-950/50 px-4 text-center">
+            <strong className="text-xs font-black text-slate-300">표시할 키워드가 없습니다.</strong>
+            <span className="text-[11px] font-semibold leading-relaxed text-slate-500">
+              검색어를 바꾸거나 다른 카테고리를 선택해 주세요.
+            </span>
+          </div>
         ) : (
           <div className="flex flex-col gap-3">
             {visibleKeywords.map((kw, i) => {
@@ -113,6 +120,7 @@ const KeywordList = memo(function KeywordList({
       <button
         type="button"
         onClick={onToggleShowAll}
+        disabled={keywordLoading || totalCount === 0}
         className="w-full py-2.5 rounded-xl border border-slate-800 bg-slate-900/40 hover:bg-slate-900/80 text-slate-400 hover:text-slate-200 text-xs font-bold transition-all text-center block cursor-pointer"
       >
         {showAllKeywords ? '👆 접기' : `👇 전체 ${totalCount}개 키워드 보기`}
