@@ -11,7 +11,7 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AutoMaple v9.0.0 - WORLD</title>
+    <title>OpenForm v12.6.0 - WORLD</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
@@ -21,13 +21,13 @@
             --color-bg-light: #f8fafc;
         }
         .download-btn {
-            background: linear-gradient(135deg, #00adb5 0%, #007a82 100%);
-            box-shadow: 0 4px 15px rgba(0, 173, 181, 0.3);
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
             transition: all 0.3s ease;
         }
         .download-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 173, 181, 0.5);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
         }
     </style>
 </head>
@@ -53,7 +53,7 @@
                     <a href="index.html" class="hover:text-white transition duration-200">홈</a>
                     <a href="meetup-calendar.html" class="hover:text-white transition duration-200">밋업</a>
                     <a href="workspace/index.html?view=styler" class="hover:text-white transition duration-200">블로그/티스토리</a>
-                    <a href="autohunter-download.html" class="hover:text-white transition duration-200 active-tab">오토메이플</a>
+                    <a href="autohunter-download.html" class="hover:text-white transition duration-200">오토메이플</a>
                     <a href="#" id="nav-feedback" class="hover:text-white transition duration-200">피드백</a>
                 </nav>
 
@@ -70,53 +70,49 @@
 
             <main class="flex-grow flex items-center justify-center px-4 py-20">
                 <div class="max-w-2xl w-full">
-                    <div class="glass-card p-10 md:p-16 rounded-[40px] text-center card-glow-cyan relative overflow-hidden">
-                        <div class="absolute -top-24 -right-24 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl"></div>
-                        <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl"></div>
+                    <div class="glass-card p-10 md:p-16 rounded-[40px] text-center card-glow-magenta relative overflow-hidden">
+                        <div class="absolute -top-24 -right-24 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl"></div>
+                        <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-orange-500/10 rounded-full blur-3xl"></div>
                         
-                        <div class="w-24 h-24 rounded-3xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 mb-8 mx-auto text-5xl shadow-lg">
-                            🎮
+                        <div class="w-24 h-24 rounded-3xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-8 mx-auto text-5xl shadow-lg">
+                            📝
                         </div>
                         
                         <h1 class="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">
-                            AutoMaple <span class="text-cyan-500">v9.7.0</span>
+                            OpenForm <span class="text-amber-500">v12.6.0</span>
                         </h1>
 
                         <p class="text-slate-600 dark:text-gray-400 text-lg mb-10 leading-relaxed font-medium">
-                            이미지 인식 기반의 가장 스마트한 사냥 보조 프로그램<br>
-                            도형거탐 분석 기능이 포함된 최신 배포 버전을 경험하세요.
+                            구글 폼 자동 작성을 위한 가장 직관적인 솔루션<br>
+                            개인정보 매핑 및 단축키 기능을 활용하여 업무 효율을 높이세요.
                         </p>
 
-                        <div class="space-y-6">
-                            <!-- 파일 크기 제한으로 인해 대용량 스토리지를 통한 외부 다운로드 방식을 권장합니다 -->
-                            <a href="https://github.com/CASHCOW95/product-bulider-lecture/releases" class="download-btn inline-block px-10 py-5 rounded-2xl text-white font-black text-xl tracking-tight uppercase group w-full text-center">
+                        <div class="space-y-4">
+                            <a href="https://github.com/CASHCOW95/world-project/raw/master/deploy/packages/OpenForm_v12.6.zip" class="download-btn inline-block px-10 py-5 rounded-2xl text-white font-black text-xl tracking-tight uppercase group w-full text-center" download>
                                 <span class="flex items-center justify-center gap-3">
-                                    GO TO GITHUB RELEASES <span class="group-hover:translate-x-1 transition-transform">🚀</span>
+                                    DOWNLOAD NOW (v12.6.0) <span class="group-hover:translate-x-1 transition-transform">📥</span>
                                 </span>
                             </a>
-                            
-                            <div class="space-y-2">
-                                <p class="text-slate-400 dark:text-gray-500 text-[10px] font-bold uppercase tracking-widest">
-                                    Windows 10/11 Optimized • Version 9.7.0 (2026.06.02)
-                                </p>
-                                <p class="text-amber-500 text-[11px] font-bold">
-                                    * 50MB 이상의 대용량 파일은 GitHub Releases에서 안전하게 다운로드 가능합니다.
-                                </p>
-                            </div>
+                            <p class="text-slate-400 dark:text-gray-500 text-[10px] font-bold uppercase tracking-widest mt-6">
+                                Windows 10/11 Optimized • Version 12.6.0 (2026.06.02)
+                            </p>
+                            <p class="text-amber-500 text-[10px] font-medium mt-2">
+                                * 대용량 파일은 GitHub 서버를 통해 안전하게 다운로드됩니다.
+                            </p>
                         </div>
 
                         <div class="mt-12 grid grid-cols-3 gap-4 border-t border-white/5 pt-10">
                             <div class="text-center">
-                                <div class="text-cyan-500 font-black text-xl">IMAGE</div>
-                                <div class="text-[10px] text-slate-500 dark:text-gray-500 uppercase font-bold">Recognition</div>
+                                <div class="text-amber-500 font-black text-xl">AUTO</div>
+                                <div class="text-[10px] text-slate-500 dark:text-gray-500 uppercase font-bold">Fill System</div>
                             </div>
                             <div class="text-center border-x border-white/5">
-                                <div class="text-cyan-500 font-black text-xl">AUTO</div>
-                                <div class="text-[10px] text-slate-500 dark:text-gray-500 uppercase font-bold">Sell System</div>
+                                <div class="text-amber-500 font-black text-xl">INFO</div>
+                                <div class="text-[10px] text-slate-500 dark:text-gray-500 uppercase font-bold">Mapping</div>
                             </div>
                             <div class="text-center">
-                                <div class="text-cyan-500 font-black text-xl">SCALE</div>
-                                <div class="text-[10px] text-slate-500 dark:text-gray-500 uppercase font-bold">Flexible UI</div>
+                                <div class="text-amber-500 font-black text-xl">HOTKEY</div>
+                                <div class="text-[10px] text-slate-500 dark:text-gray-500 uppercase font-bold">Backtick (`)</div>
                             </div>
                         </div>
                     </div>

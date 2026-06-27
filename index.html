@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- CF Build: 20260602_2226 -->
+<!-- CF Build: 20260602_2330_v12.6 -->
 <html lang="ko" class="dark">
 <head>
     <!-- Google tag (gtag.js) -->
@@ -22,6 +22,7 @@
     <title>WORLD - 나만의 월드 파트너</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
     <link rel="stylesheet" href="css/style.css">
     <style>
         @theme {
@@ -36,104 +37,345 @@
         <div class="content-container min-h-screen flex flex-col">
 
             <!-- Header -->
-            <header class="w-full bg-white/60 dark:bg-[#030509]/30 backdrop-blur-md border-b border-black/5 dark:border-white/5 px-8 py-3.5 flex justify-between items-center transition-all duration-300 sticky top-0 z-50">
+            <header class="w-full bg-[#030509]/80 backdrop-blur-md border-b border-white/5 px-8 py-4 flex justify-between items-center transition-all duration-300 sticky top-0 z-50">
+                <!-- Left Logo -->
                 <div class="flex items-center space-x-3">
-                    <div class="text-xl font-black tracking-tighter flex items-center gap-2">
-                        <div class="w-5 h-5 rounded-full bg-gradient-to-tr from-cyan-400 via-indigo-500 to-purple-500 relative flex items-center justify-center shadow-inner">
-                            <div class="absolute w-6.5 h-2.5 border border-white/50 rounded-full rotate-[-30deg]"></div>
+                    <a href="index.html" class="text-xl font-black tracking-tighter flex items-center gap-2 group">
+                        <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-cyan-400 via-indigo-500 to-purple-500 relative flex items-center justify-center shadow-lg group-hover:scale-110 transition duration-300">
+                            <div class="absolute w-7.5 h-3 border border-white/60 rounded-full rotate-[-30deg]"></div>
                         </div>
-                        <span class="text-slate-900 dark:text-white font-extrabold text-lg tracking-wide uppercase">WORLD</span>
-                    </div>
+                        <span class="text-white font-extrabold text-lg tracking-widest uppercase">WORLD</span>
+                    </a>
                 </div>
-                <div class="flex items-center space-x-3 text-[11px] font-medium">
-                    <div class="flex items-center bg-black/5 dark:bg-white/5 rounded-full p-1 border border-black/10 dark:border-white/10">
-                        <button id="theme-light" class="px-3 py-1 rounded-full transition-all duration-300 hover:bg-white dark:hover:bg-white/10">LIGHT</button>
-                        <button id="theme-dark" class="px-3 py-1 rounded-full transition-all duration-300 bg-white dark:bg-white/20 shadow-sm">DARK</button>
-                    </div>
-                    <button class="open-auth px-4 py-1.5 rounded-full border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-slate-700 dark:text-gray-200 transition">ADMIN LOGIN</button>
+
+                <!-- Center GNB Tabs -->
+                <nav class="hidden md:flex items-center space-x-8 text-sm font-bold text-slate-400">
+                    <a href="index.html" class="hover:text-white transition duration-200 active-tab">홈</a>
+                    <a href="meetup-calendar.html" class="hover:text-white transition duration-200">밋업</a>
+                    <a href="workspace/index.html?view=styler" class="hover:text-white transition duration-200">블로그/티스토리</a>
+                    <a href="autohunter-download.html" class="hover:text-white transition duration-200">오토메이플</a>
+                    <a href="#" id="nav-feedback" class="hover:text-white transition duration-200">피드백</a>
+                </nav>
+
+                <!-- Right Buttons -->
+                <div class="flex items-center space-x-3 text-[11px] font-semibold">
+                    <button class="open-auth px-4 py-1.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-gray-200 hover:text-white transition flex items-center gap-1.5">
+                        <span>🔑</span> 로그인 / 가입
+                    </button>
+                    <a href="openform-download.html" class="px-4 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 hover:text-indigo-200 transition flex items-center gap-1.5">
+                        <span>⏱️</span> 패치노트
+                    </a>
                 </div>
             </header>
 
             <main class="flex-grow">
                 <!-- Hero Section -->
-                <section class="max-w-4xl mx-auto text-center pt-24 pb-16 px-4 scroll-reveal">
-                    <h1 class="text-5xl md:text-7xl font-black text-slate-900 dark:text-white tracking-tight leading-none text-shadow-strong">
-                        WORLD<br>
-                        <span class="text-3xl md:text-5xl font-extrabold mt-4 inline-block tracking-normal">비즈니스 관리 센터</span>
+                <section class="max-w-4xl mx-auto text-center pt-12 pb-8 px-4 scroll-reveal">
+                    <!-- Badge -->
+                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 backdrop-blur-md mb-6 shadow-sm transition-colors duration-300">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                        </span>
+                        <span class="text-[10px] font-black tracking-[0.2em] text-slate-600 dark:text-slate-200 uppercase">NEXT GENERATION AI PLATFORM</span>
+                    </div>
+
+                    <!-- 메인 헤드라인 -->
+                    <h1 class="text-4xl sm:text-6xl font-black tracking-tight leading-[1.15] text-white transition-colors" style="text-shadow: 0 2px 20px rgba(0,0,0,0.5);">
+                        <span class="title-gradient uppercase">WORLD</span> 비즈니스<br>
+                        5분 만에 끝내는 AI 수익화
                     </h1>
+
+                    <!-- 서브 헤드라인 -->
+                    <p class="mt-4 text-base sm:text-lg font-semibold text-slate-200/90 tracking-wide leading-relaxed max-w-xl mx-auto transition-colors" style="text-shadow: 0 1px 8px rgba(0,0,0,0.4);">
+                        혁신 AI를 통해 번거로운 실무를 자동화하고,<br>
+                        나만의 고효율 수익 파이프라인을 실시간으로 구축하세요.
+                    </p>
+
+                    <!-- CTA Button (Primary Action) -->
+                    <div class="mt-8">
+                        <a href="#features" class="inline-flex items-center gap-2.5 px-7 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm rounded-2xl transition-all shadow-[0_4px_20px_rgba(99,102,241,0.25)] hover:scale-[1.03] active:scale-[0.97] tracking-wider">
+                            지금 시작하기 <span class="text-xs">➔</span>
+                        </a>
+                    </div>
+                </section>
+
+                <!-- 서버 운영센터 (Server Ops Center) -->
+                <section id="server-ops" class="max-w-6xl mx-auto px-6 mb-6 scroll-reveal">
+                    <div class="ops-center-panel p-4 flex flex-col gap-3">
+                        <!-- Header -->
+                        <div class="flex items-center justify-between flex-wrap gap-2 border-b border-white/5 pb-2.5">
+                            <div class="flex items-center gap-2">
+                                <span class="flex h-2.5 w-2.5 relative">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-sky-500"></span>
+                                </span>
+                                <span class="text-sm font-black text-sky-400 tracking-wider uppercase">● 서버 운영센터</span>
+                            </div>
+                            <span class="text-xs text-slate-400 font-bold bg-white/5 px-2.5 py-1 rounded-full border border-white/10">Mac mini 자동화 · 워커 · 로그 · 상태 관리</span>
+                        </div>
+
+                        <!-- 3-Card Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+
+                            <!-- Card 1: Mac mini 상태 -->
+                            <div class="ops-card" id="ops-card-status">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-lg">🖥️</span>
+                                    <span class="text-sm font-black text-white">Mac mini 상태</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="ops-status-dot checking" id="ops-status-dot"></span>
+                                    <span class="text-xs font-extrabold tracking-wider" id="ops-status-text" style="color:#fbbf24;">CHECKING</span>
+                                </div>
+                                <div class="space-y-1">
+                                    <div class="flex justify-between">
+                                        <span class="ops-kv-label">마지막 확인</span>
+                                        <span class="ops-kv-value" id="ops-last-check">—</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="ops-kv-label">업타임 / 응답</span>
+                                        <span class="ops-kv-value" id="ops-uptime">—</span>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2 mt-auto pt-1">
+                                    <button class="ops-btn ops-btn-primary flex-1" id="ops-check-health" title="브라우저에서 Mac mini /health API를 직접 호출합니다 (Tailscale 필요)">
+                                        🔍 상태 확인
+                                    </button>
+                                    <a class="ops-btn flex-1 justify-center" id="ops-open-health" href="#" target="_blank" rel="noopener">
+                                        📋 상세 보기
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Card 2: 자동화 워커 현황 -->
+                            <div class="ops-card" id="ops-card-workers">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-lg">⚙️</span>
+                                    <span class="text-sm font-black text-white">자동화 워커 현황</span>
+                                </div>
+                                <div class="flex gap-4">
+                                    <div class="text-center">
+                                        <div class="text-xl font-black text-emerald-400" id="ops-workers-running">—</div>
+                                        <div class="text-[10px] font-bold text-slate-500 uppercase">실행 중</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-xl font-black text-red-400" id="ops-workers-error">—</div>
+                                        <div class="text-[10px] font-bold text-slate-500 uppercase">오류</div>
+                                    </div>
+                                </div>
+                                <div id="ops-worker-list" class="flex flex-col gap-0">
+                                    <div class="ops-worker-row">
+                                        <span class="ops-worker-badge idle">IDLE</span>
+                                        <span class="text-xs font-bold text-slate-300">크롤러</span>
+                                    </div>
+                                    <div class="ops-worker-row">
+                                        <span class="ops-worker-badge idle">IDLE</span>
+                                        <span class="text-xs font-bold text-slate-300">블로그</span>
+                                    </div>
+                                    <div class="ops-worker-row">
+                                        <span class="ops-worker-badge idle">IDLE</span>
+                                        <span class="text-xs font-bold text-slate-300">유튜브</span>
+                                    </div>
+                                    <div class="ops-worker-row">
+                                        <span class="ops-worker-badge idle">IDLE</span>
+                                        <span class="text-xs font-bold text-slate-300">ADB</span>
+                                    </div>
+                                </div>
+                                <button class="ops-btn mt-auto justify-center w-full" id="ops-refresh-workers">
+                                    🔄 워커 상태 새로고침
+                                </button>
+                            </div>
+
+                            <!-- Card 3: 빠른 운영 진입 -->
+                            <div class="ops-card" id="ops-card-quick">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-lg">🚀</span>
+                                    <span class="text-sm font-black text-white">빠른 운영 진입</span>
+                                </div>
+                                <p class="text-xs text-slate-400 font-medium leading-relaxed">Mac mini 대시보드에 접속하거나, 접속 장애 시 복구 절차를 안내받을 수 있습니다.</p>
+                                <div class="flex flex-col gap-2 mt-auto">
+                                    <a class="ops-btn ops-btn-primary justify-center w-full" id="ops-open-dashboard" href="#" target="_blank" rel="noopener">
+                                        🖥️ Mac mini 대시보드 열기
+                                    </a>
+                                    <button class="ops-btn ops-btn-warn justify-center w-full" id="ops-open-recovery">
+                                        🛠️ 로그 및 복구 안내
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
                 </section>
 
                 <!-- Features Grid (8 Banners) -->
-                <section id="features" class="max-w-6xl mx-auto px-6 py-12 w-full scroll-reveal">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="features-grid">
-                        <a href="meetup-calendar.html" class="feature-card p-8 rounded-3xl glass-card card-glow-cyan flex flex-col items-center text-center relative overflow-hidden group" data-feature="meetup">
+                <section id="features" class="max-w-6xl mx-auto px-6 py-6 w-full scroll-reveal">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="features-grid">
+                        <a href="meetup-calendar.html" class="feature-card p-5 rounded-2xl glass-card card-glow-cyan flex flex-col items-center text-center relative overflow-hidden group" data-feature="meetup">
                             <div class="lock-overlay absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-500 z-20"><span class="text-4xl">🔒</span></div>
                             <div class="feature-icon w-14 h-14 rounded-2xl bg-cyan-100 dark:bg-cyan-950/50 border border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400 mb-4 text-2xl">🗓️</div>
                             <h3 class="text-lg font-black">1. 온/오프라인 밋업</h3>
                             <p class="text-slate-600 dark:text-gray-400 text-xs mt-2 leading-relaxed">구글 캘린더 연동 및 일정 관리</p>
                         </a>
 
-                        <a href="asset-mgmt.html" class="feature-card p-8 rounded-3xl glass-card card-glow-magenta flex flex-col items-center text-center relative overflow-hidden group" data-feature="assets">
+                        <a href="asset-mgmt.html" class="feature-card p-5 rounded-2xl glass-card card-glow-magenta flex flex-col items-center text-center relative overflow-hidden group" data-feature="assets">
                             <div class="lock-overlay absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-500 z-20"><span class="text-4xl">🔒</span></div>
                             <div class="feature-icon w-14 h-14 rounded-2xl bg-pink-100 dark:bg-pink-950/50 border border-pink-500/30 flex items-center justify-center text-pink-600 dark:text-pink-400 mb-4 text-2xl">🎁</div>
                             <h3 class="text-lg font-black">2. 기프티콘 및 프로필</h3>
                             <p class="text-slate-600 dark:text-gray-400 text-xs mt-2 leading-relaxed">멤버 정보 및 이미지 자산 관리</p>
                         </a>
 
-                        <a href="profit-mgmt.html" class="feature-card p-8 rounded-3xl glass-card card-glow-emerald flex flex-col items-center text-center relative overflow-hidden group" data-feature="profit">
+                        <a href="profit-mgmt.html" class="feature-card p-5 rounded-2xl glass-card card-glow-emerald flex flex-col items-center text-center relative overflow-hidden group" data-feature="profit">
                             <div class="lock-overlay absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-500 z-20"><span class="text-4xl">🔒</span></div>
                             <div class="feature-icon w-14 h-14 rounded-2xl bg-emerald-100 dark:bg-emerald-950/50 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-4 text-2xl">📈</div>
                             <h3 class="text-lg font-black">3. 수익정산내역</h3>
                             <p class="text-slate-600 dark:text-gray-400 text-xs mt-2 leading-relaxed">수익 시각화 및 성공률 분석</p>
                         </a>
 
-                        <a href="diary.html" class="feature-card p-8 rounded-3xl glass-card card-glow-gold flex flex-col items-center text-center relative overflow-hidden group" data-feature="diary">
+                        <a href="diary.html" class="feature-card p-5 rounded-2xl glass-card card-glow-gold flex flex-col items-center text-center relative overflow-hidden group" data-feature="diary">
                             <div class="lock-overlay absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-500 z-20"><span class="text-4xl">🔒</span></div>
                             <div class="feature-icon w-14 h-14 rounded-2xl bg-amber-100 dark:bg-amber-950/50 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-4 text-2xl">✍️</div>
                             <h3 class="text-lg font-black">4. 피드백 일기장</h3>
                             <p class="text-slate-600 dark:text-gray-400 text-xs mt-2 leading-relaxed">밋업 회고 및 셀프 피드백</p>
                         </a>
 
-                        <a href="tiktok-mgmt.html" class="feature-card p-8 rounded-3xl glass-card card-glow-cyan flex flex-col items-center text-center relative overflow-hidden group" data-feature="tiktok">
+                        <a href="tiktok-mgmt.html" class="feature-card p-5 rounded-2xl glass-card card-glow-cyan flex flex-col items-center text-center relative overflow-hidden group" data-feature="tiktok">
                             <div class="lock-overlay absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-500 z-20"><span class="text-4xl">🔒</span></div>
                             <div class="feature-icon w-14 h-14 rounded-2xl bg-slate-100 dark:bg-white/10 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-4 text-2xl">📱</div>
                             <h3 class="text-lg font-black">5. 틱톡 관리</h3>
                             <p class="text-slate-600 dark:text-gray-400 text-xs mt-2 leading-relaxed">월별 출석률 및 메모 관리</p>
                         </a>
 
-                        <a href="timer.html" class="feature-card p-8 rounded-3xl glass-card card-glow-magenta flex flex-col items-center text-center relative overflow-hidden group" data-feature="timer">
+                        <a href="workspace/index.html?view=styler" class="feature-card p-5 rounded-2xl glass-card card-glow-magenta flex flex-col items-center text-center relative overflow-hidden group" data-feature="styler">
                             <div class="lock-overlay absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-500 z-20"><span class="text-4xl">🔒</span></div>
-                            <div class="feature-icon w-14 h-14 rounded-2xl bg-indigo-100 dark:bg-indigo-950/50 border border-indigo-500/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-4 text-2xl">⏰</div>
-                            <h3 class="text-lg font-black">6. 스마트 타이머</h3>
-                            <p class="text-slate-600 dark:text-gray-400 text-xs mt-2 leading-relaxed">알람 및 카운트다운 타이머</p>
+                            <div class="feature-icon w-14 h-14 rounded-2xl bg-indigo-100 dark:bg-indigo-950/50 border border-indigo-500/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-4 text-2xl">✍️</div>
+                            <h3 class="text-lg font-black">6. 블로그 자동화</h3>
+                            <p class="text-slate-600 dark:text-gray-400 text-xs mt-2 leading-relaxed">나만의 월드 서비스 기획 및 맞춤형 개발 대시보드</p>
                         </a>
 
-                        <a href="autohunter-download.html" class="feature-card p-8 rounded-3xl glass-card card-glow-emerald flex flex-col items-center text-center relative overflow-hidden group border-emerald-500/50" data-feature="download">
-                            <div class="feature-icon w-14 h-14 rounded-2xl bg-emerald-100 dark:bg-emerald-950/50 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-4 text-2xl">📥</div>
-                            <h3 class="text-lg font-black">7. 오토메이플 v9.0.0</h3>
-                            <p class="text-slate-600 dark:text-gray-400 text-xs mt-2 leading-relaxed">최신 프리미엄 버전 다운로드</p>
-                            <div class="absolute top-2 right-2 bg-emerald-500 text-white text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter">NEW</div>
+                        <a href="openform-download.html" class="feature-card p-5 rounded-2xl glass-card card-glow-amber flex flex-col items-center text-center relative overflow-hidden group border-amber-500/50" data-feature="download">
+                            <div class="feature-icon w-14 h-14 rounded-2xl bg-amber-100 dark:bg-amber-950/50 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-4 text-2xl">📥</div>
+                            <h3 class="text-lg font-black">7. 오픈폼 다운로드</h3>
+                            <p class="text-slate-600 dark:text-gray-400 text-xs mt-2 leading-relaxed">최신 오픈폼 v12.6.0 다운로드</p>
+                            <div class="absolute top-2 right-2 bg-amber-500 text-white text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter">HOT</div>
                         </a>
 
-                        <button id="open-feedback" class="feature-card p-8 rounded-3xl glass-card card-glow-gold flex flex-col items-center text-center relative overflow-hidden group" data-feature="feedback">
+                        <a href="autohunter-download.html" class="feature-card p-5 rounded-2xl glass-card card-glow-emerald flex flex-col items-center text-center relative overflow-hidden group border-emerald-500/50" data-feature="automaple">
+                            <div class="feature-icon w-14 h-14 rounded-2xl bg-emerald-100 dark:bg-emerald-950/50 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-4 text-2xl">🎮</div>
+                            <h3 class="text-lg font-black">8. 오토메이플 다운로드</h3>
+                            <p class="text-slate-600 dark:text-gray-400 text-xs mt-2 leading-relaxed">최신 오토메이플 v9.7.0 다운로드</p>
+                            <div class="absolute top-2 right-2 bg-emerald-500 text-white text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter">HOT</div>
+                        </a>
+
+                        <button id="open-feedback" class="feature-card p-5 rounded-2xl glass-card card-glow-gold flex flex-col items-center text-center relative overflow-hidden group" data-feature="feedback">
                             <div class="feature-icon w-14 h-14 rounded-2xl bg-amber-100 dark:bg-amber-950/50 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-4 text-2xl">📧</div>
-                            <h3 class="text-lg font-black">8. 문의사항</h3>
+                            <h3 class="text-lg font-black">9. 문의사항</h3>
                             <p class="text-slate-600 dark:text-gray-400 text-xs mt-2 leading-relaxed">피드백 및 개선사항 접수</p>
                         </button>
                     </div>
                 </section>
 
-                <!-- Dashboard Summary -->
-                <section id="dashboard-summary" class="max-w-4xl mx-auto px-6 py-12 w-full scroll-reveal">
-                    <div class="p-10 rounded-[3rem] glass-card border border-indigo-500/20 shadow-2xl relative overflow-hidden">
-                        <div class="absolute top-0 right-0 p-8 opacity-10 text-6xl">📊</div>
-                        <h2 class="text-2xl font-black mb-8 flex items-center gap-3">
-                            <span class="w-2 h-6 bg-indigo-500 rounded-full"></span>
-                            비즈니스 대시보드 요약
-                        </h2>
-                        <div id="dashboard-summary-content">
-                            <!-- Populated by js/main.js -->
-                            <p class="text-slate-500 italic">로그인하여 데이터를 확인하세요.</p>
+                <!-- Value Simulator & ROI Calculator (Flashy & Premium) -->
+                <section id="dashboard-summary" class="max-w-6xl mx-auto px-6 py-6 w-full scroll-reveal">
+                    <div class="p-6 md:p-8 rounded-[2rem] premium-glow-card relative overflow-hidden">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                            
+                            <!-- Left: Interactive Sliders -->
+                            <div class="flex flex-col gap-6">
+                                <div class="flex flex-col gap-2">
+                                    <div class="inline-block self-start px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-[12px] font-black text-indigo-600 dark:text-indigo-400 tracking-wider uppercase">
+                                        ⚡ VALUE SIMULATOR & ROI CALCULATOR
+                                    </div>
+                                    <h2 class="text-3xl md:text-4xl font-black text-slate-900 dark:text-white leading-tight">
+                                        내가 얻을 수 있는<br>경제적 시간 및 비용 절감 시뮬레이션
+                                    </h2>
+                                    <p class="text-slate-600 dark:text-slate-400 text-base font-medium leading-relaxed mt-2">
+                                        본인의 하루 평균 콘텐츠/기획 업무 소요 시간과 외부 마케터/디자이너 고용에 소비되는 월 고정 비용을 설정해보세요. 혁신 AI 탑재 후 기하급수적으로 축적될 잠재 가치를 실시간으로 확인하실 수 있습니다.
+                                    </p>
+                                </div>
+                                
+                                <div class="space-y-6 mt-2">
+                                    <!-- Slider 1 -->
+                                    <div class="space-y-2">
+                                        <div class="flex justify-between items-center text-base font-bold">
+                                            <span class="text-slate-800 dark:text-slate-300">⏱️ 일 평균 기획 / 디자인 / 작문 시간</span>
+                                            <span class="text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-3.5 py-1 rounded-full border border-indigo-500/20 dark:border-indigo-500/30 text-base" id="hours-val-display">3시간</span>
+                                        </div>
+                                        <input type="range" id="hours-slider" min="1" max="12" step="1" value="3" 
+                                            class="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                                        <div class="flex justify-between text-xs text-slate-500 dark:text-slate-500 font-bold">
+                                            <span>1시간 (가벼운 작업)</span>
+                                            <span>4시간 (집중 수작업)</span>
+                                            <span>8시간+ (종일 수동 제작)</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Slider 2 -->
+                                    <div class="space-y-2">
+                                        <div class="flex justify-between items-center text-base font-bold">
+                                            <span class="text-slate-800 dark:text-slate-300">💸 월 평균 마케팅 및 디자인 외주/소재 비용</span>
+                                            <span class="text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-3.5 py-1 rounded-full border border-indigo-500/20 dark:border-indigo-500/30 text-base" id="cost-val-display">50만원</span>
+                                        </div>
+                                        <input type="range" id="cost-slider" min="0" max="300" step="10" value="50" 
+                                            class="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                                        <div class="flex justify-between text-xs text-slate-500 dark:text-slate-500 font-bold">
+                                            <span>외주 없음</span>
+                                            <span>100만원 (일반 소재 공급)</span>
+                                            <span>200만원+ (고정 대행 수수료)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Right: Value Analysis Metrics -->
+                            <div class="p-6 md:p-8 rounded-3xl bg-white/60 dark:bg-[#030509]/60 border border-slate-200 dark:border-white/5 flex flex-col gap-6">
+                                <div class="text-sm font-black text-slate-600 dark:text-slate-400 tracking-wider uppercase border-b border-slate-200 dark:border-white/5 pb-2">
+                                    EXPECTED VALUE ANALYSIS
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <!-- Output 1 -->
+                                    <div class="p-5 rounded-2xl bg-cyan-500/5 dark:bg-[#090e1a]/50 border border-cyan-500/15 metric-cyan-glow">
+                                        <p class="text-xs font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-1.5">연간 확보되는 여가 / 확장 시간</p>
+                                        <p class="text-3xl font-black text-cyan-500 dark:text-cyan-400 flex items-baseline gap-1" id="time-saved-display">
+                                            <span>1,015</span> <span class="text-base font-bold text-cyan-600 dark:text-cyan-500">시간 확보</span>
+                                        </p>
+                                        <p class="text-xs text-slate-600 dark:text-slate-500 font-medium mt-1">혁신 AI 엔진 작동 시 평균 작업 시간이 <span class="text-cyan-600 dark:text-cyan-400 font-bold">94%</span> 초저밀 단축됩니다.</p>
+                                    </div>
+                                    <!-- Output 2 -->
+                                    <div class="p-5 rounded-2xl bg-amber-500/5 dark:bg-[#090e1a]/50 border border-amber-500/15 metric-amber-glow">
+                                        <p class="text-xs font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-1.5">연간 보존되는 실질 경제적 자산 value</p>
+                                        <p class="text-3xl font-black text-amber-500 dark:text-amber-400 flex items-baseline gap-1" id="money-saved-display">
+                                            <span class="text-base text-amber-600 dark:text-amber-500 font-black">~</span> <span>3,300</span> <span class="text-base font-bold text-amber-600 dark:text-amber-500">만원 세이브</span>
+                                        </p>
+                                        <p class="text-xs text-slate-600 dark:text-slate-500 font-medium mt-1">표준 전문 인력 고용비(시간당 2.5만) + 마케팅 수수료의 누적 보존 가치입니다.</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Speed badge -->
+                                <div class="p-4 rounded-xl bg-violet-500/5 dark:bg-violet-500/10 border border-violet-500/20 dark:border-violet-500/30 flex items-center justify-between gap-4">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-8 h-8 rounded-lg bg-violet-500/10 border border-violet-500/30 flex items-center justify-center text-sm">📈</div>
+                                        <div class="text-sm font-bold text-slate-800 dark:text-white leading-tight">
+                                            통합 업무 사이클 속도 지표<br>
+                                            <span class="text-slate-500 dark:text-slate-400 text-xs">외주 대기 zero, 원클릭 무제한 생성 사이클</span>
+                                        </div>
+                                    </div>
+                                    <span class="px-3 py-1 rounded-full bg-violet-600 text-white font-black text-xs uppercase tracking-tighter shadow-md">평균 18배 속도 향상!</span>
+                                </div>
+                                
+                                <!-- CTA Banner -->
+                                <div class="flex flex-col gap-4 border-t border-slate-200 dark:border-white/5 pt-6 mt-2">
+                                    <div class="text-left">
+                                        <p class="text-sm font-bold text-slate-800 dark:text-white">혁신 AI Lite는 회원가입만 해도 평생 무료!</p>
+                                        <p class="text-xs text-slate-600 dark:text-slate-500 font-medium">신용카드 요구 일절 없음, 단 3초 만에 나만의 맞춤 작업실이 즉시 빌딩됩니다.</p>
+                                    </div>
+                                    <button onclick="window.location.href='login.html'" class="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-sm transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-amber-500/15 flex items-center justify-center gap-2 cta-button-glow">
+                                        지금 평생무료 혜택 가져오기 <span class="text-xs">➔</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
                         </div>
                     </div>
                 </section>
@@ -143,8 +385,8 @@
             <footer class="w-full border-t border-black/5 dark:border-white/5 px-8 py-8 text-xs text-slate-500 flex justify-between items-center bg-white/5 backdrop-blur-md">
                 <div class="font-bold text-slate-700 dark:text-gray-400">© 2026 World. All rights reserved.</div>
                 <div class="flex space-x-6">
-                    <a href="#" class="hover:text-white transition">Terms</a>
-                    <a href="#" class="hover:text-white transition">Privacy</a>
+                    <a href="#" class="hover:text-slate-800 dark:hover:text-white transition">Terms</a>
+                    <a href="#" class="hover:text-slate-800 dark:hover:text-white transition">Privacy</a>
                 </div>
             </footer>
 
@@ -156,7 +398,7 @@
         <div class="modal-content glass-card border-amber-500/30">
             <h2 class="text-2xl font-black mb-6 flex items-center gap-3">
                 <span class="w-2 h-6 bg-amber-500 rounded-full"></span>
-                8. 문의사항
+                10. 문의사항
             </h2>
             <div class="space-y-4">
                 <div>
@@ -174,6 +416,43 @@
                     <button id="submit-feedback" class="flex-2 py-3 rounded-xl bg-amber-500 text-black text-sm font-black hover:bg-amber-400 transition shadow-lg shadow-amber-500/20">보내기</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Recovery Guide Modal (복구 안내 모달) -->
+    <div id="recovery-modal" class="modal">
+        <div class="recovery-modal-content">
+            <div class="flex items-center justify-between mb-5">
+                <h2 class="text-lg font-black flex items-center gap-2 text-white">
+                    <span class="w-1.5 h-5 bg-sky-500 rounded-full"></span>
+                    🛠️ 로그 및 복구 안내
+                </h2>
+                <button id="close-recovery" class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition flex items-center justify-center text-sm cursor-pointer">✕</button>
+            </div>
+            <p class="text-xs text-slate-400 font-medium mb-4 leading-relaxed">Mac mini 대시보드 접속이 되지 않을 때 아래 순서에 따라 복구를 시도하세요.</p>
+            <div class="flex flex-col">
+                <div class="recovery-step">
+                    <div class="recovery-step-num">1</div>
+                    <div class="recovery-step-text"><strong>Tailscale 연결 확인</strong><br>Galaxy Tab / PC에서 Tailscale VPN이 연결되어 있는지 확인합니다.</div>
+                </div>
+                <div class="recovery-step">
+                    <div class="recovery-step-num">2</div>
+                    <div class="recovery-step-text"><strong>대시보드 접속 시도</strong><br>브라우저에서 Mac mini 대시보드 URL에 직접 접속해봅니다.</div>
+                </div>
+                <div class="recovery-step">
+                    <div class="recovery-step-num">3</div>
+                    <div class="recovery-step-text"><strong>접속 실패 시 SSH 접속</strong><br>Termius 앱을 열고 Mac mini SSH 호스트에 접속합니다.</div>
+                </div>
+                <div class="recovery-step">
+                    <div class="recovery-step-num">4</div>
+                    <div class="recovery-step-text"><strong>'서버 상태 확인' Snippet 실행</strong><br>Termius Snippets에서 '서버 상태 확인'을 실행하여 프로세스 상태를 점검합니다.</div>
+                </div>
+                <div class="recovery-step">
+                    <div class="recovery-step-num">5</div>
+                    <div class="recovery-step-text"><strong>필요 시 '대시보드 재시작' Snippet 실행</strong><br>대시보드 서버가 중단된 경우 '대시보드 재시작' Snippet을 실행합니다.</div>
+                </div>
+            </div>
+            <button id="close-recovery-bottom" class="mt-5 w-full py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-bold text-slate-300 hover:bg-white/10 transition cursor-pointer">닫기</button>
         </div>
     </div>
 
